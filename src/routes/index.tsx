@@ -38,14 +38,38 @@ function Index() {
   const [focused, setFocused] = useState(1);
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
   const [states, setStates] = useState<
-    Array<{ status: "idle" | "downloading" | "done" | "error"; progress: number }>
+    Array<{
+      status: "idle" | "downloading" | "done" | "error";
+      progress: number;
+      blobUrl?: string;
+    }>
   >(() => APPS.map(() => ({ status: "idle", progress: 0 })));
+  const [modalChoice, setModalChoice] = useState<"yes" | "no">("yes");
+  const yesBtnRef = useRef<HTMLButtonElement | null>(null);
+  const noBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  const doneIndex = states.findIndex((s) => s.status === "done");
+  const modalOpen = doneIndex !== -1;
 
   useEffect(() => {
-    refs.current[focused]?.focus();
-  }, [focused]);
+    if (!modalOpen) refs.current[focused]?.focus();
+  }, [focused, modalOpen]);
+
+  useEffect(() => {
+    if (modalOpen) {
+      setModalChoice("yes");
+      setTimeout(() => yesBtnRef.current?.focus(), 0);
+    }
+  }, [modalOpen]);
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    if (modalChoice === "yes") yesBtnRef.current?.focus();
+    else noBtnRef.current?.focus();
+  }, [modalChoice, modalOpen]);
 
   const handleKey = (e: React.KeyboardEvent) => {
+    if (modalOpen) return;
     if (e.key === "ArrowRight") {
       e.preventDefault();
       setFocused((i) => Math.min(APPS.length - 1, i + 1));
@@ -57,7 +81,11 @@ function Index() {
 
   const updateState = (
     i: number,
-    patch: Partial<{ status: "idle" | "downloading" | "done" | "error"; progress: number }>,
+    patch: Partial<{
+      status: "idle" | "downloading" | "done" | "error";
+      progress: number;
+      blobUrl?: string;
+    }>,
   ) => {
     setStates((prev) => {
       const next = [...prev];
@@ -97,12 +125,38 @@ function Index() {
       document.body.appendChild(a);
       a.click();
       a.remove();
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
-      updateState(i, { status: "done", progress: 100 });
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 5 * 60_000);
+      updateState(i, { status: "done", progress: 100, blobUrl });
     } catch (err) {
       console.error(err);
       updateState(i, { status: "error", progress: 0 });
     }
+  };
+
+  const handleModalKey = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+      e.preventDefault();
+      setModalChoice((c) => (c === "yes" ? "no" : "yes"));
+    } else if (e.key === "Escape" || e.key === "Backspace") {
+      e.preventDefault();
+      closeModal();
+    }
+  };
+
+  const closeModal = () => {
+    if (doneIndex === -1) return;
+    const url = states[doneIndex].blobUrl;
+    if (url) URL.revokeObjectURL(url);
+    updateState(doneIndex, { status: "idle", progress: 0, blobUrl: undefined });
+  };
+
+  const openApk = () => {
+    if (doneIndex === -1) return;
+    const url = states[doneIndex].blobUrl;
+    if (url) {
+      window.location.href = url;
+    }
+    updateState(doneIndex, { status: "idle", progress: 0, blobUrl: undefined });
   };
 
   return (
