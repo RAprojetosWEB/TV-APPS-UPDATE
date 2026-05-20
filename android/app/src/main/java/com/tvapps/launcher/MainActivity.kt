@@ -68,6 +68,9 @@ class MainActivity : Activity() {
             // download + instalação. Sem isso, blob/URLs de APK numa WebView
             // simplesmente não abrem o instalador do Android.
             setDownloadListener { url, _, _, mimeType, _ ->
+                // blob: URLs não podem ser baixadas pelo ApkDownloader (só http/https).
+                // Ignoramos silenciosamente — o web fallback nem usa mais blob.
+                if (url.startsWith("blob:")) return@setDownloadListener
                 val isApk = mimeType?.contains("vnd.android.package-archive") == true ||
                     url.endsWith(".apk", ignoreCase = true)
                 if (!isApk) return@setDownloadListener
