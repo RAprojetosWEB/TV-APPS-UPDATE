@@ -236,18 +236,12 @@ function Index() {
     // o Chrome reconhece o MIME application/vnd.android.package-archive
     // e chama o instalador nativo. Mantemos o blob vivo (não revogamos)
     // para que a nova aba consiga carregá-lo.
+    // Em WebView, `target=_blank` com blob: não aciona o instalador.
+    // Navegação direta é o caminho mais compatível.
     try {
-      const a = document.createElement("a");
-      a.href = url;
-      a.target = "_blank";
-      a.rel = "noopener";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      window.location.href = url;
     } catch (err) {
       console.error("openApk failed", err);
-      // fallback: navegação direta
-      window.location.href = url;
       return;
     }
     // Só limpa o estado visual; NÃO revoga o blob (será revogado pelo timer)
