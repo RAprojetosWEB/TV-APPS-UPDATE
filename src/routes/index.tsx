@@ -178,11 +178,11 @@ function Index() {
           "radial-gradient(ellipse at top left, oklch(0.3 0.12 280 / 0.4), transparent 60%), radial-gradient(ellipse at bottom right, oklch(0.3 0.12 150 / 0.35), transparent 60%)",
       }}
     >
-      <header className="px-16 pt-10">
-        <h1 className="text-5xl font-black tracking-tight">
+      <header className="px-16 pt-6">
+        <h1 className="text-4xl font-black tracking-tight">
           TV<span style={{ color: "var(--tv-accent)" }}>.</span>Apps
         </h1>
-        <p className="mt-2 text-lg text-white/60">
+        <p className="mt-1 text-base text-white/60">
           Use as setas do controle e pressione OK para baixar
         </p>
       </header>
