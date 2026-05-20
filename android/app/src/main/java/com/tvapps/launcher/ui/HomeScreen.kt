@@ -26,10 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.progressindicator.LinearProgressIndicatorDefaults
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tvapps.launcher.AppCatalog
 import com.tvapps.launcher.AppEntry
@@ -46,8 +43,8 @@ private val ErrorColor = Color(0xFFEF4444)
 @Composable
 fun HomeScreen(vm: HomeViewModel = viewModel()) {
     val context = LocalContext.current
-    val states by vm.states.collectAsStateWithLifecycle()
-    val modalIndex by vm.modalIndex.collectAsStateWithLifecycle()
+    val states by vm.states.collectAsState()
+    val modalIndex by vm.modalIndex.collectAsState()
 
     Column(
         modifier = Modifier
