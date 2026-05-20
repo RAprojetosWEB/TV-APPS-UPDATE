@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Download, Play, Tv } from "lucide-react";
+import { Check, Download, Play, Tv, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -37,6 +37,9 @@ const APPS = [
 function Index() {
   const [focused, setFocused] = useState(1);
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
+  const [states, setStates] = useState<
+    Array<{ status: "idle" | "downloading" | "done" | "error"; progress: number }>
+  >(() => APPS.map(() => ({ status: "idle", progress: 0 })));
 
   useEffect(() => {
     refs.current[focused]?.focus();
@@ -52,8 +55,54 @@ function Index() {
     }
   };
 
-  const open = (url: string) => {
-    window.open(url, "_blank", "noopener,noreferrer");
+  const updateState = (
+    i: number,
+    patch: Partial<{ status: "idle" | "downloading" | "done" | "error"; progress: number }>,
+  ) => {
+    setStates((prev) => {
+      const next = [...prev];
+      next[i] = { ...next[i], ...patch };
+      return next;
+    });
+  };
+
+  const startDownload = async (i: number) => {
+    const app = APPS[i];
+    if (states[i].status === "downloading") return;
+    updateState(i, { status: "downloading", progress: 0 });
+    try {
+      const res = await fetch(app.url);
+      if (!res.ok || !res.body) throw new Error("HTTP " + res.status);
+      const total = Number(res.headers.get("Content-Length") || 0);
+      const reader = res.body.getReader();
+      const chunks: Uint8Array[] = [];
+      let received = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+          chunks.push(value);
+          received += value.length;
+          if (total > 0) {
+            updateState(i, { progress: Math.round((received / total) * 100) });
+          }
+        }
+      }
+      const blob = new Blob(chunks, { type: "application/vnd.android.package-archive" });
+      const blobUrl = URL.createObjectURL(blob);
+      const fileName = app.url.split("/").pop()?.split("?")[0] || `${app.name}.apk`;
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = decodeURIComponent(fileName);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+      updateState(i, { status: "done", progress: 100 });
+    } catch (err) {
+      console.error(err);
+      updateState(i, { status: "error", progress: 0 });
+    }
   };
 
   return (
@@ -86,11 +135,11 @@ function Index() {
               }}
               tabIndex={0}
               onFocus={() => setFocused(i)}
-              onClick={() => open(app.url)}
+              onClick={() => startDownload(i)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  open(app.url);
+                  startDownload(i);
                 }
               }}
               className="group relative flex h-[460px] w-[360px] flex-col items-center justify-center rounded-3xl outline-none transition-all duration-300"
@@ -104,6 +153,83 @@ function Index() {
                   : "0 10px 30px -10px oklch(0 0 0 / 0.5)",
               }}
             >
+              {states[i].status === "downloading" ? (
+                <div className="flex w-full flex-col items-center px-8">
+                  <div
+                    className="mb-8 flex h-32 w-32 items-center justify-center rounded-2xl"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))",
+                    }}
+                  >
+                    <Download size={64} strokeWidth={1.8} color="oklch(0.15 0.03 270)" />
+                  </div>
+                  <h2 className="text-3xl font-bold">{app.name}</h2>
+                  <p className="mt-2 text-sm text-white/60">Baixando…</p>
+                  <div
+                    className="mt-6 h-3 w-full overflow-hidden rounded-full"
+                    style={{ background: "oklch(0.28 0.04 270)" }}
+                  >
+                    <div
+                      className="h-full rounded-full transition-all duration-200"
+                      style={{
+                        width: `${states[i].progress}%`,
+                        background:
+                          "linear-gradient(90deg, var(--tv-accent), var(--tv-accent-2))",
+                      }}
+                    />
+                  </div>
+                  <div
+                    className="mt-4 text-4xl font-black tabular-nums"
+                    style={{ color: "var(--tv-accent)" }}
+                  >
+                    {states[i].progress}%
+                  </div>
+                </div>
+              ) : states[i].status === "done" ? (
+                <div className="flex flex-col items-center px-8">
+                  <div
+                    className="mb-8 flex h-32 w-32 items-center justify-center rounded-2xl"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))",
+                    }}
+                  >
+                    <Check size={64} strokeWidth={2.5} color="oklch(0.15 0.03 270)" />
+                  </div>
+                  <h2 className="text-3xl font-bold">{app.name}</h2>
+                  <p className="mt-3 text-center text-base text-white/70">
+                    Download concluído!
+                  </p>
+                  <p className="mt-2 px-2 text-center text-xs text-white/50">
+                    Abra a notificação do Android para instalar
+                  </p>
+                </div>
+              ) : states[i].status === "error" ? (
+                <div className="flex flex-col items-center px-8">
+                  <div
+                    className="mb-8 flex h-32 w-32 items-center justify-center rounded-2xl"
+                    style={{ background: "oklch(0.4 0.2 25)" }}
+                  >
+                    <AlertCircle size={64} strokeWidth={1.8} color="white" />
+                  </div>
+                  <h2 className="text-3xl font-bold">{app.name}</h2>
+                  <p className="mt-3 text-center text-base text-white/70">
+                    Falha no download
+                  </p>
+                  <div
+                    className="mt-6 rounded-full px-6 py-3 text-sm font-semibold"
+                    style={{
+                      background: isFocused ? "var(--tv-accent)" : "transparent",
+                      color: isFocused ? "oklch(0.15 0.03 270)" : "white",
+                      border: `2px solid ${isFocused ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
+                    }}
+                  >
+                    Tentar de novo
+                  </div>
+                </div>
+              ) : (
+              <>
               <div
                 className="mb-8 flex h-32 w-32 items-center justify-center rounded-2xl transition-all duration-300"
                 style={{
@@ -134,6 +260,8 @@ function Index() {
                 <Download size={16} />
                 BAIXAR APK
               </div>
+              </>
+              )}
             </button>
           );
         })}
