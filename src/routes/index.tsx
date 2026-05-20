@@ -220,15 +220,15 @@ function Index() {
               {states[i].status === "downloading" ? (
                 <div className="flex w-full flex-col items-center px-8">
                   <div
-                    className="mb-8 flex h-32 w-32 items-center justify-center rounded-2xl"
+                    className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl"
                     style={{
                       background:
                         "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))",
                     }}
                   >
-                    <Download size={64} strokeWidth={1.8} color="oklch(0.15 0.03 270)" />
+                    <Download size={44} strokeWidth={1.8} color="oklch(0.15 0.03 270)" />
                   </div>
-                  <h2 className="text-3xl font-bold">{app.name}</h2>
+                  <h2 className="text-2xl font-bold">{app.name}</h2>
                   <p className="mt-2 text-sm text-white/60">Baixando…</p>
                   <div
                     className="mt-6 h-3 w-full overflow-hidden rounded-full"
@@ -253,15 +253,15 @@ function Index() {
               ) : states[i].status === "done" ? (
                 <div className="flex flex-col items-center px-8">
                   <div
-                    className="mb-8 flex h-32 w-32 items-center justify-center rounded-2xl"
+                    className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl"
                     style={{
                       background:
                         "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))",
                     }}
                   >
-                    <Check size={64} strokeWidth={2.5} color="oklch(0.15 0.03 270)" />
+                    <Check size={44} strokeWidth={2.5} color="oklch(0.15 0.03 270)" />
                   </div>
-                  <h2 className="text-3xl font-bold">{app.name}</h2>
+                  <h2 className="text-2xl font-bold">{app.name}</h2>
                   <p className="mt-3 text-center text-base text-white/70">
                     Download concluído!
                   </p>
@@ -272,12 +272,12 @@ function Index() {
               ) : states[i].status === "error" ? (
                 <div className="flex flex-col items-center px-8">
                   <div
-                    className="mb-8 flex h-32 w-32 items-center justify-center rounded-2xl"
+                    className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl"
                     style={{ background: "oklch(0.4 0.2 25)" }}
                   >
-                    <AlertCircle size={64} strokeWidth={1.8} color="white" />
+                    <AlertCircle size={44} strokeWidth={1.8} color="white" />
                   </div>
-                  <h2 className="text-3xl font-bold">{app.name}</h2>
+                  <h2 className="text-2xl font-bold">{app.name}</h2>
                   <p className="mt-3 text-center text-base text-white/70">
                     Falha no download
                   </p>
@@ -295,7 +295,7 @@ function Index() {
               ) : (
               <>
               <div
-                className="mb-8 flex h-32 w-32 items-center justify-center rounded-2xl transition-all duration-300"
+                className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl transition-all duration-300"
                 style={{
                   background: isFocused
                     ? "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))"
@@ -304,12 +304,12 @@ function Index() {
               >
                 <Icon
                   className="transition-all"
-                  size={64}
+                  size={44}
                   strokeWidth={1.8}
                   color={isFocused ? "oklch(0.15 0.03 270)" : "white"}
                 />
               </div>
-              <h2 className="text-3xl font-bold">{app.name}</h2>
+              <h2 className="text-2xl font-bold">{app.name}</h2>
               <p className="mt-3 px-6 text-center text-base text-white/60">
                 {app.description}
               </p>
