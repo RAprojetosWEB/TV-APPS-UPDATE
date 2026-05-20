@@ -61,11 +61,6 @@ APK final: `app/build/outputs/apk/debug/app-debug.apk`.
 5. Na primeira vez o Android pede permissão "Instalar apps desconhecidos"
    (Configurações → Apps → TV Apps → Fontes desconhecidas) — autorize uma vez.
 
-> **Primeira instalação**: ao clicar em baixar pela primeira vez, o Android
-> abre a tela de permissão "Fontes desconhecidas". Autorize, **volte ao app
-> TV Apps** e clique baixar de novo — daí em diante o instalador abre
-> automaticamente ao final do download.
-
 ## Editar a lista de apps
 
 Abra `app/src/main/java/com/tvapps/launcher/AppCatalog.kt` e altere a lista

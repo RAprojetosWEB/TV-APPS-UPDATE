@@ -1,86 +1,43 @@
-# Projeto Android Studio nativo (Kotlin + Compose) — TV Apps
+# Corrigir instalação do APK no app nativo
 
-Criar uma nova pasta `android/` com um projeto Android Studio Kotlin pronto para abrir, sincronizar e gerar APK. O app é um launcher de TV Box que baixa e instala APKs **nativamente** (sem WebView), equivalente em função ao app web atual.
+## Diagnóstico
 
-## Importante: substituição da pasta `android/` atual
+A foto que você mandou é o **modal web de fallback** ("Sim, abrir / Não, agora não"). Ele só aparece quando o site **não detectou** a ponte nativa Android — então caiu no caminho do navegador: baixa via `fetch`, gera um `blob:` URL e clica num `<a target="_blank">`. Dentro de uma WebView, blob URL **não aciona o instalador de APK** — daí o "nada acontece".
 
-Já existe uma pasta `android/` neste repositório com uma abordagem **diferente** (WebView que carrega o site Lovable + ponte JS↔Kotlin). O plano aqui é **substituí-la** por um app 100% nativo em Jetpack Compose for TV, sem WebView. Se quiser manter as duas versões lado a lado, me avise antes de aprovar — posso colocar a nova em `android-native/`.
+No caminho nativo (o correto), esse modal nem deveria aparecer: o Kotlin baixa o APK e ao chegar em 100% abre o instalador do sistema sozinho.
 
-O app web (`src/routes/index.tsx`, manifest PWA, etc.) **não é tocado** e continua funcionando em paralelo.
+Duas causas possíveis pra ponte não ser detectada:
+1. `window.Android.isNative()` foi avaliado antes da WebView injetar a interface (timing de hidratação SSR).
+2. WebView mais antiga em algumas TV Box que retorna o booleano de forma estranha.
 
-## Resultado para o usuário
+## O que vou fazer
 
-1. Baixar a pasta `android/` do projeto.
-2. Abrir no Android Studio (Hedgehog ou superior) → "Open" → selecionar `android/`.
-3. Aguardar o Gradle sync.
-4. Menu **Build → Build Bundle(s) / APK(s) → Build APK(s)** gera o `app-debug.apk` instalável em qualquer TV Box Android 7+.
-5. Sideload do APK na TV Box (cabo, ADB ou pendrive).
+### 1. Frontend (`src/routes/index.tsx`)
+- Trocar a detecção de nativo para **verificar `window.Android?.installApk` direto** (sem depender de `isNative()` retornar `true`). Se a função existe, é nativo. Ponto.
+- Re-checar a presença do bridge em `useEffect` (depois da hidratação), guardar em `useState` — assim nunca cai no fallback web por erro de timing.
+- Remover o `<a target="_blank">` do `openApk` quando estiver em WebView: usar `window.location.href = blobUrl` (mais compatível) — só usado se mesmo assim ficar no fallback.
 
-## Estrutura criada
+### 2. Android — rede de segurança (`MainActivity.kt`)
+- Adicionar `webView.setDownloadListener { ... }`. Se por qualquer motivo o site cair no caminho web e disparar um download de `.apk`, o Kotlin **intercepta** e roda o mesmo fluxo de `ApkDownloader` + `ApkInstaller`. Garante que **nunca** fique "nada acontecendo".
 
-```text
-android/
-  settings.gradle.kts
-  build.gradle.kts
-  gradle.properties
-  gradle/wrapper/{gradle-wrapper.properties, gradle-wrapper.jar}
-  gradlew, gradlew.bat
-  app/
-    build.gradle.kts
-    proguard-rules.pro
-    src/main/
-      AndroidManifest.xml
-      java/com/tvapps/launcher/
-        MainActivity.kt          # tela principal Compose
-        AppCatalog.kt            # lista hardcoded dos 3 APKs
-        DownloadManager.kt       # baixa APK com progresso
-        ApkInstaller.kt          # PackageInstaller nativo
-        ui/                      # cards, botões DPAD, modal
-      res/
-        values/{strings.xml, themes.xml, colors.xml}
-        drawable/                # ícones
-        xml/file_paths.xml       # FileProvider
-```
+### 3. Android — instalador (`ApkInstaller.kt`)
+- Quando `canRequestPackageInstalls()` é `false`, hoje só manda pra Configurações silenciosamente. Vou adicionar um `Toast` explicando ("Permita 'Instalar apps desconhecidos' e tente de novo") pra você não ficar sem feedback na primeira vez.
 
-## Funcionalidades nativas
+### 4. Documentação
+- Atualizar `android/README.md` com a nota: na **primeira instalação** o Android pede permissão "Fontes desconhecidas" — autorize, volte ao app e clique baixar de novo. A partir daí funciona direto.
 
-- **UI Jetpack Compose** com tema dark roxo equivalente ao web (background `#1a0d2e`, accent verde).
-- **Compose for TV** (`androidx.tv:tv-foundation`, `tv-material`) com foco visual e DPAD nativo — esquerda/direita navegam, OK seleciona, Back fecha modal.
-- **Orientação landscape** travada no `AndroidManifest.xml` (`screenOrientation="landscape"`).
-- **Download via OkHttp** com progresso reportado por `Flow<Int>` para barra Compose.
-- **Instalação nativa via `PackageInstaller`** (Android 7+) — sem precisar passar por intent de "abrir arquivo". Em Android 8+ pede `REQUEST_INSTALL_PACKAGES` uma única vez.
-- **FileProvider** configurado em `xml/file_paths.xml` para fallback via `ACTION_VIEW` (Android 6 / WebViews legadas).
-- **Catálogo de apps**: lista hardcoded com os três APKs atuais (UniTV, Nexa TV, AllApp) apontando para as mesmas URLs do Supabase Storage que o site usa hoje.
+## Resultado esperado
 
-## Permissões no Manifest
-
-- `INTERNET`
-- `REQUEST_INSTALL_PACKAGES`
-- `FOREGROUND_SERVICE` (download continua com a tela ligada)
-- `uses-feature leanback required=false` para aparecer na home da TV
-- `category LEANBACK_LAUNCHER` no MainActivity
-
-## Configuração Gradle
-
-- `compileSdk = 34`, `minSdk = 24`, `targetSdk = 34`
-- Kotlin 1.9, AGP 8.4, Compose BOM 2024.06
-- `applicationId = "com.tvapps.launcher"`, `versionName = "1.0"`
-- Build type `debug` assinado com a debug key padrão — instala em qualquer device sem configurar keystore
-
-## O que NÃO muda
-
-- O app web atual (`src/routes/index.tsx`, manifest PWA, etc.) permanece intocado.
-- Nenhuma mudança em dependências do projeto web.
-
-## Limitações
-
-- O projeto **não é compilado pelo Lovable** (não temos JDK/Android SDK no sandbox). Você gera o APK localmente no Android Studio.
-- Para mudar a lista de apps, edite `AppCatalog.kt` e recompile.
-- Assinatura release/Play Store fica para passo futuro — o APK debug basta para sideload.
+Depois de recompilar e reinstalar o APK uma vez:
+- Clica no card → barra de progresso → ao terminar, **abre direto o instalador do Android** (sem modal "Sim, abrir").
+- Se for a primeira vez, abre a tela de permissão; autoriza uma vez e nas próximas vai direto.
 
 ## Detalhes técnicos
 
-- O `gradle-wrapper.jar` é binário; vou baixá-lo do mirror oficial Gradle (8.7) durante a geração, já que o sandbox não tem JDK mas tem `curl`.
-- O `PackageInstaller` usa `Session.openWrite` + `commit` com `PendingIntent` de status, evitando `ACTION_VIEW` quando possível.
-- `DownloadManager.kt` é um wrapper simples sobre OkHttp `ResponseBody.source()` emitindo `Flow<DownloadProgress>` (sealed class: `Progress(percent)`, `Done(file)`, `Error(msg)`).
-- Cards focáveis usam `Modifier.focusable() + onFocusChanged` com escala/borda animada — padrão visual de launcher Android TV.
+Arquivos alterados:
+- `src/routes/index.tsx` — detecção de bridge + fallback
+- `android/app/src/main/java/com/tvapps/launcher/MainActivity.kt` — `setDownloadListener`
+- `android/app/src/main/java/com/tvapps/launcher/ApkInstaller.kt` — Toast de permissão
+- `android/README.md` — instrução de primeira instalação
+
+Você precisa **recompilar o APK** (mudança em Kotlin). Mudanças só no `src/` web seriam refletidas automaticamente, mas aqui o fix principal é nativo.

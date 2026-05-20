@@ -10,13 +10,6 @@ import android.view.WindowManager
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.Toast
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class MainActivity : Activity() {
 
@@ -27,7 +20,6 @@ class MainActivity : Activity() {
     }
 
     private lateinit var webView: WebView
-    private val downloadScope: CoroutineScope = MainScope()
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,37 +55,6 @@ class MainActivity : Activity() {
             webViewClient = WebViewClient()
             // Ponte JS → Kotlin: o site chama window.Android.installApk(url)
             addJavascriptInterface(WebAppBridge(this@MainActivity, this), "Android")
-            // Rede de segurança: se o site cair no fluxo web (download direto
-            // do APK), interceptamos aqui e rodamos o mesmo fluxo nativo de
-            // download + instalação. Sem isso, blob/URLs de APK numa WebView
-            // simplesmente não abrem o instalador do Android.
-            setDownloadListener { url, _, _, mimeType, _ ->
-                // blob: URLs não podem ser baixadas pelo ApkDownloader (só http/https).
-                // Ignoramos silenciosamente — o web fallback nem usa mais blob.
-                if (url.startsWith("blob:")) return@setDownloadListener
-                val isApk = mimeType?.contains("vnd.android.package-archive") == true ||
-                    url.endsWith(".apk", ignoreCase = true)
-                if (!isApk) return@setDownloadListener
-                Toast.makeText(this@MainActivity, "Baixando APK…", Toast.LENGTH_SHORT).show()
-                val name = url.substringAfterLast('/').substringBefore('?')
-                downloadScope.launch {
-                    ApkDownloader.download(this@MainActivity, url, name).collect { progress ->
-                        when (progress) {
-                            is DownloadProgress.Done -> withContext(Dispatchers.Main) {
-                                ApkInstaller.install(this@MainActivity, progress.file)
-                            }
-                            is DownloadProgress.Error -> withContext(Dispatchers.Main) {
-                                Toast.makeText(
-                                    this@MainActivity,
-                                    "Erro no download: ${progress.message}",
-                                    Toast.LENGTH_LONG,
-                                ).show()
-                            }
-                            else -> Unit
-                        }
-                    }
-                }
-            }
             isFocusable = true
             isFocusableInTouchMode = true
             requestFocus()
@@ -113,7 +74,6 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
-        downloadScope.cancel()
         webView.destroy()
         super.onDestroy()
     }

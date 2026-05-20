@@ -49,42 +49,27 @@ const APPS = [
 ];
 
 function Index() {
-  // Detecta a ponte nativa de forma tolerante: em algumas WebViews os métodos
-  // expostos por addJavascriptInterface aparecem como `object`, não `function`.
-  // Então só checamos a EXISTÊNCIA da chave `installApk` em `window.Android`.
-  const detect = () =>
-    typeof window !== "undefined" &&
-    !!window.Android &&
-    "installApk" in (window.Android as object);
-  const [isNative, setIsNative] = useState<boolean>(detect);
-  const [bridgeVersion, setBridgeVersion] = useState<string>("");
-  useEffect(() => {
-    const check = () => {
-      if (!detect()) return;
-      setIsNative(true);
-      try {
-        setBridgeVersion(window.Android?.version?.() ?? "?");
-      } catch {
-        setBridgeVersion("?");
-      }
-    };
-    check();
-    // WebView pode injetar a interface logo após o load — re-checa algumas vezes.
-    const ids = [50, 200, 600, 1500].map((ms) => window.setTimeout(check, ms));
-    return () => ids.forEach((id) => window.clearTimeout(id));
-  }, []);
+  const isNative =
+    typeof window !== "undefined" && !!window.Android?.isNative?.();
   const [focused, setFocused] = useState(1);
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
   const [states, setStates] = useState<
     Array<{
       status: "idle" | "downloading" | "done" | "error";
       progress: number;
+      blobUrl?: string;
     }>
   >(() => APPS.map(() => ({ status: "idle", progress: 0 })));
+  const [modalChoice, setModalChoice] = useState<"yes" | "no">("yes");
+  const yesBtnRef = useRef<HTMLButtonElement | null>(null);
+  const noBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  const doneIndex = states.findIndex((s) => s.status === "done");
+  const modalOpen = doneIndex !== -1;
 
   useEffect(() => {
-    refs.current[focused]?.focus();
-  }, [focused]);
+    if (!modalOpen) refs.current[focused]?.focus();
+  }, [focused, modalOpen]);
 
   // Força orientação landscape sempre que possível (PWA / fullscreen no Android)
   useEffect(() => {
@@ -104,7 +89,21 @@ function Index() {
     return () => document.removeEventListener("fullscreenchange", onFs);
   }, []);
 
+  useEffect(() => {
+    if (modalOpen) {
+      setModalChoice("yes");
+      setTimeout(() => yesBtnRef.current?.focus(), 0);
+    }
+  }, [modalOpen]);
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    if (modalChoice === "yes") yesBtnRef.current?.focus();
+    else noBtnRef.current?.focus();
+  }, [modalChoice, modalOpen]);
+
   const handleKey = (e: React.KeyboardEvent) => {
+    if (modalOpen) return;
     if (e.key === "ArrowRight") {
       e.preventDefault();
       setFocused((i) => Math.min(APPS.length - 1, i + 1));
@@ -119,6 +118,7 @@ function Index() {
     patch: Partial<{
       status: "idle" | "downloading" | "done" | "error";
       progress: number;
+      blobUrl?: string;
     }>,
   ) => {
     setStates((prev) => {
@@ -128,22 +128,50 @@ function Index() {
     });
   };
 
-  const startDownload = (i: number) => {
+  const startDownload = async (i: number) => {
     const app = APPS[i];
     if (states[i].status === "downloading") return;
+    updateState(i, { status: "downloading", progress: 0 });
 
     // Modo nativo: delega download + instalação ao APK host.
     if (isNative && window.Android) {
-      updateState(i, { status: "downloading", progress: 0 });
       window.Android.installApk(app.url, app.name);
       return;
     }
 
-    // Fallback (navegador ou WebView sem ponte): navega direto para a URL
-    // do APK. O Chrome/WebView reconhece o tipo e dispara o download nativo.
-    // Dentro do nosso APK, mesmo se a ponte falhar, o setDownloadListener
-    // do MainActivity intercepta esse http e roda o mesmo fluxo nativo.
-    window.location.href = app.url;
+    try {
+      const res = await fetch(app.url);
+      if (!res.ok || !res.body) throw new Error("HTTP " + res.status);
+      const total = Number(res.headers.get("Content-Length") || 0);
+      const reader = res.body.getReader();
+      const chunks: BlobPart[] = [];
+      let received = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+          chunks.push(value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength) as ArrayBuffer);
+          received += value.length;
+          if (total > 0) {
+            updateState(i, { progress: Math.round((received / total) * 100) });
+          }
+        }
+      }
+      const blob = new Blob(chunks, { type: "application/vnd.android.package-archive" });
+      const blobUrl = URL.createObjectURL(blob);
+      const fileName = app.url.split("/").pop()?.split("?")[0] || `${app.name}.apk`;
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = decodeURIComponent(fileName);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 5 * 60_000);
+      updateState(i, { status: "done", progress: 100, blobUrl });
+    } catch (err) {
+      console.error(err);
+      updateState(i, { status: "error", progress: 0 });
+    }
   };
 
   // Recebe progresso/erros do bridge nativo.
@@ -153,7 +181,6 @@ function Index() {
       const idx = APPS.findIndex((a) => a.name === name);
       if (idx === -1) return;
       if (percent < 0) {
-        console.error("Erro nativo:", error);
         updateState(idx, { status: "error", progress: 0 });
         return;
       }
@@ -169,6 +196,52 @@ function Index() {
     };
   }, [isNative]);
 
+  const handleModalKey = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+      e.preventDefault();
+      setModalChoice((c) => (c === "yes" ? "no" : "yes"));
+    } else if (e.key === "Escape" || e.key === "Backspace") {
+      e.preventDefault();
+      closeModal();
+    }
+  };
+
+  const closeModal = () => {
+    if (doneIndex === -1) return;
+    const url = states[doneIndex].blobUrl;
+    if (url) URL.revokeObjectURL(url);
+    updateState(doneIndex, { status: "idle", progress: 0, blobUrl: undefined });
+  };
+
+  const openApk = () => {
+    if (doneIndex === -1) return;
+    const url = states[doneIndex].blobUrl;
+    if (!url) {
+      updateState(doneIndex, { status: "idle", progress: 0, blobUrl: undefined });
+      return;
+    }
+    // Abre o APK numa nova aba SEM o atributo download — no Android
+    // o Chrome reconhece o MIME application/vnd.android.package-archive
+    // e chama o instalador nativo. Mantemos o blob vivo (não revogamos)
+    // para que a nova aba consiga carregá-lo.
+    try {
+      const a = document.createElement("a");
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (err) {
+      console.error("openApk failed", err);
+      // fallback: navegação direta
+      window.location.href = url;
+      return;
+    }
+    // Só limpa o estado visual; NÃO revoga o blob (será revogado pelo timer)
+    updateState(doneIndex, { status: "idle", progress: 0, blobUrl: undefined });
+  };
+
   return (
     <main
       onKeyDown={handleKey}
@@ -178,16 +251,16 @@ function Index() {
           "radial-gradient(ellipse at top left, oklch(0.3 0.12 280 / 0.4), transparent 60%), radial-gradient(ellipse at bottom right, oklch(0.3 0.12 150 / 0.35), transparent 60%)",
       }}
     >
-      <header className="px-16 pt-6">
-        <h1 className="text-4xl font-black tracking-tight">
+      <header className="px-16 pt-10">
+        <h1 className="text-5xl font-black tracking-tight">
           TV<span style={{ color: "var(--tv-accent)" }}>.</span>Apps
         </h1>
-        <p className="mt-1 text-base text-white/60">
+        <p className="mt-2 text-lg text-white/60">
           Use as setas do controle e pressione OK para baixar
         </p>
       </header>
 
-      <section className="flex flex-1 items-center justify-center gap-8 px-16 py-6">
+      <section className="flex flex-1 items-center justify-center gap-10 px-16">
         {APPS.map((app, i) => {
           const isFocused = focused === i;
           const Icon = app.Icon;
@@ -206,12 +279,12 @@ function Index() {
                   startDownload(i);
                 }
               }}
-              className="group relative flex h-[360px] w-[280px] flex-col items-center justify-center rounded-3xl outline-none transition-all duration-300"
+              className="group relative flex h-[460px] w-[360px] flex-col items-center justify-center rounded-3xl outline-none transition-all duration-300"
               style={{
                 background:
                   "linear-gradient(160deg, var(--tv-card), oklch(0.18 0.04 270))",
                 border: `3px solid ${isFocused ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
-                transform: isFocused ? "scale(1.05)" : "scale(1)",
+                transform: isFocused ? "scale(1.08)" : "scale(1)",
                 boxShadow: isFocused
                   ? "0 25px 80px -10px oklch(0.78 0.22 150 / 0.55), 0 0 0 6px oklch(0.78 0.22 150 / 0.15)"
                   : "0 10px 30px -10px oklch(0 0 0 / 0.5)",
@@ -220,15 +293,15 @@ function Index() {
               {states[i].status === "downloading" ? (
                 <div className="flex w-full flex-col items-center px-8">
                   <div
-                    className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl"
+                    className="mb-8 flex h-32 w-32 items-center justify-center rounded-2xl"
                     style={{
                       background:
                         "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))",
                     }}
                   >
-                    <Download size={44} strokeWidth={1.8} color="oklch(0.15 0.03 270)" />
+                    <Download size={64} strokeWidth={1.8} color="oklch(0.15 0.03 270)" />
                   </div>
-                  <h2 className="text-2xl font-bold">{app.name}</h2>
+                  <h2 className="text-3xl font-bold">{app.name}</h2>
                   <p className="mt-2 text-sm text-white/60">Baixando…</p>
                   <div
                     className="mt-6 h-3 w-full overflow-hidden rounded-full"
@@ -253,15 +326,15 @@ function Index() {
               ) : states[i].status === "done" ? (
                 <div className="flex flex-col items-center px-8">
                   <div
-                    className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl"
+                    className="mb-8 flex h-32 w-32 items-center justify-center rounded-2xl"
                     style={{
                       background:
                         "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))",
                     }}
                   >
-                    <Check size={44} strokeWidth={2.5} color="oklch(0.15 0.03 270)" />
+                    <Check size={64} strokeWidth={2.5} color="oklch(0.15 0.03 270)" />
                   </div>
-                  <h2 className="text-2xl font-bold">{app.name}</h2>
+                  <h2 className="text-3xl font-bold">{app.name}</h2>
                   <p className="mt-3 text-center text-base text-white/70">
                     Download concluído!
                   </p>
@@ -272,12 +345,12 @@ function Index() {
               ) : states[i].status === "error" ? (
                 <div className="flex flex-col items-center px-8">
                   <div
-                    className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl"
+                    className="mb-8 flex h-32 w-32 items-center justify-center rounded-2xl"
                     style={{ background: "oklch(0.4 0.2 25)" }}
                   >
-                    <AlertCircle size={44} strokeWidth={1.8} color="white" />
+                    <AlertCircle size={64} strokeWidth={1.8} color="white" />
                   </div>
-                  <h2 className="text-2xl font-bold">{app.name}</h2>
+                  <h2 className="text-3xl font-bold">{app.name}</h2>
                   <p className="mt-3 text-center text-base text-white/70">
                     Falha no download
                   </p>
@@ -295,7 +368,7 @@ function Index() {
               ) : (
               <>
               <div
-                className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl transition-all duration-300"
+                className="mb-8 flex h-32 w-32 items-center justify-center rounded-2xl transition-all duration-300"
                 style={{
                   background: isFocused
                     ? "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))"
@@ -304,12 +377,12 @@ function Index() {
               >
                 <Icon
                   className="transition-all"
-                  size={44}
+                  size={64}
                   strokeWidth={1.8}
                   color={isFocused ? "oklch(0.15 0.03 270)" : "white"}
                 />
               </div>
-              <h2 className="text-2xl font-bold">{app.name}</h2>
+              <h2 className="text-3xl font-bold">{app.name}</h2>
               <p className="mt-3 px-6 text-center text-base text-white/60">
                 {app.description}
               </p>
@@ -322,7 +395,7 @@ function Index() {
                 }}
               >
                 <Download size={16} />
-                BAIXAR APLICATIVO
+                BAIXAR APK
               </div>
               </>
               )}
@@ -331,14 +404,94 @@ function Index() {
         })}
       </section>
 
-      <footer className="flex items-center justify-between px-16 pb-8 text-sm text-white/40">
-        <span>
-          Após o download, abra o arquivo APK e permita instalação de fontes desconhecidas
-        </span>
-        <span className="font-mono text-xs text-white/30">
-          {isNative ? `nativo${bridgeVersion ? ` v${bridgeVersion}` : ""}` : "web"}
-        </span>
+      <footer className="px-16 pb-8 text-center text-sm text-white/40">
+        Após o download, abra o arquivo APK e permita instalação de fontes desconhecidas
       </footer>
+
+      {modalOpen && (
+        <div
+          onKeyDown={handleModalKey}
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "oklch(0 0 0 / 0.75)", backdropFilter: "blur(8px)" }}
+        >
+          <div
+            className="flex w-[560px] flex-col items-center rounded-3xl p-10"
+            style={{
+              background:
+                "linear-gradient(160deg, var(--tv-card), oklch(0.18 0.04 270))",
+              border: "3px solid var(--tv-accent)",
+              boxShadow:
+                "0 30px 100px -10px oklch(0.78 0.22 150 / 0.45), 0 0 0 8px oklch(0.78 0.22 150 / 0.12)",
+            }}
+          >
+            <div
+              className="mb-6 flex h-24 w-24 items-center justify-center rounded-2xl"
+              style={{
+                background:
+                  "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))",
+              }}
+            >
+              <Check size={56} strokeWidth={2.5} color="oklch(0.15 0.03 270)" />
+            </div>
+            <h2 className="text-3xl font-bold text-white">
+              {APPS[doneIndex].name}
+            </h2>
+            <p className="mt-3 text-center text-lg text-white/80">
+              Download concluído.
+            </p>
+            <p className="mt-1 text-center text-lg text-white/80">
+              Deseja abrir o arquivo?
+            </p>
+            <div className="mt-8 flex gap-5">
+              <button
+                ref={yesBtnRef}
+                onFocus={() => setModalChoice("yes")}
+                onClick={openApk}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openApk();
+                  }
+                }}
+                className="rounded-2xl px-10 py-4 text-lg font-bold outline-none transition-all"
+                style={{
+                  background:
+                    modalChoice === "yes"
+                      ? "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))"
+                      : "oklch(0.28 0.04 270)",
+                  color:
+                    modalChoice === "yes" ? "oklch(0.15 0.03 270)" : "white",
+                  border: `3px solid ${modalChoice === "yes" ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
+                  transform: modalChoice === "yes" ? "scale(1.06)" : "scale(1)",
+                }}
+              >
+                Sim, abrir
+              </button>
+              <button
+                ref={noBtnRef}
+                onFocus={() => setModalChoice("no")}
+                onClick={closeModal}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    closeModal();
+                  }
+                }}
+                className="rounded-2xl px-10 py-4 text-lg font-bold outline-none transition-all"
+                style={{
+                  background:
+                    modalChoice === "no" ? "oklch(0.4 0.04 270)" : "transparent",
+                  color: "white",
+                  border: `3px solid ${modalChoice === "no" ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
+                  transform: modalChoice === "no" ? "scale(1.06)" : "scale(1)",
+                }}
+              >
+                Não, agora não
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
