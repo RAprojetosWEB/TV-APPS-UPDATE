@@ -187,7 +187,7 @@ function Index() {
         </p>
       </header>
 
-      <section className="flex flex-1 items-center justify-center gap-10 px-16">
+      <section className="flex flex-1 items-center justify-center gap-8 px-16 py-6">
         {APPS.map((app, i) => {
           const isFocused = focused === i;
           const Icon = app.Icon;
@@ -206,12 +206,12 @@ function Index() {
                   startDownload(i);
                 }
               }}
-              className="group relative flex h-[460px] w-[360px] flex-col items-center justify-center rounded-3xl outline-none transition-all duration-300"
+              className="group relative flex h-[360px] w-[280px] flex-col items-center justify-center rounded-3xl outline-none transition-all duration-300"
               style={{
                 background:
                   "linear-gradient(160deg, var(--tv-card), oklch(0.18 0.04 270))",
                 border: `3px solid ${isFocused ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
-                transform: isFocused ? "scale(1.08)" : "scale(1)",
+                transform: isFocused ? "scale(1.05)" : "scale(1)",
                 boxShadow: isFocused
                   ? "0 25px 80px -10px oklch(0.78 0.22 150 / 0.55), 0 0 0 6px oklch(0.78 0.22 150 / 0.15)"
                   : "0 10px 30px -10px oklch(0 0 0 / 0.5)",
