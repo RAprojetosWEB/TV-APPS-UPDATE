@@ -15,21 +15,21 @@ export const Route = createFileRoute("/")({
 // ⬇️ SUBSTITUA AS URLs ABAIXO PELOS LINKS DIRETOS DOS SEUS APKs ⬇️
 const APPS = [
   {
-    name: "App 1",
+    name: "UniTV",
     description: "Streaming de filmes e séries",
-    url: "https://SEU_LINK_1.apk",
+    url: "https://apyjsxxuuptelmiwnzwq.supabase.co/storage/v1/object/public/Alpicativos%20APKs/unitv.apk",
     Icon: Play,
   },
   {
-    name: "App 2",
+    name: "Nexa TV",
     description: "Player de mídia universal",
-    url: "https://SEU_LINK_2.apk",
+    url: "https://apyjsxxuuptelmiwnzwq.supabase.co/storage/v1/object/public/Alpicativos%20APKs/Nexa_TV.apk",
     Icon: Tv,
   },
   {
-    name: "IPTV Player",
-    description: "Listas e canais ao vivo",
-    url: "https://SEU_LINK_3.apk",
+    name: "AllApp",
+    description: "Tudo em um só app",
+    url: "https://apyjsxxuuptelmiwnzwq.supabase.co/storage/v1/object/public/Alpicativos%20APKs/AllApp.apk",
     Icon: Download,
   },
 ];
