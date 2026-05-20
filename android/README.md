@@ -1,8 +1,30 @@
 # TV Apps — Projeto Android nativo
 
-App nativo Kotlin/Jetpack Compose (com suporte Android TV / Leanback) que
-lista os APKs do catálogo, baixa via OkHttp com barra de progresso e
-instala usando o `PackageInstaller` do sistema.
+App container Kotlin (Android TV / Leanback) que carrega o site publicado
+no Lovable dentro de uma WebView e expõe uma ponte JavaScript → Kotlin
+(`window.Android.installApk`) para instalar APKs nativamente — algo que o
+navegador comum não pode fazer.
+
+**Vantagem**: qualquer mudança visual (botões, cores, lista de apps) é
+feita no Lovable e publicada. A TV Box recebe a atualização na próxima
+vez que abrir o app, **sem recompilar nem reinstalar o APK**.
+
+## URL carregada
+
+Definida em `MainActivity.kt` na constante `SITE_URL`:
+
+```
+https://sideload-hero.lovable.app
+```
+
+Para apontar pra outro domínio (custom domain, staging), edite essa
+constante e recompile o APK.
+
+## Segurança da ponte
+
+`WebAppBridge.kt` só aceita downloads de URLs cujo host esteja na
+`allowedHosts`. Hoje contém apenas o Supabase Storage do projeto. Adicione
+outros hosts se precisar, mas mantenha a lista curta.
 
 ## Como gerar o APK
 

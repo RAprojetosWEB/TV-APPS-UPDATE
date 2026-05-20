@@ -2,6 +2,20 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Check, Download, Play, Tv, AlertCircle } from "lucide-react";
 
+// Ponte com o APK nativo (WebView host). Se existir, instalamos APK direto
+// via PackageInstaller nativo; senão, fazemos o download "tradicional".
+type AndroidBridge = {
+  isNative: () => boolean;
+  installApk: (url: string, name: string) => void;
+  version?: () => string;
+};
+declare global {
+  interface Window {
+    Android?: AndroidBridge;
+    __onNativeApkProgress?: (name: string, percent: number, error: string) => void;
+  }
+}
+
 export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
@@ -35,6 +49,8 @@ const APPS = [
 ];
 
 function Index() {
+  const isNative =
+    typeof window !== "undefined" && !!window.Android?.isNative?.();
   const [focused, setFocused] = useState(1);
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
   const [states, setStates] = useState<
@@ -116,6 +132,13 @@ function Index() {
     const app = APPS[i];
     if (states[i].status === "downloading") return;
     updateState(i, { status: "downloading", progress: 0 });
+
+    // Modo nativo: delega download + instalação ao APK host.
+    if (isNative && window.Android) {
+      window.Android.installApk(app.url, app.name);
+      return;
+    }
+
     try {
       const res = await fetch(app.url);
       if (!res.ok || !res.body) throw new Error("HTTP " + res.status);
@@ -150,6 +173,28 @@ function Index() {
       updateState(i, { status: "error", progress: 0 });
     }
   };
+
+  // Recebe progresso/erros do bridge nativo.
+  useEffect(() => {
+    if (!isNative) return;
+    window.__onNativeApkProgress = (name, percent, error) => {
+      const idx = APPS.findIndex((a) => a.name === name);
+      if (idx === -1) return;
+      if (percent < 0) {
+        updateState(idx, { status: "error", progress: 0 });
+        return;
+      }
+      if (percent >= 100) {
+        // Instalador nativo já abriu — voltamos pro estado idle sem modal.
+        updateState(idx, { status: "idle", progress: 0 });
+        return;
+      }
+      updateState(idx, { status: "downloading", progress: percent });
+    };
+    return () => {
+      window.__onNativeApkProgress = undefined;
+    };
+  }, [isNative]);
 
   const handleModalKey = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
