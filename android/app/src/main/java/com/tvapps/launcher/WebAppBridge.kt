@@ -1,6 +1,7 @@
 package com.tvapps.launcher
 
 import android.content.Context
+import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.widget.Toast
@@ -32,6 +33,7 @@ class WebAppBridge(
 
     private val allowedHosts = setOf(
         "apyjsxxuuptelmiwnzwq.supabase.co",
+        "sideload-hero.lovable.app",
     )
 
     @JavascriptInterface
@@ -44,6 +46,7 @@ class WebAppBridge(
     fun installApk(url: String, name: String) {
         val host = runCatching { URI(url).host }.getOrNull()
         if (host == null || host !in allowedHosts) {
+            Log.w("WebAppBridge", "URL recusada (host fora da allowlist): $url")
             postProgress(name, -1, "URL não autorizada")
             return
         }
