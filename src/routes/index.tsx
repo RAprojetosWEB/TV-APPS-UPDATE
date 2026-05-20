@@ -171,9 +171,29 @@ function Index() {
   const openApk = () => {
     if (doneIndex === -1) return;
     const url = states[doneIndex].blobUrl;
-    if (url) {
-      window.location.href = url;
+    if (!url) {
+      updateState(doneIndex, { status: "idle", progress: 0, blobUrl: undefined });
+      return;
     }
+    // Abre o APK numa nova aba SEM o atributo download — no Android
+    // o Chrome reconhece o MIME application/vnd.android.package-archive
+    // e chama o instalador nativo. Mantemos o blob vivo (não revogamos)
+    // para que a nova aba consiga carregá-lo.
+    try {
+      const a = document.createElement("a");
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (err) {
+      console.error("openApk failed", err);
+      // fallback: navegação direta
+      window.location.href = url;
+      return;
+    }
+    // Só limpa o estado visual; NÃO revoga o blob (será revogado pelo timer)
     updateState(doneIndex, { status: "idle", progress: 0, blobUrl: undefined });
   };
 
