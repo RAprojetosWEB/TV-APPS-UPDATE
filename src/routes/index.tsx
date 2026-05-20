@@ -75,13 +75,13 @@ function Index() {
       if (!res.ok || !res.body) throw new Error("HTTP " + res.status);
       const total = Number(res.headers.get("Content-Length") || 0);
       const reader = res.body.getReader();
-      const chunks: Uint8Array[] = [];
+      const chunks: BlobPart[] = [];
       let received = 0;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         if (value) {
-          chunks.push(value);
+          chunks.push(value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength) as ArrayBuffer);
           received += value.length;
           if (total > 0) {
             updateState(i, { progress: Math.round((received / total) * 100) });
