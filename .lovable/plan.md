@@ -1,24 +1,34 @@
 # Modal "Abrir arquivo?" ao terminar o download
 
-Quando o download de um APK termina, abrir um modal centralizado perguntando "Deseja abrir o arquivo?" com botões **Sim** e **Não**. Ao clicar em **Sim**, o app navega pra URL do blob — o Android reconhece o MIME `application/vnd.android.package-archive` e chama o instalador nativo.
+Quando o download de um APK terminar, abrir um modal centralizado perguntando: "Deseja abrir o arquivo?" com os botões **Sim** e **Não**.
 
-## O que vou fazer em `src/routes/index.tsx`
+Ao clicar em **Sim**, o app navega para a URL do blob. O Android reconhece o MIME `application/vnd.android.package-archive` e chama automaticamente o instalador nativo do sistema.
 
-- Guardar a `blobUrl` no estado de cada botão ao final do download (hoje ela é criada e descartada localmente).
-- Adicionar um modal overlay (fixed, fundo escuro semi-transparente, centralizado) que aparece quando `status === "done"`.
-- Modal mostra: ícone de check, nome do app, "Download concluído. Deseja abrir o arquivo?", e 2 botões grandes: **Sim, abrir** (verde, foco inicial) e **Não, agora não**.
-- Navegação DPAD dentro do modal: ← → alterna entre os 2 botões, Enter confirma, Escape/Back fecha.
-- **Sim** → `window.location.href = blobUrl` (em Android dispara o instalador nativo; em outros browsers, abre/baixa de novo).
-- **Não** → fecha o modal e volta o card pro estado idle.
-- Card volta a mostrar conteúdo normal após fechar o modal.
+## O que será feito em `src/routes/index.tsx`
 
-## Limitação honesta
+- Armazenar a `blobUrl` no estado de cada botão após o término do download (hoje é criada e descartada localmente).
+- Adicionar um modal overlay (fixed, fundo escuro semi-transparente, centralizado) exibido quando `status === "done"`.
+- O modal mostra: ícone de confirmação, nome do app, texto "Download concluído. Deseja abrir o arquivo?" e dois botões grandes:
+  - **Sim, abrir** (verde, foco inicial)
+  - **Não, agora não**
+- Navegação DPAD dentro do modal:
+  - ← → alterna entre os botões
+  - Enter confirma
+  - Escape/Back fecha o modal
+- Ao clicar em **Sim**: executar `window.location.href = blobUrl`. No Android dispara o instalador nativo do APK; em outros browsers pode apenas abrir/baixar de novo.
+- Ao clicar em **Não**: fechar o modal e retornar o card ao estado `idle`.
+- Após fechar o modal, o card volta ao conteúdo normal.
 
-- O comportamento ao clicar em **Sim** depende do browser da TV Box:
-  - Chrome Android moderno: abre o instalador direto ✅
-  - WebView antiga: pode só baixar de novo
-- A notificação automática do Android (que já aparece sozinha após o download) continua funcionando em paralelo — é o fallback garantido.
+## Limitação conhecida
 
-## Não vou mexer
+- Chrome Android moderno: abre o instalador diretamente ✅
+- WebViews antigas: podem apenas baixar novamente o APK
+- A notificação automática padrão do Android continua funcionando em paralelo como fallback.
 
-- Lógica de download, barra de progresso, layout dos botões, navegação DPAD principal, PWA manifest.
+## Não alterar
+
+- Lógica de download
+- Barra de progresso
+- Layout principal dos botões
+- Navegação DPAD principal
+- Manifest PWA
