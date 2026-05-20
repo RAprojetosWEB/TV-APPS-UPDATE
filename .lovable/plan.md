@@ -1,25 +1,24 @@
-# Barra de progresso de download nos botões
+# Modal "Abrir arquivo?" ao terminar o download
 
-`DownloadManager` é API nativa Android e não roda em PWA. A solução equivalente em web — visualmente idêntica — usa `fetch` + `ReadableStream` pra ler o APK em pedaços, calcular % em tempo real, e no final disparar o download via blob.
+Quando o download de um APK termina, abrir um modal centralizado perguntando "Deseja abrir o arquivo?" com botões **Sim** e **Não**. Ao clicar em **Sim**, o app navega pra URL do blob — o Android reconhece o MIME `application/vnd.android.package-archive` e chama o instalador nativo.
 
-## O que vou fazer
+## O que vou fazer em `src/routes/index.tsx`
 
-Atualizar `src/routes/index.tsx`:
+- Guardar a `blobUrl` no estado de cada botão ao final do download (hoje ela é criada e descartada localmente).
+- Adicionar um modal overlay (fixed, fundo escuro semi-transparente, centralizado) que aparece quando `status === "done"`.
+- Modal mostra: ícone de check, nome do app, "Download concluído. Deseja abrir o arquivo?", e 2 botões grandes: **Sim, abrir** (verde, foco inicial) e **Não, agora não**.
+- Navegação DPAD dentro do modal: ← → alterna entre os 2 botões, Enter confirma, Escape/Back fecha.
+- **Sim** → `window.location.href = blobUrl` (em Android dispara o instalador nativo; em outros browsers, abre/baixa de novo).
+- **Não** → fecha o modal e volta o card pro estado idle.
+- Card volta a mostrar conteúdo normal após fechar o modal.
 
-- Adicionar estado por botão: `idle | downloading | done | error` + `progress` (0–100).
-- Ao clicar (ou Enter no DPAD): iniciar `fetch(url)` com leitor de stream.
-- Ler `Content-Length` pra saber o total, somar bytes recebidos a cada chunk → calcular %.
-- Substituir o conteúdo do card focado por **barra de progresso grande + número da %** enquanto baixa.
-- Ao terminar: montar `Blob`, criar `<a download>` automático → Android dispara notificação "Abrir" que aciona o instalador nativo.
-- Tratamento de erro: mostrar mensagem no card + botão "Tentar de novo".
-- Manter navegação DPAD; bloquear iniciar 2º download se um já está em andamento no mesmo botão.
+## Limitação honesta
 
-## Limitações honestas
-
-- A barra mostra o progresso **do download dentro do navegador**, não do `DownloadManager` do sistema. Pro usuário final é a mesma coisa visual.
-- Funciona se o servidor (Supabase) retornar `Content-Length` (retorna) e CORS permitir leitura (Supabase Storage público permite).
-- Se quiser `DownloadManager` real + instalação automática, só com Capacitor + Kotlin (caminho separado).
+- O comportamento ao clicar em **Sim** depende do browser da TV Box:
+  - Chrome Android moderno: abre o instalador direto ✅
+  - WebView antiga: pode só baixar de novo
+- A notificação automática do Android (que já aparece sozinha após o download) continua funcionando em paralelo — é o fallback garantido.
 
 ## Não vou mexer
 
-- Layout, cores, ícones, navegação DPAD, manifest PWA — tudo fica como está.
+- Lógica de download, barra de progresso, layout dos botões, navegação DPAD principal, PWA manifest.
