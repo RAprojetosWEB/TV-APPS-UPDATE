@@ -1,43 +1,51 @@
-# Corrigir instalação do APK no app nativo
+# Projeto Android Studio pronto + correções nativas
 
-## Diagnóstico
+O projeto `android/` já existe no repositório. Vou deixá-lo **100% pronto pra abrir no Android Studio, sincronizar e gerar APK**, e ao mesmo tempo aplicar todas as correções para o download e instalação funcionarem nativamente (sem mais o modal "Sim, abrir / Não, agora não").
 
-A foto que você mandou é o **modal web de fallback** ("Sim, abrir / Não, agora não"). Ele só aparece quando o site **não detectou** a ponte nativa Android — então caiu no caminho do navegador: baixa via `fetch`, gera um `blob:` URL e clica num `<a target="_blank">`. Dentro de uma WebView, blob URL **não aciona o instalador de APK** — daí o "nada acontece".
+## O que você vai fazer (passos finais, só seu)
 
-No caminho nativo (o correto), esse modal nem deveria aparecer: o Kotlin baixa o APK e ao chegar em 100% abre o instalador do sistema sozinho.
+1. Baixar a pasta `android/` deste projeto (botão de download do Lovable / GitHub).
+2. Abrir no Android Studio Hedgehog ou superior → "Open" → selecionar `android/`.
+3. Esperar o Gradle Sync terminar (baixa SDKs automaticamente).
+4. Menu **Build → Build Bundle(s) / APK(s) → Build APK(s)**.
+5. Instalar o APK gerado (`android/app/build/outputs/apk/debug/app-debug.apk`) na TV Box via pendrive ou `adb install`.
 
-Duas causas possíveis pra ponte não ser detectada:
-1. `window.Android.isNative()` foi avaliado antes da WebView injetar a interface (timing de hidratação SSR).
-2. WebView mais antiga em algumas TV Box que retorna o booleano de forma estranha.
+Pronto — a partir daí qualquer mudança visual feita no Lovable é refletida automaticamente na TV Box (a WebView carrega `https://sideload-hero.lovable.app`), **sem recompilar**.
 
-## O que vou fazer
+## Mudanças que vou aplicar agora
 
-### 1. Frontend (`src/routes/index.tsx`)
-- Trocar a detecção de nativo para **verificar `window.Android?.installApk` direto** (sem depender de `isNative()` retornar `true`). Se a função existe, é nativo. Ponto.
-- Re-checar a presença do bridge em `useEffect` (depois da hidratação), guardar em `useState` — assim nunca cai no fallback web por erro de timing.
-- Remover o `<a target="_blank">` do `openApk` quando estiver em WebView: usar `window.location.href = blobUrl` (mais compatível) — só usado se mesmo assim ficar no fallback.
+### 1. Wrapper Gradle (`android/gradle/wrapper/gradle-wrapper.jar` + scripts)
+Garantir que o `gradle-wrapper.jar` está presente e os scripts `gradlew` / `gradlew.bat` são executáveis — sem isso o Android Studio reclama no primeiro sync.
 
-### 2. Android — rede de segurança (`MainActivity.kt`)
-- Adicionar `webView.setDownloadListener { ... }`. Se por qualquer motivo o site cair no caminho web e disparar um download de `.apk`, o Kotlin **intercepta** e roda o mesmo fluxo de `ApkDownloader` + `ApkInstaller`. Garante que **nunca** fique "nada acontecendo".
+### 2. Frontend (`src/routes/index.tsx`)
+- Detectar nativo via `typeof window.Android?.installApk === "function"` (não depende de `isNative()` resolver na hidratação SSR).
+- Re-checar a ponte num `useEffect` e guardar em `useState` — nunca mais cai no fallback web por erro de timing.
+- No fallback web (navegador comum), substituir o `<a target="_blank">` por `window.location.href = blobUrl` — mais compatível com WebView caso ainda assim caia ali.
 
-### 3. Android — instalador (`ApkInstaller.kt`)
-- Quando `canRequestPackageInstalls()` é `false`, hoje só manda pra Configurações silenciosamente. Vou adicionar um `Toast` explicando ("Permita 'Instalar apps desconhecidos' e tente de novo") pra você não ficar sem feedback na primeira vez.
+### 3. Android — `MainActivity.kt`
+Adicionar `webView.setDownloadListener { url, _, _, mime, _ -> ... }`. Se o site disparar download de `.apk` por qualquer motivo, o Kotlin intercepta e roda `ApkDownloader` + `ApkInstaller` — rede de segurança que garante que **nunca** fique "nada acontecendo".
 
-### 4. Documentação
-- Atualizar `android/README.md` com a nota: na **primeira instalação** o Android pede permissão "Fontes desconhecidas" — autorize, volte ao app e clique baixar de novo. A partir daí funciona direto.
+### 4. Android — `WebAppBridge.kt`
+Ampliar a allowlist de hosts (`apyjsxxuuptelmiwnzwq.supabase.co`, e o host do próprio site) e logar quando uma URL for rejeitada, para você ver `adb logcat` se algo vier de fonte diferente.
+
+### 5. Android — `ApkInstaller.kt`
+Quando `canRequestPackageInstalls()` for `false`, mostrar um `Toast` em português ("Autorize 'Instalar apps desconhecidos' e toque de novo no app") antes de abrir as Configurações — feedback claro na primeira instalação.
+
+### 6. `android/README.md`
+Reescrever em formato passo-a-passo (abrir no Android Studio → sync → Build APK → instalar → primeira permissão de Fontes desconhecidas → uso normal).
 
 ## Resultado esperado
 
-Depois de recompilar e reinstalar o APK uma vez:
-- Clica no card → barra de progresso → ao terminar, **abre direto o instalador do Android** (sem modal "Sim, abrir").
-- Se for a primeira vez, abre a tela de permissão; autoriza uma vez e nas próximas vai direto.
+Depois de compilar e instalar **uma vez** na TV Box:
+- Clica no card → barra de progresso → ao chegar em 100%, **abre direto o instalador do sistema** (sem modal web).
+- Primeira vez: Android pede a permissão de Fontes desconhecidas, você autoriza, e nas próximas instalações vai direto.
+- Edições visuais feitas depois no Lovable aparecem sozinhas na TV Box ao reabrir o app.
 
-## Detalhes técnicos
+## Arquivos alterados
 
-Arquivos alterados:
-- `src/routes/index.tsx` — detecção de bridge + fallback
-- `android/app/src/main/java/com/tvapps/launcher/MainActivity.kt` — `setDownloadListener`
-- `android/app/src/main/java/com/tvapps/launcher/ApkInstaller.kt` — Toast de permissão
-- `android/README.md` — instrução de primeira instalação
-
-Você precisa **recompilar o APK** (mudança em Kotlin). Mudanças só no `src/` web seriam refletidas automaticamente, mas aqui o fix principal é nativo.
+- `src/routes/index.tsx`
+- `android/app/src/main/java/com/tvapps/launcher/MainActivity.kt`
+- `android/app/src/main/java/com/tvapps/launcher/WebAppBridge.kt`
+- `android/app/src/main/java/com/tvapps/launcher/ApkInstaller.kt`
+- `android/gradle/wrapper/gradle-wrapper.jar` (garantir presença)
+- `android/README.md`
