@@ -22,10 +22,10 @@ object ApkDownloader {
         .readTimeout(60, TimeUnit.SECONDS)
         .build()
 
-    fun download(context: Context, app: AppEntry): Flow<DownloadProgress> = flow {
+    fun download(context: Context, url: String, fileNameHint: String): Flow<DownloadProgress> = flow {
         try {
             emit(DownloadProgress.Progress(0))
-            val request = Request.Builder().url(app.url).build()
+            val request = Request.Builder().url(url).build()
             val response = client.newCall(request).execute()
             if (!response.isSuccessful) {
                 emit(DownloadProgress.Error("HTTP ${response.code}"))
@@ -37,7 +37,8 @@ object ApkDownloader {
             }
             val total = body.contentLength().coerceAtLeast(1L)
             val dir = File(context.cacheDir, "apks").apply { mkdirs() }
-            val outFile = File(dir, "${app.packageHint}.apk")
+            val safeName = fileNameHint.replace(Regex("[^A-Za-z0-9._-]"), "_")
+            val outFile = File(dir, "$safeName.apk")
             if (outFile.exists()) outFile.delete()
 
             body.byteStream().use { input ->
