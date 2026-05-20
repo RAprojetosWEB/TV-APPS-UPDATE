@@ -322,7 +322,7 @@ function Index() {
                 }}
               >
                 <Download size={16} />
-                BAIXAR APK
+                BAIXAR APLICATIVO
               </div>
               </>
               )}
