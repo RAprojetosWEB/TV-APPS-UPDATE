@@ -49,8 +49,20 @@ const APPS = [
 ];
 
 function Index() {
-  const isNative =
-    typeof window !== "undefined" && !!window.Android?.isNative?.();
+  // Detecta a ponte nativa olhando direto pela função `installApk`.
+  // Não dependemos de `isNative()` — algumas WebViews antigas retornam
+  // o booleano de forma estranha. Re-checamos após hidratação.
+  const [isNative, setIsNative] = useState<boolean>(() =>
+    typeof window !== "undefined" && typeof window.Android?.installApk === "function",
+  );
+  useEffect(() => {
+    const check = () =>
+      typeof window.Android?.installApk === "function" && setIsNative(true);
+    check();
+    // WebView pode injetar a interface logo após o load — re-checa algumas vezes.
+    const ids = [50, 200, 600, 1500].map((ms) => window.setTimeout(check, ms));
+    return () => ids.forEach((id) => window.clearTimeout(id));
+  }, []);
   const [focused, setFocused] = useState(1);
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
   const [states, setStates] = useState<
@@ -224,18 +236,12 @@ function Index() {
     // o Chrome reconhece o MIME application/vnd.android.package-archive
     // e chama o instalador nativo. Mantemos o blob vivo (não revogamos)
     // para que a nova aba consiga carregá-lo.
+    // Em WebView, `target=_blank` com blob: não aciona o instalador.
+    // Navegação direta é o caminho mais compatível.
     try {
-      const a = document.createElement("a");
-      a.href = url;
-      a.target = "_blank";
-      a.rel = "noopener";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      window.location.href = url;
     } catch (err) {
       console.error("openApk failed", err);
-      // fallback: navegação direta
-      window.location.href = url;
       return;
     }
     // Só limpa o estado visual; NÃO revoga o blob (será revogado pelo timer)
