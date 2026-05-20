@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TV Apps</string>
+    <string name="subtitle">Central de Apps para TV Box</string>
+    <string name="download">Baixar</string>
+    <string name="downloading">Baixando…</string>
+    <string name="installed">Instalado</string>
+    <string name="error_download">Erro no download</string>
+    <string name="modal_title">Download concluído</string>
+    <string name="modal_message">Deseja instalar o aplicativo agora?</string>
+    <string name="yes_install">Sim, instalar</string>
+    <string name="no_later">Não, agora não</string>
+</resources>
