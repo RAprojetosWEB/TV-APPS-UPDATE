@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.widget.Toast
 import androidx.core.content.FileProvider
 import java.io.File
 
@@ -19,6 +20,11 @@ object ApkInstaller {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
             !context.packageManager.canRequestPackageInstalls()
         ) {
+            Toast.makeText(
+                context,
+                "Autorize \"Instalar apps desconhecidos\" e toque de novo no app.",
+                Toast.LENGTH_LONG,
+            ).show()
             // Send user to allow install from unknown sources
             val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
                 data = Uri.parse("package:${context.packageName}")
