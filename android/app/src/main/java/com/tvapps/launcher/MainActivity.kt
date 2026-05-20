@@ -4,12 +4,19 @@ import android.os.Bundle
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.graphics.Color
+import android.net.Uri
 import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : Activity() {
 
@@ -20,6 +27,7 @@ class MainActivity : Activity() {
     }
 
     private lateinit var webView: WebView
+    private val scope: CoroutineScope = MainScope()
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,6 +63,34 @@ class MainActivity : Activity() {
             webViewClient = WebViewClient()
             // Ponte JS → Kotlin: o site chama window.Android.installApk(url)
             addJavascriptInterface(WebAppBridge(this@MainActivity, this), "Android")
+            // Rede de segurança: se a página cair no caminho web (download
+            // de blob/url de .apk), interceptamos e usamos o instalador nativo.
+            setDownloadListener { url, _, contentDisposition, mimeType, _ ->
+                val isApk = url.endsWith(".apk", ignoreCase = true) ||
+                    mimeType == "application/vnd.android.package-archive" ||
+                    contentDisposition?.contains(".apk", ignoreCase = true) == true
+                if (!isApk) return@setDownloadListener
+                val name = Uri.parse(url).lastPathSegment
+                    ?.substringBeforeLast('.') ?: "app"
+                Toast.makeText(this@MainActivity, "Baixando $name…", Toast.LENGTH_SHORT).show()
+                scope.launch {
+                    ApkDownloader.download(this@MainActivity, url, name).collect { p ->
+                        when (p) {
+                            is DownloadProgress.Done -> withContext(Dispatchers.Main) {
+                                ApkInstaller.install(this@MainActivity, p.file)
+                            }
+                            is DownloadProgress.Error -> withContext(Dispatchers.Main) {
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    "Erro: ${p.message}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            }
+                            else -> Unit
+                        }
+                    }
+                }
+            }
             isFocusable = true
             isFocusableInTouchMode = true
             requestFocus()

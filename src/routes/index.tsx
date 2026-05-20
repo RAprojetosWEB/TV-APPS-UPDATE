@@ -49,8 +49,27 @@ const APPS = [
 ];
 
 function Index() {
-  const isNative =
-    typeof window !== "undefined" && !!window.Android?.isNative?.();
+  // Detecta a ponte nativa de forma resiliente: a única coisa que importa é
+  // se `installApk` existe como função. Isso evita falsos negativos quando
+  // `isNative()` ainda não foi avaliada na hidratação SSR.
+  const [isNative, setIsNative] = useState<boolean>(() =>
+    typeof window !== "undefined" &&
+    typeof window.Android?.installApk === "function",
+  );
+  useEffect(() => {
+    const check = () =>
+      setIsNative(typeof window.Android?.installApk === "function");
+    check();
+    // Algumas WebViews injetam a interface depois do primeiro render.
+    const t1 = setTimeout(check, 50);
+    const t2 = setTimeout(check, 250);
+    const t3 = setTimeout(check, 1000);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, []);
   const [focused, setFocused] = useState(1);
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
   const [states, setStates] = useState<
@@ -220,25 +239,14 @@ function Index() {
       updateState(doneIndex, { status: "idle", progress: 0, blobUrl: undefined });
       return;
     }
-    // Abre o APK numa nova aba SEM o atributo download — no Android
-    // o Chrome reconhece o MIME application/vnd.android.package-archive
-    // e chama o instalador nativo. Mantemos o blob vivo (não revogamos)
-    // para que a nova aba consiga carregá-lo.
+    // Em WebView, `target="_blank"` em blob: não dispara o instalador.
+    // Navegação direta é mais compatível e funciona tanto em Chrome
+    // quanto em WebView de TV Box.
     try {
-      const a = document.createElement("a");
-      a.href = url;
-      a.target = "_blank";
-      a.rel = "noopener";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      window.location.href = url;
     } catch (err) {
       console.error("openApk failed", err);
-      // fallback: navegação direta
-      window.location.href = url;
-      return;
     }
-    // Só limpa o estado visual; NÃO revoga o blob (será revogado pelo timer)
     updateState(doneIndex, { status: "idle", progress: 0, blobUrl: undefined });
   };
 
