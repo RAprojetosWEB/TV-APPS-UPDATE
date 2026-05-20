@@ -1,51 +1,90 @@
-# Projeto Android Studio pronto + correções nativas
+# Projeto Android 100% nativo, sem WebView
 
-O projeto `android/` já existe no repositório. Vou deixá-lo **100% pronto pra abrir no Android Studio, sincronizar e gerar APK**, e ao mesmo tempo aplicar todas as correções para o download e instalação funcionarem nativamente (sem mais o modal "Sim, abrir / Não, agora não").
+O problema atual é claro: o APK ainda carrega o site dentro de uma WebView, então visualmente e tecnicamente continua parecendo web. Vou substituir isso por uma tela Android nativa em Kotlin, com cards, foco por controle remoto, download, progresso e instalação de APK direto pelo sistema Android.
 
-## O que você vai fazer (passos finais, só seu)
+## Objetivo
 
-1. Baixar a pasta `android/` deste projeto (botão de download do Lovable / GitHub).
-2. Abrir no Android Studio Hedgehog ou superior → "Open" → selecionar `android/`.
-3. Esperar o Gradle Sync terminar (baixa SDKs automaticamente).
-4. Menu **Build → Build Bundle(s) / APK(s) → Build APK(s)**.
-5. Instalar o APK gerado (`android/app/build/outputs/apk/debug/app-debug.apk`) na TV Box via pendrive ou `adb install`.
+Gerar um ZIP novo com a pasta `android/` contendo um projeto Android Studio pronto para abrir, sincronizar e gerar APK, sem depender do site publicado para funcionar.
 
-Pronto — a partir daí qualquer mudança visual feita no Lovable é refletida automaticamente na TV Box (a WebView carrega `https://sideload-hero.lovable.app`), **sem recompilar**.
+## O que muda
 
-## Mudanças que vou aplicar agora
+### 1. Remover a WebView da experiência principal
 
-### 1. Wrapper Gradle (`android/gradle/wrapper/gradle-wrapper.jar` + scripts)
-Garantir que o `gradle-wrapper.jar` está presente e os scripts `gradlew` / `gradlew.bat` são executáveis — sem isso o Android Studio reclama no primeiro sync.
+- `MainActivity.kt` deixa de carregar `https://sideload-hero.lovable.app`.
+- A tela inicial será construída nativamente em Kotlin.
+- O app Android funcionará mesmo se o site web estiver fora do ar.
 
-### 2. Frontend (`src/routes/index.tsx`)
-- Detectar nativo via `typeof window.Android?.installApk === "function"` (não depende de `isNative()` resolver na hidratação SSR).
-- Re-checar a ponte num `useEffect` e guardar em `useState` — nunca mais cai no fallback web por erro de timing.
-- No fallback web (navegador comum), substituir o `<a target="_blank">` por `window.location.href = blobUrl` — mais compatível com WebView caso ainda assim caia ali.
+### 2. Criar catálogo nativo de apps
 
-### 3. Android — `MainActivity.kt`
-Adicionar `webView.setDownloadListener { url, _, _, mime, _ -> ... }`. Se o site disparar download de `.apk` por qualquer motivo, o Kotlin intercepta e roda `ApkDownloader` + `ApkInstaller` — rede de segurança que garante que **nunca** fique "nada acontecendo".
+Adicionar `AppCatalog.kt` com a lista fixa dos apps:
 
-### 4. Android — `WebAppBridge.kt`
-Ampliar a allowlist de hosts (`apyjsxxuuptelmiwnzwq.supabase.co`, e o host do próprio site) e logar quando uma URL for rejeitada, para você ver `adb logcat` se algo vier de fonte diferente.
+- UniTV
+- Nexa TV
+- AllApp
 
-### 5. Android — `ApkInstaller.kt`
-Quando `canRequestPackageInstalls()` for `false`, mostrar um `Toast` em português ("Autorize 'Instalar apps desconhecidos' e toque de novo no app") antes de abrir as Configurações — feedback claro na primeira instalação.
+Cada item terá nome, descrição e URL direta do APK. Para mudar a lista depois, você edita esse arquivo no Android Studio e recompila.
 
-### 6. `android/README.md`
-Reescrever em formato passo-a-passo (abrir no Android Studio → sync → Build APK → instalar → primeira permissão de Fontes desconhecidas → uso normal).
+### 3. Criar UI nativa para TV Box
+
+A tela Android terá:
+
+- layout landscape fullscreen;
+- cards grandes navegáveis por controle remoto;
+- destaque visual no card focado;
+- botão/ação por OK/Enter;
+- barra de progresso nativa durante download;
+- mensagens nativas de erro/sucesso.
+
+### 4. Manter instalação nativa de APK
+
+Reaproveitar `ApkDownloader.kt` e `ApkInstaller.kt`:
+
+- clica no app;
+- baixa o APK com OkHttp;
+- mostra progresso;
+- ao terminar, abre o instalador Android;
+- na primeira vez, abre a tela para autorizar "Instalar apps desconhecidos".
+
+### 5. Limpar dependências web do Android
+
+- Remover `androidx.webkit` se não for mais usado.
+- Remover `WebAppBridge.kt` ou deixar fora do fluxo principal.
+- O projeto web atual em `src/` permanece intocado.
+
+### 6. Atualizar README e gerar ZIP
+
+Atualizar `android/README.md` explicando:
+
+1. abrir `android/` no Android Studio;
+2. aguardar Gradle sync;
+3. gerar APK debug;
+4. instalar na TV Box;
+5. editar `AppCatalog.kt` para trocar apps/links.
+
+Depois disso, gerar um novo arquivo `tv-apps-android-native.zip` para baixar direto aqui.
 
 ## Resultado esperado
 
-Depois de compilar e instalar **uma vez** na TV Box:
-- Clica no card → barra de progresso → ao chegar em 100%, **abre direto o instalador do sistema** (sem modal web).
-- Primeira vez: Android pede a permissão de Fontes desconhecidas, você autoriza, e nas próximas instalações vai direto.
-- Edições visuais feitas depois no Lovable aparecem sozinhas na TV Box ao reabrir o app.
+Ao instalar o APK na TV Box:
 
-## Arquivos alterados
+- abre uma tela Android nativa, não um site;
+- o controle remoto navega entre os apps;
+- OK baixa e instala o APK;
+- não aparece modal web;
+- não depende do Lovable preview/publicado para rodar.
 
-- `src/routes/index.tsx`
+## Arquivos Android que serão alterados/criados
+
+- `android/app/build.gradle.kts`
 - `android/app/src/main/java/com/tvapps/launcher/MainActivity.kt`
-- `android/app/src/main/java/com/tvapps/launcher/WebAppBridge.kt`
-- `android/app/src/main/java/com/tvapps/launcher/ApkInstaller.kt`
-- `android/gradle/wrapper/gradle-wrapper.jar` (garantir presença)
+- `android/app/src/main/java/com/tvapps/launcher/AppCatalog.kt`
+- `android/app/src/main/java/com/tvapps/launcher/ApkDownloader.kt` se precisar ajuste pequeno
+- `android/app/src/main/java/com/tvapps/launcher/ApkInstaller.kt` se precisar ajuste pequeno
+- `android/app/src/main/java/com/tvapps/launcher/WebAppBridge.kt` será removido ou deixado sem uso
 - `android/README.md`
+
+## O que não muda
+
+- O app web em `src/` continua como está.
+- Nenhuma dependência do projeto web será alterada.
+- O APK ainda será gerado por você localmente no Android Studio, porque o sandbox não compila Android.
