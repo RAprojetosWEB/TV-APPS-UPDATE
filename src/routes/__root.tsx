@@ -86,12 +86,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/734c7649-71b8-4ca0-abb5-c456a4b3ef00/id-preview-b0dda162--2f745f30-5619-44f8-8570-ed19b1d0795a.lovable.app-1779284346219.png" },
       { name: "theme-color", content: "#1a0d2e" },
       { name: "screen-orientation", content: "landscape" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "manifest", href: "/manifest.json" },
       { rel: "apple-touch-icon", href: "/icon-512.png" },
     ],
   }),
