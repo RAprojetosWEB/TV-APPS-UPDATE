@@ -324,6 +324,91 @@ function Index() {
       <footer className="px-16 pb-8 text-center text-sm text-white/40">
         Após o download, abra o arquivo APK e permita instalação de fontes desconhecidas
       </footer>
+
+      {modalOpen && (
+        <div
+          onKeyDown={handleModalKey}
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "oklch(0 0 0 / 0.75)", backdropFilter: "blur(8px)" }}
+        >
+          <div
+            className="flex w-[560px] flex-col items-center rounded-3xl p-10"
+            style={{
+              background:
+                "linear-gradient(160deg, var(--tv-card), oklch(0.18 0.04 270))",
+              border: "3px solid var(--tv-accent)",
+              boxShadow:
+                "0 30px 100px -10px oklch(0.78 0.22 150 / 0.45), 0 0 0 8px oklch(0.78 0.22 150 / 0.12)",
+            }}
+          >
+            <div
+              className="mb-6 flex h-24 w-24 items-center justify-center rounded-2xl"
+              style={{
+                background:
+                  "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))",
+              }}
+            >
+              <Check size={56} strokeWidth={2.5} color="oklch(0.15 0.03 270)" />
+            </div>
+            <h2 className="text-3xl font-bold text-white">
+              {APPS[doneIndex].name}
+            </h2>
+            <p className="mt-3 text-center text-lg text-white/80">
+              Download concluído.
+            </p>
+            <p className="mt-1 text-center text-lg text-white/80">
+              Deseja abrir o arquivo?
+            </p>
+            <div className="mt-8 flex gap-5">
+              <button
+                ref={yesBtnRef}
+                onFocus={() => setModalChoice("yes")}
+                onClick={openApk}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openApk();
+                  }
+                }}
+                className="rounded-2xl px-10 py-4 text-lg font-bold outline-none transition-all"
+                style={{
+                  background:
+                    modalChoice === "yes"
+                      ? "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))"
+                      : "oklch(0.28 0.04 270)",
+                  color:
+                    modalChoice === "yes" ? "oklch(0.15 0.03 270)" : "white",
+                  border: `3px solid ${modalChoice === "yes" ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
+                  transform: modalChoice === "yes" ? "scale(1.06)" : "scale(1)",
+                }}
+              >
+                Sim, abrir
+              </button>
+              <button
+                ref={noBtnRef}
+                onFocus={() => setModalChoice("no")}
+                onClick={closeModal}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    closeModal();
+                  }
+                }}
+                className="rounded-2xl px-10 py-4 text-lg font-bold outline-none transition-all"
+                style={{
+                  background:
+                    modalChoice === "no" ? "oklch(0.4 0.04 270)" : "transparent",
+                  color: "white",
+                  border: `3px solid ${modalChoice === "no" ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
+                  transform: modalChoice === "no" ? "scale(1.06)" : "scale(1)",
+                }}
+              >
+                Não, agora não
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
