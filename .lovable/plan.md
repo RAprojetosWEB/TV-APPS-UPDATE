@@ -1,34 +1,73 @@
-# Modal "Abrir arquivo?" ao terminar o download
+# Projeto Android Studio nativo (Kotlin) — TV Apps
 
-Quando o download de um APK terminar, abrir um modal centralizado perguntando: "Deseja abrir o arquivo?" com os botões **Sim** e **Não**.
+Gerar dentro deste repositório uma pasta `android/` com um projeto Android Studio Kotlin pronto para abrir, sincronizar e gerar APK. O app é um launcher de TV Box que baixa e instala APKs nativamente, equivalente em função ao app web atual.
 
-Ao clicar em **Sim**, o app navega para a URL do blob. O Android reconhece o MIME `application/vnd.android.package-archive` e chama automaticamente o instalador nativo do sistema.
+## Resultado para o usuário
 
-## O que será feito em `src/routes/index.tsx`
+1. Baixar a pasta `android/` do projeto.
+2. Abrir no Android Studio (Hedgehog ou superior) → "Open" → selecionar `android/`.
+3. Aguardar Gradle sync.
+4. Menu **Build → Build Bundle(s) / APK(s) → Build APK(s)** gera o `app-debug.apk` instalável em qualquer TV Box Android 7+.
+5. Sideload do APK na TV Box (via cabo, ADB ou pendrive).
 
-- Armazenar a `blobUrl` no estado de cada botão após o término do download (hoje é criada e descartada localmente).
-- Adicionar um modal overlay (fixed, fundo escuro semi-transparente, centralizado) exibido quando `status === "done"`.
-- O modal mostra: ícone de confirmação, nome do app, texto "Download concluído. Deseja abrir o arquivo?" e dois botões grandes:
-  - **Sim, abrir** (verde, foco inicial)
-  - **Não, agora não**
-- Navegação DPAD dentro do modal:
-  - ← → alterna entre os botões
-  - Enter confirma
-  - Escape/Back fecha o modal
-- Ao clicar em **Sim**: executar `window.location.href = blobUrl`. No Android dispara o instalador nativo do APK; em outros browsers pode apenas abrir/baixar de novo.
-- Ao clicar em **Não**: fechar o modal e retornar o card ao estado `idle`.
-- Após fechar o modal, o card volta ao conteúdo normal.
+## Estrutura criada
 
-## Limitação conhecida
+```text
+android/
+  settings.gradle.kts
+  build.gradle.kts
+  gradle.properties
+  gradle/wrapper/{gradle-wrapper.properties, gradle-wrapper.jar}
+  gradlew, gradlew.bat
+  app/
+    build.gradle.kts
+    proguard-rules.pro
+    src/main/
+      AndroidManifest.xml
+      java/com/tvapps/launcher/
+        MainActivity.kt          # tela principal Compose
+        AppCatalog.kt            # lista hardcoded dos 3 APKs
+        DownloadManager.kt       # baixa APK com progresso
+        ApkInstaller.kt          # PackageInstaller nativo
+        ui/                      # cards, botões DPAD, modal
+      res/
+        values/{strings.xml, themes.xml, colors.xml}
+        drawable/                # ícones
+        xml/file_paths.xml       # FileProvider
+```
 
-- Chrome Android moderno: abre o instalador diretamente ✅
-- WebViews antigas: podem apenas baixar novamente o APK
-- A notificação automática padrão do Android continua funcionando em paralelo como fallback.
+## Funcionalidades nativas
 
-## Não alterar
+- **UI Jetpack Compose** com tema dark roxo equivalente ao web (background `#1a0d2e`, accent verde).
+- **Compose for TV** (`androidx.tv:tv-foundation`, `tv-material`) com foco visual e suporte DPAD nativo — esquerda/direita navegam, OK seleciona, Back fecha modal.
+- **Orientação landscape** travada no `AndroidManifest.xml` (`screenOrientation="landscape"`).
+- **Download via `OkHttp`** com progresso reportado por `Flow<Int>` para barra Compose.
+- **Instalação nativa via `PackageInstaller`** (Android 7+) — sem precisar passar por intent de "abrir arquivo". Em Android 8+ pede permissão `REQUEST_INSTALL_PACKAGES` uma única vez.
+- **FileProvider** configurado em `xml/file_paths.xml` para casos onde fallback via `ACTION_VIEW` é necessário (Android 6 e WebView legadas).
+- **Catálogo de apps**: lista hardcoded com os três APKs atuais (UniTV, Nexa TV, AllApp) apontando para as mesmas URLs do Supabase Storage que o site usa hoje.
 
-- Lógica de download
-- Barra de progresso
-- Layout principal dos botões
-- Navegação DPAD principal
-- Manifest PWA
+## Permissões no Manifest
+
+- `INTERNET`
+- `REQUEST_INSTALL_PACKAGES`
+- `FOREGROUND_SERVICE` (para o download continuar com a tela ligada)
+- `<uses-feature android:name="android.software.leanback" android:required="false"/>` para aparecer na home da TV
+- `<category android:name="android.intent.category.LEANBACK_LAUNCHER"/>` no MainActivity
+
+## Configuração Gradle
+
+- `compileSdk = 34`, `minSdk = 24` (cobre 99% das TV Box), `targetSdk = 34`.
+- Kotlin 1.9, AGP 8.4, Compose BOM 2024.06.
+- `applicationId = "com.tvapps.launcher"`, `versionName = "1.0"`.
+- Build type `debug` assinado com a debug key padrão — APK instala em qualquer device sem configurar keystore.
+
+## O que NÃO muda
+
+- O app web atual (`src/routes/index.tsx`, manifest PWA, etc.) permanece intocado e continua funcionando em paralelo.
+- Nenhuma mudança em dependências do projeto web.
+
+## Limitações
+
+- O projeto não é compilado pelo Lovable (não temos JDK/Android SDK no sandbox). Você gera o APK localmente no Android Studio.
+- Para mudar a lista de apps, edite `AppCatalog.kt` e recompile.
+- Assinatura release/Play Store fica para passo futuro — o APK debug basta para sideload.
