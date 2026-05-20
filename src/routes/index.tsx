@@ -55,6 +55,24 @@ function Index() {
     if (!modalOpen) refs.current[focused]?.focus();
   }, [focused, modalOpen]);
 
+  // Força orientação landscape sempre que possível (PWA / fullscreen no Android)
+  useEffect(() => {
+    const lock = async () => {
+      try {
+        const orientation = (screen as Screen & {
+          orientation?: { lock?: (o: string) => Promise<void> };
+        }).orientation;
+        await orientation?.lock?.("landscape");
+      } catch {
+        // Navegador não permitiu (precisa estar em fullscreen/PWA instalado)
+      }
+    };
+    lock();
+    const onFs = () => lock();
+    document.addEventListener("fullscreenchange", onFs);
+    return () => document.removeEventListener("fullscreenchange", onFs);
+  }, []);
+
   useEffect(() => {
     if (modalOpen) {
       setModalChoice("yes");
