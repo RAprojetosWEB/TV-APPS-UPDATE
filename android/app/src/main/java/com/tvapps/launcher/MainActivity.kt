@@ -27,6 +27,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+import android.view.SoundEffectConstants
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -293,6 +294,9 @@ class MainActivity : Activity() {
         container.addView(content)
 
         container.setOnFocusChangeListener { v, hasFocus ->
+            if (hasFocus) {
+                v.playSoundEffect(SoundEffectConstants.NAVIGATION_RIGHT)
+            }
             v.background = makeCardBg(hasFocus, scale)
             iconBadge.background = makeIconBadgeBg(hasFocus, scale)
             pill.background = makePillBg(hasFocus, scale)
@@ -303,7 +307,10 @@ class MainActivity : Activity() {
                 .scaleY(if (hasFocus) 1.06f else 1f)
                 .setDuration(180).start()
         }
-        container.setOnClickListener { startDownload(index) }
+        container.setOnClickListener { 
+            it.playSoundEffect(SoundEffectConstants.CLICK)
+            startDownload(index) 
+        }
         return CardViews(container, content, iconBadge, iconText, title, subtitle, pill, progress, percent)
     }
 
