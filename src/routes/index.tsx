@@ -170,7 +170,7 @@ function Index() {
 
   const { time, date } = useDateTime();
   const doneIndex = states.findIndex((s) => s.status === "done");
-  const modalOpen = doneIndex !== -1 || installModalOpen;
+  const modalOpen = doneIndex !== -1 || installModalOpen || updateModalOpen;
 
   useEffect(() => {
     if (!modalOpen) refs.current[focused]?.focus();
