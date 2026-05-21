@@ -122,6 +122,23 @@ class MainActivity : Activity() {
                 }
             }
         }
+        // Status bar tickers
+        if (clockView != null) {
+            statusHandler.removeCallbacks(clockTicker)
+            statusHandler.post(clockTicker)
+        }
+        if (weatherView != null) {
+            statusHandler.removeCallbacks(weatherTicker)
+            statusHandler.post(weatherTicker)
+        }
+        registerNetworkCallback()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        statusHandler.removeCallbacks(clockTicker)
+        statusHandler.removeCallbacks(weatherTicker)
+        unregisterNetworkCallback()
     }
 
     private fun buildLoginScreen(): View {
