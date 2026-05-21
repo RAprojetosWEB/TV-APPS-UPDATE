@@ -212,12 +212,12 @@ function Index() {
             size: latestVersion?.apk_size_mb ? `${latestVersion.apk_size_mb}MB` : "N/A",
           };
         });
-        const order = ["ALPHAPLAY", "Nexa TV", "UniTV"];
-        mappedApps.sort(
-          (a, b) =>
-            (order.indexOf(a.name) === -1 ? 99 : order.indexOf(a.name)) -
-            (order.indexOf(b.name) === -1 ? 99 : order.indexOf(b.name)),
-        );
+        const order = ["alphaplay", "nexa tv", "unitv"];
+        mappedApps.sort((a, b) => {
+          const idxA = order.indexOf(a.name.toLowerCase());
+          const idxB = order.indexOf(b.name.toLowerCase());
+          return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
+        });
         setDynamicApps(mappedApps);
       }
     } catch (err) {
