@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { LogIn, RefreshCcw, AlertTriangle } from "lucide-react";
+import { LogIn, RefreshCcw, AlertTriangle, Settings } from "lucide-react";
+import { NetworkIndicator } from "./NetworkIndicator";
 import { useOtaUpdate } from "@/hooks/useOtaUpdate";
 import { OtaUpdateModal } from "./OtaUpdateModal";
 
@@ -306,6 +307,23 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
                 <LogIn className="size-5" />
                 ENTRAR
               </button>
+            </div>
+
+            <div className="mt-6 flex items-center justify-center gap-4">
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== "undefined" && typeof window.Android?.openSettings === "function") {
+                    window.Android.openSettings();
+                  }
+                }}
+                aria-label="Configurações"
+                title="Configurações"
+                className="flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-white/10 bg-white/5 text-white/70 backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-white/30 hover:bg-white/10 hover:text-white focus:outline-none focus:scale-105 focus:border-white/50 focus:bg-white/10 focus:text-white focus:shadow-[0_0_25px_rgba(255,255,255,0.25)]"
+              >
+                <Settings className="size-6" />
+              </button>
+              <NetworkIndicator compact />
             </div>
 
             <p className="mt-6 text-center text-xs text-white/30">
