@@ -376,7 +376,7 @@ function Index() {
               ) : (
               <>
               <div
-                className="mb-8 flex h-32 w-32 items-center justify-center rounded-2xl transition-all duration-300"
+                className="tv-icon-container mb-8 flex items-center justify-center rounded-2xl transition-all duration-300"
                 style={{
                   background: isFocused
                     ? "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))"
@@ -384,13 +384,12 @@ function Index() {
                 }}
               >
                 <Icon
-                  className="transition-all"
-                  size={64}
+                  className="transition-all w-1/2 h-1/2"
                   strokeWidth={1.8}
                   color={isFocused ? "oklch(0.15 0.03 270)" : "white"}
                 />
               </div>
-              <h2 className="text-3xl font-bold">{app.name}</h2>
+              <h2 className="tv-text font-bold">{app.name}</h2>
               <p className="mt-3 px-6 text-center text-base text-white/60">
                 {app.description}
               </p>
