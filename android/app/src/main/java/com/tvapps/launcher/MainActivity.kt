@@ -139,6 +139,13 @@ class MainActivity : Activity() {
         PackageInstallReceiver.register(this, packageReceiver!!)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        packageReceiver?.let { PackageInstallReceiver.unregister(this, it) }
+        scope.cancel()
+    }
+
+
 
     override fun onResume() {
         super.onResume()
