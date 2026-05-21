@@ -492,6 +492,8 @@ function Index() {
       if (percent >= 100) {
         // Instalador nativo já abriu — voltamos pro estado idle sem modal.
         updateState(idx, { status: "idle", progress: 0 });
+        // Agenda uma verificação para atualizar os badges de "Baixado"
+        setTimeout(() => checkUpdates(), 1000);
         return;
       }
       updateState(idx, { status: "downloading", progress: percent });
