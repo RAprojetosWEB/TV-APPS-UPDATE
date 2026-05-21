@@ -17,8 +17,8 @@ val versionProps = Properties().apply {
     if (f.exists()) f.inputStream().use { load(it) }
 }
 val versionBase: String = versionProps.getProperty("versionBase", "2")
-val buildTimestamp: String = SimpleDateFormat("yyMMddHHmm").format(Date())
-val computedVersionCode: Int = buildTimestamp.toInt()
+val buildTimestamp: String = SimpleDateFormat("yyyy.MM.dd.HHmm").format(Date())
+val computedVersionCode: Int = ((Date().time / 1000) - 1700000000).toInt()
 val computedVersionName: String = "$versionBase.$buildTimestamp"
 // --------------------------------------------------------------------------
 
