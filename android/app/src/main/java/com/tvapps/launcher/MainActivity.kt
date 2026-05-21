@@ -27,6 +27,10 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+import android.webkit.JavascriptInterface
+import android.webkit.WebView
+import android.webkit.WebViewClient
+
 class MainActivity : Activity() {
 
     private val scope: CoroutineScope = MainScope()
