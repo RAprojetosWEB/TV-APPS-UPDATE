@@ -38,6 +38,8 @@ class MainActivity : Activity() {
     private val cardJobs = mutableMapOf<Int, Job>()
     private val cardViews = mutableListOf<CardViews>()
     private var webView: WebView? = null
+    private var isUnlocked = false
+
 
     private data class CardViews(
         val container: FrameLayout,
@@ -66,8 +68,104 @@ class MainActivity : Activity() {
                 or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
             )
         setupWebViewBridge()
-        setContentView(buildRoot())
+        // No lugar do buildRoot() direto, vamos construir a UI do login
+        setContentView(buildLoginScreen())
     }
+
+    private fun buildLoginScreen(): View {
+        val dm = resources.displayMetrics
+        val widthDp = dm.widthPixels / dm.density
+        val scaleFactor = (widthDp / 1280f).coerceIn(0.7f, 1.3f)
+
+        val root = FrameLayout(this).apply {
+            background = makeRootBackground()
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        }
+
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { gravity = Gravity.CENTER }
+        }
+
+        val title = TextView(this).apply {
+            text = "Área Restrita"
+            setTextColor(Color.WHITE)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 32f * scaleFactor)
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setPadding(0, 0, 0, dp((24 * scaleFactor).toInt()))
+            gravity = Gravity.CENTER
+        }
+
+        val subtitle = TextView(this).apply {
+            text = "Digite a senha para continuar"
+            setTextColor(Color.parseColor("#99FFFFFF"))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f * scaleFactor)
+            setPadding(0, 0, 0, dp((32 * scaleFactor).toInt()))
+            gravity = Gravity.CENTER
+        }
+
+        val passwordInput = android.widget.EditText(this).apply {
+            hint = "Senha"
+            setHintTextColor(Color.parseColor("#44FFFFFF"))
+            setTextColor(Color.WHITE)
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            background = makeCardBg(false, scaleFactor)
+            val px = dp((24 * scaleFactor).toInt())
+            val py = dp((16 * scaleFactor).toInt())
+            setPadding(px, py, px, py)
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(dp((300 * scaleFactor).toInt()), ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
+
+        val loginButton = TextView(this).apply {
+            text = "ENTRAR"
+            setTextColor(Color.parseColor("#15102A"))
+            background = makePillBg(true, scaleFactor)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f * scaleFactor)
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            gravity = Gravity.CENTER
+            isFocusable = true
+            isClickable = true
+            val px = dp((48 * scaleFactor).toInt())
+            val py = dp((18 * scaleFactor).toInt())
+            setPadding(px, py, px, py)
+            val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            lp.topMargin = dp((24 * scaleFactor).toInt())
+            layoutParams = lp
+
+            setOnFocusChangeListener { v, hasFocus ->
+                v.background = makePillBg(hasFocus, scaleFactor)
+                (v as TextView).setTextColor(if (hasFocus) Color.parseColor("#15102A") else Color.WHITE)
+            }
+
+            setOnClickListener {
+                if (passwordInput.text.toString() == "1555") {
+                    isUnlocked = true
+                    setContentView(buildRoot())
+                } else {
+                    Toast.makeText(this@MainActivity, "Senha incorreta", Toast.LENGTH_SHORT).show()
+                    passwordInput.text.clear()
+                }
+            }
+        }
+
+        container.addView(title)
+        container.addView(subtitle)
+        container.addView(passwordInput)
+        container.addView(loginButton)
+        root.addView(container)
+
+        passwordInput.requestFocus()
+        return root
+    }
+
 
     private fun setupWebViewBridge() {
         // WebView invisível apenas para servir de bridge para o código React
@@ -438,7 +536,11 @@ class MainActivity : Activity() {
                     is DownloadProgress.Done -> withContext(Dispatchers.Main) {
                         card.progress.progress = 100
                         card.percent.text = "100%"
+                        
+                        // Diferencia se foi cache ou download real para o log/UI se quiser, 
+                        // mas o comportamento de abrir o instalador é o mesmo.
                         card.subtitle.text = "Abrindo instalador…"
+                        
                         ApkInstaller.install(this@MainActivity, p.file)
                         card.pill.postDelayed({
                             card.progress.visibility = View.GONE
@@ -462,6 +564,7 @@ class MainActivity : Activity() {
                 }
             }
         }
+
     }
 
     private fun dp(value: Int): Int {
