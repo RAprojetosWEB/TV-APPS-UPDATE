@@ -21,9 +21,12 @@ function getInstalledVersion(): string {
 }
 
 function getInstalledVersionCode(): number {
-  if (typeof window !== "undefined" && typeof window.Android?.versionCode === "function") {
+  const bridge = (typeof window !== "undefined" ? window.Android : undefined) as
+    | { versionCode?: () => number }
+    | undefined;
+  if (bridge && typeof bridge.versionCode === "function") {
     try {
-      const v = window.Android.versionCode();
+      const v = bridge.versionCode();
       return typeof v === "number" ? v : Number(v) || APP_VERSION_CODE;
     } catch {
       return APP_VERSION_CODE;
