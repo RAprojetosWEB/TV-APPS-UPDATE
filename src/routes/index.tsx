@@ -20,6 +20,7 @@ type AndroidBridge = {
   isAppInstalled: (packageName: string) => boolean;
   openApp: (packageName: string) => void;
   version?: () => string;
+  versionCode?: () => number;
   isApkDownloaded?: (packageName: string, version: string) => boolean;
   installLocalApk?: (packageName: string) => void;
 };
@@ -129,7 +130,8 @@ function Index() {
 
   const startOtaUpdate = async () => {
     if (!ota.manifest || otaDownloading) return;
-    const url = ota.manifest.apkUrl;
+    const url = ota.manifest.apkUrl ?? ota.manifest.url ?? "";
+    if (!url) return;
 
     // No APK nativo, delega ao instalador do Android
     if (typeof window !== "undefined" && typeof window.Android?.installApk === "function") {
