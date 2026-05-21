@@ -112,7 +112,33 @@ class MainActivity : Activity() {
             ApkCache.enforceSizeLimit(this)
         } catch (_: Exception) {
         }
+
+        setupPackageReceiver()
     }
+
+    private fun setupPackageReceiver() {
+        packageReceiver = PackageInstallReceiver { packageName ->
+            // Busca o app no catálogo pelo package name
+            val app = AppCatalog.apps.find { it.packageName == packageName }
+            if (app != null) {
+                val deleted = ApkCache.deleteFor(this, app.name)
+                if (deleted) {
+                    runOnUiThread {
+                        Toast.makeText(this, "Instalação concluída. Arquivo temporário removido.", Toast.LENGTH_LONG).show()
+                        // Atualiza a UI se o app estiver visível
+                        if (cardViews.isNotEmpty()) {
+                            val index = AppCatalog.apps.indexOf(app)
+                            if (index != -1) {
+                                cardViews.getOrNull(index)?.let { refreshInstalledState(it, app) }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        PackageInstallReceiver.register(this, packageReceiver!!)
+    }
+
 
     override fun onResume() {
         super.onResume()
