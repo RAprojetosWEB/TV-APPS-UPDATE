@@ -376,6 +376,7 @@ function Index() {
     patch: Partial<{
       status: "idle" | "downloading" | "done" | "error";
       progress: number;
+      isDownloaded?: boolean;
       blobUrl?: string;
     }>,
   ) => {
