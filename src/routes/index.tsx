@@ -324,7 +324,7 @@ function Index() {
                   startDownload(i);
                 }
               }}
-              className="group relative flex aspect-[3/4] w-full max-w-[360px] flex-col items-center justify-center rounded-3xl outline-none transition-all duration-300 mx-auto"
+              className="group relative flex aspect-[3/4.2] w-full max-w-[420px] flex-col items-center justify-center rounded-3xl outline-none transition-all duration-300 mx-auto"
               style={{
                 background:
                   "linear-gradient(160deg, var(--tv-card), oklch(0.18 0.04 270))",
