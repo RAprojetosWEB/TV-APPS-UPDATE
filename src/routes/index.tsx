@@ -343,7 +343,7 @@ function Index() {
         onKeyDown={handleKey}
         className="relative flex min-h-screen flex-col text-foreground"
       >
-      <header className="px-16 pt-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <header className="px-[clamp(2rem,6vw,6rem)] pt-[clamp(2rem,6vh,6rem)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
           <h1 className="tv-title font-black tracking-tight leading-none">
             TV<span style={{ color: "var(--tv-accent)" }}>.</span>Apps
@@ -353,21 +353,21 @@ function Index() {
           </p>
         </div>
 
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-6 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+        <div className="flex items-center gap-[clamp(0.5rem,1.5vw,1.5rem)] flex-wrap">
+          <div className="flex items-center gap-[clamp(1rem,2vw,2rem)] px-[clamp(1rem,2vw,2rem)] py-[clamp(0.5rem,1vh,1rem)] rounded-[clamp(1rem,2vw,1.5rem)] bg-white/5 border border-white/10 backdrop-blur-md">
             <div className="flex items-center gap-2 text-white/90">
               <Clock size={20} className="text-tv-accent" />
-              <span className="text-2xl font-bold tabular-nums">{time}</span>
+              <span className="text-[clamp(1.2rem,2.5vw,2rem)] font-bold tabular-nums">{time}</span>
             </div>
             <div className="h-6 w-px bg-white/10" />
             <div className="flex items-center gap-2 text-white/70">
               <Calendar size={18} className="text-tv-accent" />
-              <span className="text-xl font-medium capitalize">{date}</span>
+              <span className="text-[clamp(0.9rem,1.8vw,1.25rem)] font-medium capitalize">{date}</span>
             </div>
             <div className="h-6 w-px bg-white/10" />
             <div className="flex items-center gap-2 text-white/70">
               <Cloud size={20} className="text-tv-accent" />
-              <span className="text-xl font-medium">24°C</span>
+              <span className="text-[clamp(0.9rem,1.8vw,1.25rem)] font-medium">24°C</span>
             </div>
           </div>
           
@@ -394,19 +394,19 @@ function Index() {
                   startDownload(i);
                 }
               }}
-              className="group relative flex aspect-[3/4.2] w-full max-w-[420px] flex-col items-center justify-center rounded-3xl outline-none transition-all duration-300 mx-auto"
+              className="group relative flex aspect-[3/4.2] w-full max-w-[clamp(300px,25vw,420px)] max-h-[clamp(400px,80vh,600px)] flex-col items-center justify-center rounded-[clamp(1.5rem,3vw,3rem)] outline-none transition-all duration-300 mx-auto"
               style={{
                 background:
                   "linear-gradient(160deg, var(--tv-card), oklch(0.18 0.04 270))",
-                border: `3px solid ${isFocused ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
+                border: `clamp(2px, 0.4vw, 4px) solid ${isFocused ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
                 transform: isFocused ? "scale(1.05)" : "scale(1)",
                 boxShadow: isFocused
-                  ? "0 25px 80px -10px oklch(0.78 0.22 150 / 0.55), 0 0 0 6px oklch(0.78 0.22 150 / 0.15)"
+                  ? "0 25px 80px -10px oklch(0.78 0.22 150 / 0.55), 0 0 0 clamp(4px, 0.6vw, 8px) oklch(0.78 0.22 150 / 0.15)"
                   : "0 10px 30px -10px oklch(0 0 0 / 0.5)",
               }}
             >
               {states[i].status === "downloading" ? (
-                <div className="flex w-full flex-col items-center px-8">
+                <div className="flex w-full flex-col items-center px-[clamp(1rem,4vw,3rem)]">
                   <div
                     className="tv-icon-container mb-8 flex items-center justify-center rounded-2xl"
                     style={{
