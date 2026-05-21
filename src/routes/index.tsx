@@ -662,7 +662,7 @@ function Index() {
               {states[i].status === "downloading" ? (
                 <div className="flex w-full flex-col items-center px-[clamp(1rem,4vw,3rem)]">
                   <div
-                    className="tv-icon-container mb-8 flex items-center justify-center rounded-2xl"
+                    className="tv-icon-container mb-[clamp(0.5rem,2vh,2rem)] flex items-center justify-center rounded-2xl"
                     style={{
                       background:
                         "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))",
@@ -695,7 +695,7 @@ function Index() {
               ) : states[i].status === "done" ? (
                 <div className="flex flex-col items-center px-8">
                   <div
-                    className="tv-icon-container mb-8 flex items-center justify-center rounded-2xl"
+                    className="tv-icon-container mb-[clamp(0.5rem,2vh,2rem)] flex items-center justify-center rounded-2xl"
                     style={{
                       background:
                         "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))",
@@ -714,7 +714,7 @@ function Index() {
               ) : states[i].status === "error" ? (
                 <div className="flex flex-col items-center px-8">
                   <div
-                    className="tv-icon-container mb-8 flex items-center justify-center rounded-2xl"
+                    className="tv-icon-container mb-[clamp(0.5rem,2vh,2rem)] flex items-center justify-center rounded-2xl"
                     style={{ background: "oklch(0.4 0.2 25)" }}
                   >
                     <AlertCircle className="w-1/2 h-1/2" strokeWidth={1.8} color="white" />
@@ -737,7 +737,7 @@ function Index() {
               ) : (
               <>
               <div
-                className="tv-icon-container mb-8 flex items-center justify-center rounded-2xl transition-all duration-300 overflow-hidden"
+                className="tv-icon-container mb-[clamp(0.5rem,2vh,2rem)] flex items-center justify-center rounded-2xl transition-all duration-300 overflow-hidden"
                 style={{
                   background: isFocused
                     ? "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))"
