@@ -1,6 +1,7 @@
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Properties
+import java.io.File as JFile
 
 plugins {
     id("com.android.application")
@@ -87,7 +88,7 @@ tasks.register("generateUpdateJson") {
                   "apkUrl": "https://bunvyxogwpwiojzczgwl.supabase.co/storage/v1/object/public/tvapps-updates/tvapps-latest.apk"
                 }
             """.trimIndent()
-            java.io.File(apkDir, "update.json").writeText(json)
+            JFile(apkDir, "update.json").writeText(json)
             println("[tvapps] update.json gerado em ${apkDir.absolutePath} (versionCode=$computedVersionCode, versionName=$computedVersionName)")
         }
     }
