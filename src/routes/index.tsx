@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Check, Download, Play, AlertCircle, Calendar, Clock, Cloud } from "lucide-react";
+import { Check, Download, Play, AlertCircle, Calendar, Clock, Cloud, RefreshCcw, Search, Info } from "lucide-react";
 import { NetworkIndicator } from "@/components/NetworkIndicator";
 import { useDateTime } from "@/hooks/useDateTime";
+import { toast } from "sonner";
 import unitvLogo from "@/assets/unitv.png";
 import nexatvLogo from "@/assets/nexatv.png";
 import alphaplayLogo from "@/assets/alphaplay.webp";
@@ -41,6 +42,9 @@ const APPS = [
     url: "https://apyjsxxuuptelmiwnzwq.supabase.co/storage/v1/object/public/Alpicativos%20APKs/unitv.apk",
     logo: unitvLogo,
     packageName: "com.unitv.app",
+    version: "2.4",
+    updateDate: "20/05/2026",
+    size: "45MB",
   },
   {
     name: "Nexa TV",
@@ -48,6 +52,9 @@ const APPS = [
     url: "https://apyjsxxuuptelmiwnzwq.supabase.co/storage/v1/object/public/Alpicativos%20APKs/Nexa_TV.apk",
     logo: nexatvLogo,
     packageName: "com.nexa.tv",
+    version: "1.8",
+    updateDate: "15/05/2026",
+    size: "32MB",
   },
   {
     name: "ALPHAPLAY",
@@ -55,6 +62,9 @@ const APPS = [
     url: "https://firebasestorage.googleapis.com/v0/b/update-41ccf.appspot.com/o/alphaplay.apk?alt=media&token=cdbe4055-ea90-4f2c-a540-1b458159ade6",
     logo: alphaplayLogo,
     packageName: "com.alphaplay.app",
+    version: "3.2",
+    updateDate: "18/05/2026",
+    size: "58MB",
   },
 ];
 
