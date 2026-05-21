@@ -267,10 +267,6 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
               <p className="mt-2 text-base text-white/60">
                 Digite a senha para continuar
               </p>
-              <p className="mt-3 text-sm text-white/60">
-                Acesso restrito a clientes. Peça o acesso no WhatsApp{" "}
-                <span className="font-semibold text-white/90">14 99868-1696</span>
-              </p>
             </div>
 
             <div className="mt-8 space-y-4">
@@ -318,6 +314,11 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
           </>
         )}
       </div>
+
+      <p className="absolute bottom-6 left-0 right-0 z-10 px-6 text-center text-xs text-white/50">
+        Acesso restrito a clientes. Peça o acesso no WhatsApp{" "}
+        <span className="font-semibold text-white/80">14 99868-1696</span>
+      </p>
     </div>
   );
 }
