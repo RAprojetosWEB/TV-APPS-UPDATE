@@ -1,31 +1,41 @@
-# Padronizar layout em qualquer TV / celular / TV Box
+### Plano de Implementação: Atualização de Versão e Detecção
 
-## Problema
-Hoje os cards têm tamanho fixo em `dp` (340×440) e o ícone tem fonte fixa (56sp). Em telas menores ou com densidade diferente (celular, MiBox), os 3 cards não cabem lado a lado → aparecem cortados e os ícones parecem gigantes em relação ao card visível. No MXQ cabe porque a resolução bate certo.
+Este plano adiciona a funcionalidade de comparar a versão instalada dos aplicativos com a versão disponível remotamente (via JSON), exibindo badges de "Atualização disponível" e informações de versão nos cards.
 
-A solução é tornar o layout **responsivo à largura real da tela**, em vez de usar tamanhos fixos.
+#### 1. Estrutura de Dados das Versões
+- Criar um arquivo `public/versions.json` que servirá como fonte da verdade.
+- Atualizar a interface `AndroidBridge` e as classes Kotlin para suportar a leitura de versões.
 
-## Mudança em `MainActivity.kt`
+#### 2. Alterações no Android (Kotlin)
+- **AppCatalog.kt**: Adicionar o campo `packageName` (já existe) e preparar para receber informações de versão.
+- **MainActivity.kt**:
+  - Implementar `getInstalledVersion(packageName)` usando `packageManager.getPackageInfo`.
+  - Expor essa função via `JavascriptInterface` para a WebView.
+  - Implementar lógica para buscar o `versions.json` via HTTP (ou receber do React) para exibir os badges na UI nativa.
 
-1. Medir a largura útil da tela em runtime (`resources.displayMetrics.widthPixels` menos paddings laterais).
-2. Calcular o tamanho do card dinamicamente:
-   - `cardWidth = (larguraUtil - 2 * gap) / 3`
-   - limitar entre um mínimo (ex.: 220dp) e um máximo (ex.: 360dp)
-   - `cardHeight = cardWidth * 1.3` (mantém proporção)
-3. Escalar proporcionalmente:
-   - badge do ícone = `cardWidth * 0.38`
-   - fonte do emoji = `cardWidth * 0.18` (em px → sp)
-   - título = `cardWidth * 0.08`
-   - subtítulo = `cardWidth * 0.05`
-   - pill horizontal padding = `cardWidth * 0.07`
-4. Trocar paddings fixos do root (`64dp`) por padding proporcional (`8%` da largura), e reduzir margens entre cards em telas pequenas.
-5. Garantir que a `Row` use `MATCH_PARENT` e `gravity = CENTER`, e que cada card use o tamanho calculado em vez de `dp(340)`/`dp(440)`.
-6. Header (`TV.Apps` 44sp) também passa a escalar: `min(44, larguraDp * 0.05)`.
+#### 3. Alterações no Frontend (React)
+- Criar um hook `useVersions` para buscar o `versions.json`.
+- Comparar a versão remota com a versão instalada (obtida via bridge).
+- **UI dos Cards**:
+  - Adicionar badge "Atualização disponível" em cor de destaque (ex: laranja/ouro).
+  - Mostrar "Versão instalada: X" e "Nova versão: Y" quando houver discrepância.
+  - Alterar o texto do botão para "ATUALIZAR APP" se houver nova versão.
 
-Resultado esperado: em qualquer tela (celular pequeno, MiBox 720p, MXQ 1080p, TV 4K) os 3 cards aparecem inteiros, centralizados, com proporção visual idêntica.
+#### 4. Fluxo de Atualização
+- Se `remoteVersion > installedVersion`:
+  - Botão vira "ATUALIZAR".
+  - Clique inicia o download e sobrescreve o APK anterior.
 
-## Arquivos
-- `android/app/src/main/java/com/tvapps/launcher/MainActivity.kt`
+### Detalhes Técnicos
 
-## Depois
-Gerar novo `tv-apps-android-native.zip` em `/mnt/documents/`.
+```json
+// public/versions.json
+{
+  "com.unitv.app": { "version": "2.4", "code": 24 },
+  "com.nexa.tv": { "version": "1.8", "code": 18 },
+  "com.alphaplay.app": { "version": "3.1", "code": 31 }
+}
+```
+
+---
+*Nota: Para que isso funcione 100%, você precisará atualizar manualmente esse JSON sempre que subir um novo APK para seus links de download.*
