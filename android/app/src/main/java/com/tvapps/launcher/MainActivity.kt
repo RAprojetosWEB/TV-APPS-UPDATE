@@ -113,13 +113,10 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
-        // Revalida estado de instalação de cada card e limpa APKs já instalados
+        // Revalida estado de instalação de cada card e trata limpeza de cache
         if (cardViews.isNotEmpty()) {
             AppCatalog.apps.forEachIndexed { index, app ->
                 cardViews.getOrNull(index)?.let { refreshInstalledState(it, app) }
-                if (InstalledRegistry.isInstalled(this, app)) {
-                    ApkCache.deleteFor(this, app.name)
-                }
             }
         }
         // Status bar tickers
@@ -408,7 +405,7 @@ class MainActivity : Activity() {
 
         // Pill "INSTALAR"
         val pill = TextView(this).apply {
-            text = "⬇  INSTALAR"
+            text = "⬇  Baixar aplicativo"
             setTextColor(Color.WHITE)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
@@ -544,17 +541,26 @@ class MainActivity : Activity() {
     }
 
     /**
-     * Aplica no card o estado visual de "instalado" (chip + botão "ABRIR APP")
-     * ou volta para "QUERO INSTALAR" se foi desinstalado.
+     * Aplica no card o estado visual de acordo com a instalação e cache.
+     * Estados: "Abrir aplicativo", "Instalar aplicativo", "Baixar aplicativo"
      */
     private fun refreshInstalledState(card: CardViews, app: CatalogApp) {
-        val installed = InstalledRegistry.isInstalled(this, app)
         if (card.progress.visibility == View.VISIBLE) return // download em andamento
+        
+        val installed = InstalledRegistry.isInstalled(this, app)
+        val apkFile = ApkCache.fileFor(this, app.name)
+        val hasApk = apkFile.exists() && apkFile.length() > 0
+
         if (installed) {
-            card.pill.text = "▶  ABRIR APP"
+            card.pill.text = "▶  Abrir aplicativo"
             card.installedChip.visibility = View.VISIBLE
+            // Se já está instalado, removemos o APK do cache para liberar espaço
+            ApkCache.deleteFor(this, app.name)
+        } else if (hasApk) {
+            card.pill.text = "⬇  Instalar aplicativo"
+            card.installedChip.visibility = View.GONE
         } else {
-            card.pill.text = "⬇  INSTALAR"
+            card.pill.text = "⬇  Baixar aplicativo"
             card.installedChip.visibility = View.GONE
         }
     }
@@ -599,6 +605,13 @@ class MainActivity : Activity() {
         // Se já estiver instalado, abre direto
         if (InstalledRegistry.isInstalled(this, app)) {
             openApp(InstalledRegistry.resolvePackage(this, app))
+            return
+        }
+
+        // Se não está instalado mas já temos o APK baixado, abre o instalador direto
+        val apkFile = ApkCache.fileFor(this, app.name)
+        if (apkFile.exists() && apkFile.length() > 0) {
+            ApkInstaller.install(this, apkFile)
             return
         }
 
