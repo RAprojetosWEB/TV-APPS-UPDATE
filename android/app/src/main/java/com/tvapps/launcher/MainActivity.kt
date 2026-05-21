@@ -663,6 +663,236 @@ class MainActivity : Activity() {
         return (value * d).toInt()
     }
 
+    // ===================== TOP BAR =====================
+
+    private fun buildTopBar(scale: Float): View {
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            )
+        }
+
+        // Bloco esquerdo: TV.Apps + subtítulo
+        val left = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        val header = TextView(this).apply {
+            val accent = "#5EE6A8"
+            val spanned = android.text.SpannableString("TV.Apps")
+            spanned.setSpan(
+                android.text.style.ForegroundColorSpan(Color.parseColor(accent)),
+                2, 3, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE,
+            )
+            text = spanned
+            setTextColor(Color.WHITE)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 44f * scale)
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+        }
+        val sub = TextView(this).apply {
+            text = "Central de Downloads Automática"
+            setTextColor(Color.parseColor("#99FFFFFF"))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f * scale)
+            setPadding(0, dp((4 * scale).toInt()), 0, 0)
+        }
+        left.addView(header)
+        left.addView(sub)
+
+        // Bloco direito: pílulas de status
+        val right = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            )
+        }
+
+        val system = makeStatusPill("⟳  Verificando sistema...", "#E8A85C", scale)
+        val clock = makeStatusPill("🕐  --:--", "#FFFFFF", scale)
+        val date = makeStatusPill("📅  ---", "#FFFFFF", scale)
+        val weather = makeStatusPill("🌥  --°C", "#FFFFFF", scale)
+        val wifi = makeStatusPill("📶  Wi-Fi", "#5EE6A8", scale)
+
+        val gap = dp((8 * scale).toInt())
+        listOf(system, clock, date, weather, wifi).forEach { pill ->
+            (pill.layoutParams as LinearLayout.LayoutParams).marginStart = gap
+        }
+
+        right.addView(system)
+        right.addView(clock)
+        right.addView(date)
+        right.addView(weather)
+        right.addView(wifi)
+
+        clockView = clock
+        dateView = date
+        weatherView = weather
+        wifiView = wifi
+
+        row.addView(left)
+        row.addView(right)
+
+        // Inicializa valores
+        updateClockAndDate()
+        refreshWeather()
+        updateWifi(isNetworkOnline())
+        checkOtaUpdate(system)
+
+        return row
+    }
+
+    private fun makeStatusPill(text: String, accentHex: String, scale: Float): TextView {
+        return TextView(this).apply {
+            this.text = text
+            setTextColor(Color.parseColor(accentHex))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f * scale)
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            val bg = GradientDrawable().apply {
+                setColor(Color.parseColor("#1AFFFFFF"))
+                cornerRadius = dp((12 * scale).toInt()).toFloat()
+                setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+            }
+            background = bg
+            val px = dp((14 * scale).toInt())
+            val py = dp((10 * scale).toInt())
+            setPadding(px, py, px, py)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            )
+        }
+    }
+
+    private fun updateClockAndDate() {
+        val now = Date()
+        clockView?.text = "🕐  " + SimpleDateFormat("HH:mm", Locale("pt", "BR")).format(now)
+        val raw = SimpleDateFormat("EEE, dd 'De' MMM.", Locale("pt", "BR")).format(now)
+        dateView?.text = "📅  " + capitalizeWords(raw)
+    }
+
+    private fun capitalizeWords(s: String): String =
+        s.split(" ").joinToString(" ") { word ->
+            if (word.isEmpty()) word
+            else word.substring(0, 1).uppercase(Locale("pt", "BR")) + word.substring(1)
+        }
+
+    private fun refreshWeather() {
+        scope.launch {
+            val w = StatusInfo.fetchWeather()
+            if (w != null) {
+                weatherView?.text = "${w.emoji}  ${w.tempC}°C"
+            }
+        }
+    }
+
+    // ===================== REDE =====================
+
+    private fun isNetworkOnline(): Boolean {
+        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return false
+        val net = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(net) ?: return false
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+            caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+    }
+
+    private fun updateWifi(online: Boolean) {
+        wifiView?.post {
+            if (online) {
+                wifiView?.text = "📶  Wi-Fi"
+                wifiView?.setTextColor(Color.parseColor("#5EE6A8"))
+            } else {
+                wifiView?.text = "⚠  Sem rede"
+                wifiView?.setTextColor(Color.parseColor("#FF6B6B"))
+            }
+        }
+    }
+
+    private fun registerNetworkCallback() {
+        if (networkCallback != null) return
+        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return
+        val cb = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) { updateWifi(true) }
+            override fun onLost(network: Network) { updateWifi(false) }
+            override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) {
+                updateWifi(
+                    caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+                        caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+                )
+            }
+        }
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                cm.registerDefaultNetworkCallback(cb)
+            } else {
+                val req = NetworkRequest.Builder()
+                    .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                    .build()
+                cm.registerNetworkCallback(req, cb)
+            }
+            networkCallback = cb
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun unregisterNetworkCallback() {
+        val cb = networkCallback ?: return
+        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+        try { cm?.unregisterNetworkCallback(cb) } catch (_: Exception) {}
+        networkCallback = null
+    }
+
+    // ===================== OTA =====================
+
+    private fun checkOtaUpdate(systemPill: TextView) {
+        scope.launch {
+            val updated = try {
+                withContext(Dispatchers.IO) {
+                    val url = "https://bunvyxogwpwiojzczgwl.supabase.co/storage/v1/object/public/tvapps-updates/update.json?t=${System.currentTimeMillis()}"
+                    val client = okhttp3.OkHttpClient()
+                    val res = client.newCall(okhttp3.Request.Builder().url(url).build()).execute()
+                    res.use {
+                        if (!it.isSuccessful) return@withContext null
+                        val body = it.body?.string() ?: return@withContext null
+                        val json = org.json.JSONObject(body)
+                        val remote = json.optString("version", "")
+                        val local = try { packageManager.getPackageInfo(packageName, 0).versionName ?: "" } catch (_: Exception) { "" }
+                        compareVersions(remote, local) > 0
+                    }
+                }
+            } catch (_: Exception) { null }
+
+            when (updated) {
+                true -> {
+                    systemPill.text = "⬇  Atualização disponível"
+                    systemPill.setTextColor(Color.parseColor("#5EE6A8"))
+                }
+                false -> {
+                    systemPill.text = "✓  Sistema atualizado"
+                    systemPill.setTextColor(Color.parseColor("#5EE6A8"))
+                }
+                null -> {
+                    systemPill.text = "⚠  Sem conexão"
+                    systemPill.setTextColor(Color.parseColor("#FF6B6B"))
+                }
+            }
+        }
+    }
+
+    private fun compareVersions(a: String, b: String): Int {
+        val pa = a.split(".").mapNotNull { it.toIntOrNull() }
+        val pb = b.split(".").mapNotNull { it.toIntOrNull() }
+        val len = maxOf(pa.size, pb.size)
+        for (i in 0 until len) {
+            val diff = (pa.getOrNull(i) ?: 0) - (pb.getOrNull(i) ?: 0)
+            if (diff != 0) return diff
+        }
+        return 0
+    }
+
     override fun onDestroy() {
         scope.cancel()
         statusHandler.removeCallbacksAndMessages(null)
