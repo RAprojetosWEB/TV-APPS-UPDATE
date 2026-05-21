@@ -19,6 +19,7 @@ type AndroidBridge = {
   installApk: (url: string, name: string) => void;
   isAppInstalled: (packageName: string) => boolean;
   openApp: (packageName: string) => void;
+  openSettings?: () => void;
   version?: () => string;
   versionCode?: () => number;
   isApkDownloaded?: (packageName: string, version: string) => boolean;
