@@ -62,8 +62,15 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  
+  // OTA (Verificação obrigatória antes do login)
+  const ota = useOtaUpdate({ autoCheck: true });
+  const [otaDownloading, setOtaDownloading] = useState(false);
+  const [otaProgress, setOtaProgress] = useState(0);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const updateBtnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     setMounted(true);
