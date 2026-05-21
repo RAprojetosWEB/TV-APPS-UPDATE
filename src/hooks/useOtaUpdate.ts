@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { APP_VERSION, UPDATE_JSON_URL, compareVersions, type UpdateManifest } from "@/lib/app-version";
+import {
+  APP_VERSION,
+  APP_VERSION_CODE,
+  UPDATE_JSON_URL,
+  isUpdateAvailable,
+  type UpdateManifest,
+} from "@/lib/app-version";
 
 function getInstalledVersion(): string {
   if (typeof window !== "undefined" && typeof window.Android?.version === "function") {
@@ -11,6 +17,18 @@ function getInstalledVersion(): string {
     }
   }
   return APP_VERSION;
+}
+
+function getInstalledVersionCode(): number {
+  if (typeof window !== "undefined" && typeof window.Android?.versionCode === "function") {
+    try {
+      const v = window.Android.versionCode();
+      return typeof v === "number" ? v : Number(v) || APP_VERSION_CODE;
+    } catch {
+      return APP_VERSION_CODE;
+    }
+  }
+  return APP_VERSION_CODE;
 }
 
 export function useOtaUpdate() {
@@ -28,14 +46,19 @@ export function useOtaUpdate() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as UpdateManifest;
       const installed = getInstalledVersion();
+      const installedCode = getInstalledVersionCode();
       setInstalledVersion(installed);
       setManifest(data);
-      const updateAvailable = compareVersions(data.version, installed) > 0;
+      const updateAvailable = isUpdateAvailable(data, {
+        code: installedCode,
+        name: installed,
+      });
       setHasUpdate(updateAvailable);
 
       if (manual) {
         if (updateAvailable) {
-          toast.success(`Nova versão ${data.version} disponível!`);
+          const remoteName = data.versionName ?? data.version ?? "";
+          toast.success(`Nova versão ${remoteName} disponível!`);
         } else {
           toast.success("✅ O aplicativo já está atualizado", {
             description: `Você está na versão ${installed}.`,
