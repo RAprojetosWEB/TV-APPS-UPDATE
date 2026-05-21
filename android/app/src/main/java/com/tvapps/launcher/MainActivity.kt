@@ -209,19 +209,35 @@ class MainActivity : Activity() {
             ).apply { gravity = Gravity.CENTER }
         }
 
-        val title = TextView(this).apply {
-            text = "Área Restrita"
+        // Logo TV.Apps (igual à versão web)
+        val logo = TextView(this).apply {
+            val spannable = android.text.SpannableString("TV.Apps")
+            spannable.setSpan(
+                android.text.style.ForegroundColorSpan(Color.parseColor("#4ade80")),
+                2, 3,
+                android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+            text = spannable
             setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 32f * scaleFactor)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 44f * scaleFactor)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             setPadding(0, 0, 0, dp((24 * scaleFactor).toInt()))
+            gravity = Gravity.CENTER
+        }
+
+        val title = TextView(this).apply {
+            text = "Bem-vindo"
+            setTextColor(Color.WHITE)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 28f * scaleFactor)
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setPadding(0, 0, 0, dp((8 * scaleFactor).toInt()))
             gravity = Gravity.CENTER
         }
 
         val subtitle = TextView(this).apply {
             text = "Digite a senha para continuar"
             setTextColor(Color.parseColor("#99FFFFFF"))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f * scaleFactor)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f * scaleFactor)
             setPadding(0, 0, 0, dp((32 * scaleFactor).toInt()))
             gravity = Gravity.CENTER
         }
@@ -271,6 +287,7 @@ class MainActivity : Activity() {
             }
         }
 
+        container.addView(logo)
         container.addView(title)
         container.addView(subtitle)
         container.addView(passwordInput)
