@@ -713,7 +713,7 @@ function Index() {
                   onFocus={() => setModalChoice("yes")}
                   onClick={() => {
                     setUpdateModalOpen(false);
-                    startDownload(appToUpdate);
+                    startDownload(appToUpdate, true);
                   }}
                   className="flex-1 rounded-2xl px-8 py-5 text-xl font-black outline-none transition-all"
                   style={{
