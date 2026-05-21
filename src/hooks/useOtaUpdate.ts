@@ -35,7 +35,7 @@ function getInstalledVersionCode(): number {
   return APP_VERSION_CODE;
 }
 
-export function useOtaUpdate() {
+export function useOtaUpdate(options: { autoCheck?: boolean } = { autoCheck: true }) {
   const [manifest, setManifest] = useState<UpdateManifest | null>(null);
   const [installedVersion, setInstalledVersion] = useState<string>(APP_VERSION);
   const [checking, setChecking] = useState(false);
