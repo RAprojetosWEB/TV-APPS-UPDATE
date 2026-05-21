@@ -14,7 +14,80 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      app_versions: {
+        Row: {
+          apk_size_mb: number | null
+          apk_url: string
+          app_id: string
+          changelog: string | null
+          created_at: string
+          id: string
+          is_latest: boolean | null
+          version_code: number
+          version_name: string
+        }
+        Insert: {
+          apk_size_mb?: number | null
+          apk_url: string
+          app_id: string
+          changelog?: string | null
+          created_at?: string
+          id?: string
+          is_latest?: boolean | null
+          version_code: number
+          version_name: string
+        }
+        Update: {
+          apk_size_mb?: number | null
+          apk_url?: string
+          app_id?: string
+          changelog?: string | null
+          created_at?: string
+          id?: string
+          is_latest?: boolean | null
+          version_code?: number
+          version_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_versions_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "apps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apps: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          package_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          package_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          package_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
