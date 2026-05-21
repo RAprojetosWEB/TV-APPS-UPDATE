@@ -619,15 +619,34 @@ function Index() {
                 }}
               >
                 {states[i].isInstalled ? (
-                  <>
-                    <Play size={22} fill="currentColor" />
-                    ABRIR APP
-                  </>
+                  states[i].hasUpdate ? (
+                    <>
+                      <RefreshCcw size={22} className="animate-spin-slow" />
+                      ATUALIZAR
+                    </>
+                  ) : (
+                    <>
+                      <Play size={22} fill="currentColor" />
+                      ABRIR APP
+                    </>
+                  )
                 ) : (
                   <>
                     <Download size={22} />
-                    QUERO INSTALAR
+                    INSTALAR
                   </>
+                )}
+              </div>
+              
+              <div className="mt-6 flex flex-col items-center gap-1">
+                <div className="flex items-center gap-2 text-white/40 text-sm font-medium">
+                  <Info size={14} />
+                  <span>Versão {app.version} • {app.size}</span>
+                </div>
+                {states[i].isInstalled && (
+                  <span className="text-white/30 text-[10px] uppercase tracking-widest font-bold">
+                    Instalada: {states[i].installedVersion}
+                  </span>
                 )}
               </div>
               </>
