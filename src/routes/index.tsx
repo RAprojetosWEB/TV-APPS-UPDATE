@@ -412,6 +412,21 @@ function Index() {
         </div>
 
         <div className="flex items-center gap-[clamp(0.5rem,1.5vw,1.5rem)] flex-wrap">
+          <button
+            onClick={() => checkUpdates(true)}
+            disabled={checkingUpdates}
+            className={`flex items-center gap-3 px-6 py-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md transition-all active:scale-95 focus:outline-none focus:border-tv-accent ${checkingUpdates ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/10'}`}
+          >
+            {checkingUpdates ? (
+              <RefreshCcw size={20} className="text-tv-accent animate-spin" />
+            ) : (
+              <Search size={20} className="text-tv-accent" />
+            )}
+            <span className="text-lg font-bold text-white/90">
+              {checkingUpdates ? "Verificando..." : "Procurar atualização"}
+            </span>
+          </button>
+
           <div className="flex items-center gap-[clamp(1rem,2vw,2rem)] px-[clamp(1rem,2vw,2rem)] py-[clamp(0.5rem,1vh,1rem)] rounded-[clamp(1rem,2vw,1.5rem)] bg-white/5 border border-white/10 backdrop-blur-md">
             <div className="flex items-center gap-2 text-white/90">
               <Clock size={20} className="text-tv-accent" />
