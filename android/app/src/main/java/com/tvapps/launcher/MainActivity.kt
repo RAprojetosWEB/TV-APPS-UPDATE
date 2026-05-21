@@ -402,6 +402,15 @@ class MainActivity : Activity() {
                 fun openApp(packageName: String) = this@MainActivity.openApp(packageName)
 
                 @JavascriptInterface
+                fun openSettings() {
+                    try {
+                        startActivity(Intent(android.provider.Settings.ACTION_SETTINGS))
+                    } catch (e: Exception) {
+                        // ignore
+                    }
+                }
+
+                @JavascriptInterface
                 fun installApk(url: String, name: String) {
                     val index = AppCatalog.apps.indexOfFirst { it.name == name }
                     if (index != -1) {
@@ -924,17 +933,46 @@ class MainActivity : Activity() {
                 }
             }
         }
+        val settings = makeStatusPill("⚙️", "#FFFFFF", scale).apply {
+            isFocusable = true
+            isClickable = true
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            
+            setOnClickListener {
+                try {
+                    startActivity(Intent(android.provider.Settings.ACTION_SETTINGS))
+                } catch (e: Exception) {
+                    Toast.makeText(this@MainActivity, "Não foi possível abrir as configurações", Toast.LENGTH_SHORT).show()
+                }
+            }
+            setOnFocusChangeListener { v, hasFocus ->
+                val tv = v as TextView
+                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
+                
+                if (hasFocus) {
+                    bg.setColor(Color.parseColor("#33FFFFFF"))
+                    bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                    tv.text = "⚙️  Configurações"
+                } else {
+                    bg.setColor(Color.parseColor("#1AFFFFFF"))
+                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    tv.text = "⚙️"
+                }
+            }
+        }
         val clock = makeStatusPill("🕐  --:--", "#FFFFFF", scale)
         val date = makeStatusPill("📅  ---", "#FFFFFF", scale)
         val weather = makeStatusPill("🌥  --°C", "#FFFFFF", scale)
         val wifi = makeStatusPill("📶  Wi-Fi", "#5EE6A8", scale)
 
         val gap = dp((8 * scale).toInt())
-        listOf(system, clock, date, weather, wifi).forEach { pill ->
+        listOf(system, settings, clock, date, weather, wifi).forEach { pill ->
             (pill.layoutParams as LinearLayout.LayoutParams).marginStart = gap
         }
 
         right.addView(system)
+        right.addView(settings)
         right.addView(clock)
         right.addView(date)
         right.addView(weather)
