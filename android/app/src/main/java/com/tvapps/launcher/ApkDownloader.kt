@@ -24,6 +24,16 @@ object ApkDownloader {
 
     fun download(context: Context, url: String, fileNameHint: String): Flow<DownloadProgress> = flow {
         try {
+            val dir = File(context.cacheDir, "apks").apply { mkdirs() }
+            val safeName = fileNameHint.replace(Regex("[^A-Za-z0-9._-]"), "_")
+            val outFile = File(dir, "$safeName.apk")
+
+            // Inteligente: se o arquivo já existir, não baixa novamente
+            if (outFile.exists() && outFile.length() > 0) {
+                emit(DownloadProgress.Done(outFile))
+                return@flow
+            }
+
             emit(DownloadProgress.Progress(0))
             val request = Request.Builder().url(url).build()
             val response = client.newCall(request).execute()
@@ -36,9 +46,7 @@ object ApkDownloader {
                 return@flow
             }
             val total = body.contentLength().coerceAtLeast(1L)
-            val dir = File(context.cacheDir, "apks").apply { mkdirs() }
-            val safeName = fileNameHint.replace(Regex("[^A-Za-z0-9._-]"), "_")
-            val outFile = File(dir, "$safeName.apk")
+            
             if (outFile.exists()) outFile.delete()
 
             body.byteStream().use { input ->
