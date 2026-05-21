@@ -118,8 +118,11 @@ class MainActivity : Activity() {
 
     private fun setupPackageReceiver() {
         packageReceiver = PackageInstallReceiver { packageName ->
-            // Busca o app no catálogo pelo package name
-            val app = AppCatalog.apps.find { it.packageName == packageName }
+            // Busca o app no catálogo que corresponde ao package instalado
+            val app = AppCatalog.apps.find { 
+                InstalledRegistry.resolvePackage(this, it) == packageName 
+            }
+
             if (app != null) {
                 val deleted = ApkCache.deleteFor(this, app.name)
                 if (deleted) {
