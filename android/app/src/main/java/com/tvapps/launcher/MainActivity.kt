@@ -38,6 +38,8 @@ class MainActivity : Activity() {
     private val cardJobs = mutableMapOf<Int, Job>()
     private val cardViews = mutableListOf<CardViews>()
     private var webView: WebView? = null
+    private var isUnlocked = false
+
 
     private data class CardViews(
         val container: FrameLayout,
