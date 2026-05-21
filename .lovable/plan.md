@@ -1,4 +1,38 @@
-# Versionamento automático para OTA
+# Trocar package name para `com.rastream.platformtv`
+
+Sim, dá pra trocar. É uma operação mecânica em ~10 arquivos, mas tem **um detalhe importante** que você precisa saber antes.
+
+## ⚠ Aviso importante antes de aceitar
+
+Trocar o package name faz o Android **enxergar como um app totalmente novo**. Consequências:
+
+- Quem já tem o `com.tvapps.launcher` instalado **não recebe esta atualização via OTA** — o sistema OTA compara dentro do mesmo package. Eles continuariam com a versão antiga pra sempre.
+- A solução é **desinstalar a versão antiga e instalar a nova** manualmente nesses aparelhos (uma vez só).
+- Os apps em si (catálogo, dados, login) começam do zero porque o Android trata como instalação limpa.
+
+Se você ainda não distribuiu o APK pra ninguém (ou só pra você mesmo testando), o impacto é zero. Se já tem usuários reais, vale considerar manter o package atual.
+
+## O que muda
+
+### Arquivos editados
+- `android/app/build.gradle.kts` — `namespace` e `applicationId` viram `com.rastream.platformtv`.
+- `android/app/src/main/AndroidManifest.xml` — nada a editar (usa `${applicationId}` para o FileProvider, então acompanha sozinho).
+- 8 arquivos `.kt` em `android/app/src/main/java/com/tvapps/launcher/` — a declaração `package com.tvapps.launcher` no topo de cada um vira `package com.rastream.platformtv`.
+
+### Pastas movidas
+```text
+android/app/src/main/java/com/tvapps/launcher/   →   android/app/src/main/java/com/rastream/platformtv/
+```
+Os 8 arquivos (`MainActivity.kt`, `AppCatalog.kt`, `ApkCache.kt`, `ApkDownloader.kt`, `ApkInstaller.kt`, `InstalledRegistry.kt`, `PackageInstallReceiver.kt`, `StatusInfo.kt`) mudam de pasta e ganham o novo `package` no topo. A pasta antiga `com/tvapps/launcher/` é apagada.
+
+## Detalhes técnicos
+- O FileProvider no manifesto usa `${applicationId}.fileprovider`, então o authority também vira `com.rastream.platformtv.fileprovider` automaticamente — nada a ajustar.
+- O sistema de versionamento automático (timestamp + `update.json`) continua igual.
+- O `update.json` no Supabase continua o mesmo, mas o APK novo terá outro `applicationId`. Recomendo subir o APK novo num **novo nome** (ex.: `platformtv-latest.apk`) só pra não confundir clientes antigos que ainda estão no `tvapps-latest.apk`. Posso ajustar isso junto se quiser.
+
+## Fora de escopo
+- Mudar o nome visível do app (label "TV.Apps"), o ícone, ou o esquema de cores. Só o identificador interno muda.
+- Migrar dados de usuários do package antigo pro novo (não há API Android pra isso — é instalação limpa).
 
 Tornar o ciclo "compilar → enviar APK → clientes detectam atualização" totalmente automático, sem precisar editar versão manualmente.
 
