@@ -251,12 +251,17 @@ function Index() {
         ? window.Android?.isAppInstalled?.(app.packageName)
         : (i === 0);
       
+      const isDownloaded = isNative
+        ? !!window.Android?.isApkDownloaded?.(app.packageName, app.version)
+        : false;
+      
       const installedVersion = isNative && window.Android?.version ? window.Android.version() : (parseFloat(app.version) - 0.3).toFixed(1);
       const hasUpdate = false; // Verificação de atualização para apps de terceiros removida permanentemente
 
       return {
         ...s,
         isInstalled: !!isInstalled,
+        isDownloaded,
         installedVersion: installedVersion || "0",
         hasUpdate
       };
