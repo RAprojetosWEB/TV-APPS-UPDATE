@@ -301,15 +301,15 @@ function Index() {
               {states[i].status === "downloading" ? (
                 <div className="flex w-full flex-col items-center px-8">
                   <div
-                    className="mb-8 flex h-32 w-32 items-center justify-center rounded-2xl"
+                    className="tv-icon-container mb-8 flex items-center justify-center rounded-2xl"
                     style={{
                       background:
                         "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))",
                     }}
                   >
-                    <Download size={64} strokeWidth={1.8} color="oklch(0.15 0.03 270)" />
+                    <Download className="w-1/2 h-1/2" strokeWidth={1.8} color="oklch(0.15 0.03 270)" />
                   </div>
-                  <h2 className="text-3xl font-bold">{app.name}</h2>
+                  <h2 className="tv-text font-bold">{app.name}</h2>
                   <p className="mt-2 text-sm text-white/60">Baixando…</p>
                   <div
                     className="mt-6 h-3 w-full overflow-hidden rounded-full"
