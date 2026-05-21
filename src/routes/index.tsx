@@ -81,9 +81,25 @@ function Index() {
     Array<{
       status: "idle" | "downloading" | "done" | "error";
       progress: number;
+      isInstalled: boolean;
       blobUrl?: string;
     }>
-  >(() => APPS.map(() => ({ status: "idle", progress: 0 })));
+  >(() => APPS.map(() => ({ status: "idle", progress: 0, isInstalled: false })));
+
+  // Atualiza status de instalação periodicamente
+  useEffect(() => {
+    const checkInstalled = () => {
+      if (isNative && window.Android?.isAppInstalled) {
+        setStates(prev => prev.map((s, i) => ({
+          ...s,
+          isInstalled: window.Android?.isAppInstalled?.(APPS[i].packageName) || false
+        })));
+      }
+    };
+    checkInstalled();
+    const interval = setInterval(checkInstalled, 5000);
+    return () => clearInterval(interval);
+  }, [isNative]);
   const [modalChoice, setModalChoice] = useState<"yes" | "no">("yes");
   const [installModalOpen, setInstallModalOpen] = useState(false);
   const [installModalAppIndex, setInstallModalAppIndex] = useState<number | null>(null);
@@ -163,16 +179,14 @@ function Index() {
 
   const startDownload = async (i: number) => {
     const app = APPS[i];
-    if (states[i].status === "downloading") return;
-
-    // Verificar se já está instalado (apenas se for nativo)
+    
+    // Se já estiver instalado, abre direto ao clicar
     if (isNative && window.Android?.isAppInstalled?.(app.packageName)) {
-      setInstallModalAppIndex(i);
-      setInstallModalOpen(true);
-      setModalChoice("yes");
+      window.Android.openApp(app.packageName);
       return;
     }
 
+    if (states[i].status === "downloading") return;
     updateState(i, { status: "downloading", progress: 0 });
 
     // Modo nativo: delega download + instalação ao APK host.
@@ -426,6 +440,12 @@ function Index() {
                   color={isFocused ? "oklch(0.15 0.03 270)" : "white"}
                 />
               </div>
+              {states[i].isInstalled && (
+                <div className="absolute top-6 right-6 flex items-center gap-2 rounded-full bg-tv-accent/20 px-4 py-2 border border-tv-accent/30 shadow-[0_0_20px_rgba(94,230,168,0.2)] animate-in fade-in zoom-in duration-300">
+                  <Check size={18} className="text-tv-accent" />
+                  <span className="text-sm font-bold text-tv-accent tracking-wide uppercase">Instalado</span>
+                </div>
+              )}
               <h2 className="text-4xl font-bold">{app.name}</h2>
               <p className="mt-4 px-6 text-center text-xl text-white/60">
                 {app.description}
@@ -438,8 +458,17 @@ function Index() {
                   border: `3px solid ${isFocused ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
                 }}
               >
-                <Download size={22} />
-                QUERO INSTALAR
+                {states[i].isInstalled ? (
+                  <>
+                    <Play size={22} fill="currentColor" />
+                    ABRIR APP
+                  </>
+                ) : (
+                  <>
+                    <Download size={22} />
+                    QUERO INSTALAR
+                  </>
+                )}
               </div>
               </>
               )}
