@@ -134,8 +134,25 @@ class MainActivity : Activity() {
         root.addView(header)
         root.addView(sub)
 
-        // Linha de cards centralizada
-        val row = LinearLayout(this).apply {
+        val cardWidth = (380 * scaleFactor).toInt()
+        val cardHeight = (500 * scaleFactor).toInt()
+        val cardMargin = (24 * scaleFactor).toInt()
+
+        // Linha de cards centralizada com navegação infinita
+        val row = object : LinearLayout(this) {
+            override fun focusSearch(focused: View, direction: Int): View? {
+                val currentIdx = cardViews.indexOfFirst { it.container == focused }
+                if (currentIdx != -1) {
+                    if (direction == View.FOCUS_RIGHT) {
+                        return cardViews[(currentIdx + 1) % cardViews.size].container
+                    }
+                    if (direction == View.FOCUS_LEFT) {
+                        return cardViews[(currentIdx - 1 + cardViews.size) % cardViews.size].container
+                    }
+                }
+                return super.focusSearch(focused, direction)
+            }
+        }.apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
             layoutParams = LinearLayout.LayoutParams(
@@ -145,10 +162,6 @@ class MainActivity : Activity() {
             clipToPadding = false
             setPadding(0, dp((20 * scaleFactor).toInt()), 0, dp((20 * scaleFactor).toInt()))
         }
-        
-        val cardWidth = (380 * scaleFactor).toInt()
-        val cardHeight = (500 * scaleFactor).toInt()
-        val cardMargin = (24 * scaleFactor).toInt()
 
         AppCatalog.apps.forEachIndexed { index, app ->
             val card = buildCard(index, app, cardWidth, cardHeight, cardMargin, scaleFactor)
