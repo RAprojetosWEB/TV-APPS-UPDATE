@@ -110,6 +110,7 @@ function Index() {
   const installYesBtnRef = useRef<HTMLButtonElement | null>(null);
   const installNoBtnRef = useRef<HTMLButtonElement | null>(null);
 
+  const { time, date } = useDateTime();
   const doneIndex = states.findIndex((s) => s.status === "done");
   const modalOpen = doneIndex !== -1 || installModalOpen;
 
