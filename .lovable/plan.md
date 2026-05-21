@@ -1,87 +1,91 @@
-# Botão dedicado de verificação OTA
+# Plano — Opções 1 e 3 do ambiente Android
 
-Atualmente o botão "Procurar atualizações" no header dispara tanto a verificação dos apps (já removida) quanto a OTA. Vamos criar um botão dedicado e claro para o usuário verificar/atualizar o sistema (TV.Apps) manualmente.
+## Objetivo
 
-## Mudanças em `src/routes/index.tsx`
+Deixar o launcher nativo realmente útil para o usuário:
 
-- Adicionar no header, ao lado do botão "Procurar atualizações", um novo botão:
-  - Texto: "Atualizar sistema" (ou "Verificando sistema..." durante a checagem).
-  - Ícone: `Cloud` + `RefreshCcw` (spin quando `ota.checking`).
-  - Cor de destaque laranja para diferenciar do botão de apps.
-  - Ao clicar:
-    1. Chama `ota.checkNow()`.
-    2. Se `ota.hasUpdate` ficar true, o modal OTA já abre automaticamente (efeito existente).
-    3. Se não houver update, o próprio hook exibe toast "✅ aplicativo já está atualizado".
-- Manter navegação por DPAD (focusable, outline-none, focus styles).
-- Remover a chamada `ota.checkNow()` do botão "Procurar atualizações" antigo (que agora só serve para apps), deixando-o exclusivo para o sistema OTA — ou simplesmente substituir aquele botão pelo novo, já que a verificação de apps foi removida.
+1. **Detectar app já instalado de forma confiável** + mostrar isso claramente no card.
+2. **Limpar o cache de APKs automaticamente** depois da instalação e quando ele crescer demais.
 
-## Decisão de UX
+---
 
-Substituir o botão atual "Procurar atualizações" por **"Atualizar sistema"** com ícone Cloud + RefreshCcw, em vez de manter dois botões redundantes. O texto deixa claro que é a atualização do próprio TV.Apps.
+## Opção 1 — Detectar app já instalado
 
-## Resultado
+Hoje a lógica existe (`isAppInstalled` + troca do texto do botão para "▶ ABRIR APP"), mas:
 
-Usuário tem um botão claro no header para verificar atualizações OTA a qualquer momento.
-# Sistema OTA (Over-The-Air Update)
+- Os `packageName` no `AppCatalog.kt` são placeholders (`com.unitv.app`, `com.nexa.tv`, `com.alphaplay.app`), então o `PackageManager` nunca encontra o app instalado.
+- O único sinal visual é a troca do texto do botão — fácil de não perceber.
 
-Transformar o app em uma central com atualização automática do próprio APK via Lovable Cloud Storage.
+### O que muda
 
-## O que será feito
+**a) Descobrir o packageName real automaticamente, sem precisar editar código a cada APK**
 
-### 1. Backend (Lovable Cloud)
-- Criar bucket público `tvapps-updates` no Storage para hospedar o APK e o arquivo de metadados.
-- Você fará upload manual do `tvapps-latest.apk` e do `update.json` sempre que compilar uma versão nova.
-- Formato do `update.json`:
+Em vez de depender de uma string fixa, ler o `packageName` direto do arquivo `.apk` baixado e guardar em `SharedPreferences` por nome de catálogo:
 
-```text
-{
-  "version": "2.4",
-  "apkUrl": "https://<projeto>.supabase.co/storage/v1/object/public/tvapps-updates/tvapps-latest.apk",
-  "changelog": "Melhorias visuais e correções",
-  "forceUpdate": false
-}
-```
+- Quando um APK é baixado, usar `PackageManager.getPackageArchiveInfo(apkPath, 0)` para extrair o `packageName` real.
+- Salvar em `SharedPreferences` (`installedApps`) com a chave sendo o `CatalogApp.name`.
+- Na hora de checar "está instalado?", primeiro tentar a string do catálogo, e se falhar, tentar o `packageName` salvo do APK anterior.
 
-### 2. Lógica de verificação
-- Ao abrir o app: baixa `update.json` automaticamente.
-- Compara versão instalada (via `window.Android.version()` no APK nativo, ou constante local como fallback) com a versão remota.
-- Botão "🔍 Procurar atualizações" no header dispara verificação manual com loading.
-- Bloqueio para evitar downloads duplicados ou simultâneos.
+Resultado: na **primeira instalação** o launcher aprende o package real e a partir daí detecta corretamente, sem o usuário precisar fornecer nada.
 
-### 3. UI quando houver atualização
-- Badge "⬆️ UPDATE" com glow laranja/amarelo.
-- Modal "Nova versão disponível" mostrando versão instalada, nova versão, changelog e botões "Atualizar agora" / "Depois".
-- Navegação por DPAD totalmente funcional.
+**b) Indicador visual de "Instalado" no card**
 
-### 4. UI quando NÃO houver atualização
-- Toast "✅ O aplicativo já está atualizado".
+- Adicionar um pequeno "chip" verde no topo direito do card com o texto **"INSTALADO"** quando o app é detectado.
+- Manter a troca do botão para "▶ ABRIR APP".
+- Atualizar esse estado também no `onResume()` da Activity, para refletir desinstalações feitas pelo usuário.
 
-### 5. Processo de atualização
-- "Atualizar agora" → no APK nativo chama `window.Android.installApk(url, "TV.Apps")`.
-- No navegador, baixa o APK com barra de progresso e abre o arquivo.
+---
 
-### 6. Force update
-- Quando `forceUpdate: true`, o modal não pode ser fechado.
+## Opção 3 — Limpeza automática do cache de APKs
 
-## Arquivos afetados
+Hoje cada APK fica permanentemente em `context.cacheDir/apks/` e nunca é apagado. Três APKs grandes podem ocupar centenas de MB no TV Box.
 
-- Novo: `src/hooks/useOtaUpdate.ts` — busca o `update.json`, compara versões, expõe `hasUpdate`, `remoteVersion`, `changelog`, `forceUpdate`, `checking`, `checkNow()`.
-- Novo: `src/components/OtaUpdateModal.tsx` — modal com suporte a DPAD e bloqueio em modo force.
-- Novo: `src/lib/app-version.ts` — constante `APP_VERSION` com a versão local atual.
-- Editar: `src/routes/index.tsx` — integrar o hook, exibir badge OTA, abrir modal quando houver update, conectar o botão "Procurar atualização" também à verificação OTA.
-- Migration: criar bucket público `tvapps-updates` + policies de leitura pública.
+### Regras de limpeza
+
+1. **Após instalação bem-sucedida** (quando o card detecta que o app passou a estar instalado no `onResume`): apagar o `.apk` correspondente em `cacheDir/apks/`.
+2. **Limite total de cache de 300 MB**: no `onCreate`, varrer `cacheDir/apks/`, e se passar de 300 MB, apagar os arquivos mais antigos (por `lastModified`) até voltar abaixo do limite. Apps já instalados são apagados primeiro.
+3. **Arquivos órfãos** (apks de nomes que não estão mais no catálogo): apagar também na varredura inicial.
+
+### Onde isso vive
+
+Novo objeto utilitário **`ApkCache.kt`** com:
+
+- `fun cleanupInstalled(context, catalog)` — apaga APKs cujo app já está instalado.
+- `fun enforceSizeLimit(context, maxBytes = 300L * 1024 * 1024)` — aplica limite total.
+- `fun deleteFor(context, appName)` — apaga o APK de um app específico (chamado após instalação confirmada).
+
+Chamadas:
+
+- `MainActivity.onCreate` → `ApkCache.cleanupInstalled` + `ApkCache.enforceSizeLimit`
+- `MainActivity.onResume` → reavaliar instalação de cada card e chamar `ApkCache.deleteFor` para os que foram recém-instalados.
+
+---
 
 ## Detalhes técnicos
 
-- Comparação semântica de versões aceitando `2.4`, `2.4.1`.
-- Cache-busting com `?t=Date.now()` na URL do `update.json`.
-- Erros silenciosos na verificação automática; toast só na manual.
-- Estado inicial vazio para evitar erro de hidratação SSR.
+### Arquivos novos
+- `android/app/src/main/java/com/tvapps/launcher/ApkCache.kt`
+- `android/app/src/main/java/com/tvapps/launcher/InstalledRegistry.kt` (wrapper de `SharedPreferences` para o mapa `catalogName → packageName`)
 
-## Depois que o plano for aprovado
+### Arquivos alterados
+- `android/app/src/main/java/com/tvapps/launcher/MainActivity.kt`
+  - Função `refreshInstalledState(card, app)` que aplica botão + chip "INSTALADO".
+  - Sobrescrever `onResume()` para revalidar todos os cards e disparar limpeza pontual.
+  - Após `ApkInstaller.install(...)`, agendar revalidação (já existe `postDelayed` de 2500 ms — usar essa janela).
+  - Adicionar o chip "INSTALADO" no `buildCard` (overlay no `container` via `FrameLayout.LayoutParams` com `gravity = TOP|END`).
+- `android/app/src/main/java/com/tvapps/launcher/ApkDownloader.kt`
+  - Após gravar o arquivo, chamar `InstalledRegistry.learnFromApk(context, fileNameHint, file)` para extrair e salvar o `packageName` real.
 
-Você precisará fazer upload manual no bucket `tvapps-updates`:
-1. `tvapps-latest.apk` (o APK novo)
-2. `update.json` (com a nova versão)
+### Sem alterações em
+- `AppCatalog.kt` (continua com os placeholders — eles deixam de importar, pois a detecção passa a usar o registry).
+- `ApkInstaller.kt`.
+- Build/Gradle, permissões do `AndroidManifest` (não precisa de nada novo: `QUERY_ALL_PACKAGES` não é necessário se já estamos consultando packages específicos via `getPackageInfo` que o app conhece após a instalação).
 
-Te explico o passo a passo do upload assim que o código estiver pronto.
+---
+
+## Como o usuário percebe
+
+- Abre o launcher → cards aparecem normalmente.
+- Instala "UniTV" → no fim do fluxo o card mostra chip verde **"INSTALADO"** e o botão vira **"▶ ABRIR APP"**.
+- Sai do app e volta → o estado continua correto. Se desinstalou pelas configurações, o chip some.
+- Cache não cresce indefinidamente: APKs já instalados somem do `cacheDir`, e o total fica abaixo de 300 MB.
