@@ -164,6 +164,15 @@ function Index() {
   const startDownload = async (i: number) => {
     const app = APPS[i];
     if (states[i].status === "downloading") return;
+
+    // Verificar se já está instalado (apenas se for nativo)
+    if (isNative && window.Android?.isAppInstalled?.(app.packageName)) {
+      setInstallModalAppIndex(i);
+      setInstallModalOpen(true);
+      setModalChoice("yes");
+      return;
+    }
+
     updateState(i, { status: "downloading", progress: 0 });
 
     // Modo nativo: delega download + instalação ao APK host.
