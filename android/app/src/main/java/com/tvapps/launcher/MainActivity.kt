@@ -278,6 +278,21 @@ class MainActivity : Activity() {
         root.addView(container)
         root.addView(updateOverlay)
 
+        val footerNotice = TextView(this).apply {
+            text = "Acesso restrito a clientes. Peça o acesso no WhatsApp 14 99868-1696"
+            setTextColor(Color.parseColor("#66FFFFFF"))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f * scaleFactor)
+            gravity = Gravity.CENTER
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply {
+                gravity = Gravity.BOTTOM
+                bottomMargin = dp((24 * scaleFactor).toInt())
+            }
+        }
+        root.addView(footerNotice)
+
         passwordInput.requestFocus()
 
         // Verificação automática de OTA ANTES do login
