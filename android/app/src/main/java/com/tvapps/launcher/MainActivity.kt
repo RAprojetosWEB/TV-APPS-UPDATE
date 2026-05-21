@@ -124,20 +124,19 @@ class MainActivity : Activity() {
             }
 
             if (app != null) {
-                val deleted = ApkCache.deleteFor(this, app.name)
-                if (deleted) {
-                    runOnUiThread {
-                        Toast.makeText(this, "Instalação concluída. Arquivo temporário removido.", Toast.LENGTH_LONG).show()
-                        // Atualiza a UI se o app estiver visível
-                        if (cardViews.isNotEmpty()) {
-                            val index = AppCatalog.apps.indexOf(app)
-                            if (index != -1) {
-                                cardViews.getOrNull(index)?.let { refreshInstalledState(it, app) }
-                            }
+                ApkCache.deleteFor(this, app.name)
+                runOnUiThread {
+                    Toast.makeText(this, "Instalação concluída. Arquivo temporário removido.", Toast.LENGTH_LONG).show()
+                    // Atualiza a UI se o app estiver visível
+                    if (cardViews.isNotEmpty()) {
+                        val index = AppCatalog.apps.indexOf(app)
+                        if (index != -1) {
+                            cardViews.getOrNull(index)?.let { refreshInstalledState(it, app) }
                         }
                     }
                 }
             }
+
         }
         PackageInstallReceiver.register(this, packageReceiver!!)
     }
