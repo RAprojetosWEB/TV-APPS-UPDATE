@@ -931,12 +931,27 @@ class MainActivity : Activity() {
                         if (!it.isSuccessful) return@withContext null
                         val body = it.body?.string() ?: return@withContext null
                         val json = org.json.JSONObject(body)
-                        val remote = json.optString("version", "")
-                        val downloadUrl = json.optString("url", "")
-                        val local = try { packageManager.getPackageInfo(packageName, 0).versionName ?: "" } catch (_: Exception) { "" }
-                        
-                        val hasUpdate = compareVersions(remote, local) > 0
-                        Triple(hasUpdate, remote, downloadUrl)
+                        // Aceita o novo schema (versionCode/versionName/apkUrl)
+                        // e também o antigo (version/url) para retrocompatibilidade.
+                        val remoteName = json.optString("versionName",
+                            json.optString("version", ""))
+                        val remoteCode = json.optLong("versionCode", -1L)
+                        val downloadUrl = json.optString("apkUrl",
+                            json.optString("url", ""))
+
+                        val pkgInfo = try { packageManager.getPackageInfo(packageName, 0) } catch (_: Exception) { null }
+                        val localName = pkgInfo?.versionName ?: ""
+                        val localCode: Long = if (pkgInfo == null) 0L else {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) pkgInfo.longVersionCode
+                            else @Suppress("DEPRECATION") pkgInfo.versionCode.toLong()
+                        }
+
+                        val hasUpdate = if (remoteCode > 0L) {
+                            remoteCode > localCode
+                        } else {
+                            compareVersions(remoteName, localName) > 0
+                        }
+                        Triple(hasUpdate, remoteName, downloadUrl)
                     }
                 }
             } catch (_: Exception) { null }
