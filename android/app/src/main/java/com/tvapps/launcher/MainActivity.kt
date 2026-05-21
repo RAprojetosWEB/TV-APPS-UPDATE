@@ -698,7 +698,7 @@ class MainActivity : Activity() {
             )
             text = spanned
             setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 44f * scale)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 36f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
         }
         val sub = TextView(this).apply {
