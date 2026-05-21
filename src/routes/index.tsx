@@ -107,18 +107,54 @@ function Index() {
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [appToUpdate, setAppToUpdate] = useState<number | null>(null);
 
-  // Atualiza status de instalação periodicamente
+  const checkUpdates = async (manual = false) => {
+    if (checkingUpdates) return;
+    setCheckingUpdates(true);
+    if (manual) playClick();
+
+    // Simula um delay de rede
+    await new Promise(resolve => setTimeout(resolve, manual ? 2000 : 500));
+
+    setStates(prev => prev.map((s, i) => {
+      const app = APPS[i];
+      const isInstalled = isNative && window.Android?.isAppInstalled?.(app.packageName);
+      
+      // Mock de versão instalada para demonstração (sempre um pouco menor que a versão atual)
+      const installedVersion = isNative && window.Android?.version ? window.Android.version() : (parseFloat(app.version) - 0.3).toFixed(1);
+      
+      // Consideramos que tem update se a versão do servidor for maior que a instalada
+      const hasUpdate = isInstalled && parseFloat(app.version) > parseFloat(installedVersion);
+
+      return {
+        ...s,
+        isInstalled: !!isInstalled,
+        installedVersion,
+        hasUpdate
+      };
+    }));
+
+    setCheckingUpdates(false);
+
+    if (manual) {
+      const updatesFound = states.some(s => s.hasUpdate);
+      if (!updatesFound) {
+        toast.success("O aplicativo já está atualizado", {
+          description: "Todos os seus apps estão na versão mais recente.",
+          duration: 3000,
+        });
+      }
+    }
+  };
+
+  // Atualiza status de instalação e checa updates periodicamente
   useEffect(() => {
-    const checkInstalled = () => {
+    const checkAll = () => {
       if (isNative && window.Android?.isAppInstalled) {
-        setStates(prev => prev.map((s, i) => ({
-          ...s,
-          isInstalled: window.Android?.isAppInstalled?.(APPS[i].packageName) || false
-        })));
+        checkUpdates();
       }
     };
-    checkInstalled();
-    const interval = setInterval(checkInstalled, 5000);
+    checkAll();
+    const interval = setInterval(checkAll, 15000); // Check every 15s
     return () => clearInterval(interval);
   }, [isNative]);
   const [modalChoice, setModalChoice] = useState<"yes" | "no">("yes");
