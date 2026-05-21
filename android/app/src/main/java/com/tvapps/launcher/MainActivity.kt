@@ -1058,12 +1058,20 @@ class MainActivity : Activity() {
                 }
             }
         }
-        val settings = makeStatusPill("⚙️", "#FFFFFF", scale).apply {
+        val settings = makeStatusPill("", "#FFFFFF", scale).apply {
             isFocusable = true
             isClickable = true
             maxLines = 1
             ellipsize = android.text.TextUtils.TruncateAt.END
-            
+
+            // Ícone de engrenagem (estilo lucide), igual ao da versão Web
+            val gear = androidx.core.content.ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_settings)
+            val gs = dp((16 * scale).toInt())
+            gear?.setBounds(0, 0, gs, gs)
+            gear?.setTint(Color.WHITE)
+            setCompoundDrawables(gear, null, null, null)
+            compoundDrawablePadding = dp((6 * scale).toInt())
+
             setOnClickListener {
                 try {
                     startActivity(Intent(android.provider.Settings.ACTION_SETTINGS))
@@ -1078,11 +1086,11 @@ class MainActivity : Activity() {
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#33FFFFFF"))
                     bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
-                    tv.text = "⚙️  Configurações"
+                    tv.text = "Configurações"
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                    tv.text = "⚙️"
+                    tv.text = ""
                 }
             }
         }
