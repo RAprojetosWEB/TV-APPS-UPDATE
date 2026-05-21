@@ -126,9 +126,14 @@ function Index() {
 
   useEffect(() => {
     if (!modalOpen) return;
-    if (modalChoice === "yes") yesBtnRef.current?.focus();
-    else noBtnRef.current?.focus();
-  }, [modalChoice, modalOpen]);
+    if (installModalOpen) {
+      if (modalChoice === "yes") installYesBtnRef.current?.focus();
+      else installNoBtnRef.current?.focus();
+    } else {
+      if (modalChoice === "yes") yesBtnRef.current?.focus();
+      else noBtnRef.current?.focus();
+    }
+  }, [modalChoice, modalOpen, installModalOpen]);
 
   const handleKey = (e: React.KeyboardEvent) => {
     if (modalOpen) return;
