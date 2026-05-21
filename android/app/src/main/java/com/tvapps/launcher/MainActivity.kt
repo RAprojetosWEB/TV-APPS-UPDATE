@@ -470,7 +470,7 @@ class MainActivity : Activity() {
         root.addView(row)
 
         val footer = TextView(this).apply {
-            text = "Acesso restrito a clientes. Peça o acesso no WhatsApp 14 99868-1696"
+            text = "Selecione um aplicativo e pressione OK para instalar ou abrir"
             setTextColor(Color.parseColor("#66FFFFFF"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f * scaleFactor)
             gravity = Gravity.CENTER
