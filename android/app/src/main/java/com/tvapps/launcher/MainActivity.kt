@@ -705,7 +705,7 @@ class MainActivity : Activity() {
 
         // Pill "INSTALAR"
         val pill = TextView(this).apply {
-            text = "⬇  Baixar aplicativo"
+            text = "Baixar aplicativo"
             setTextColor(Color.WHITE)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
@@ -714,6 +714,12 @@ class MainActivity : Activity() {
             val px = (32 * scale).toInt()
             val py = (18 * scale).toInt()
             setPadding(dp(px), dp(py), dp(px), dp(py))
+            val dl = androidx.core.content.ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_download)
+            val s = (textSize * 1.1f).toInt()
+            dl?.setBounds(0, 0, s, s)
+            dl?.setTint(Color.WHITE)
+            setCompoundDrawables(dl, null, null, null)
+            compoundDrawablePadding = dp(8)
         }
 
         // Barra de progresso (escondida no estado idle)
@@ -852,17 +858,31 @@ class MainActivity : Activity() {
         val hasApk = apkFile.exists() && apkFile.length() > 0
 
         if (installed) {
-            card.pill.text = "▶  Abrir aplicativo"
+            setPillContent(card.pill, R.drawable.ic_play, "Abrir aplicativo")
             card.installedChip.visibility = View.VISIBLE
             // Se já está instalado, removemos o APK do cache para liberar espaço
             ApkCache.deleteFor(this, app.name)
         } else if (hasApk) {
-            card.pill.text = "⬇  Instalar aplicativo"
+            setPillContent(card.pill, R.drawable.ic_download, "Instalar aplicativo")
             card.installedChip.visibility = View.GONE
         } else {
-            card.pill.text = "⬇  Baixar aplicativo"
+            setPillContent(card.pill, R.drawable.ic_download, "Baixar aplicativo")
             card.installedChip.visibility = View.GONE
         }
+    }
+
+    /**
+     * Define o ícone (compound drawable à esquerda) e o texto de um pill,
+     * substituindo emojis por vetores estilo lucide (igual à versão Web).
+     */
+    private fun setPillContent(pill: TextView, iconRes: Int, label: String) {
+        val icon = androidx.core.content.ContextCompat.getDrawable(this, iconRes)
+        val size = (pill.textSize * 1.1f).toInt()
+        icon?.setBounds(0, 0, size, size)
+        icon?.setTint(pill.currentTextColor)
+        pill.setCompoundDrawables(icon, null, null, null)
+        pill.compoundDrawablePadding = dp(8)
+        pill.text = label
     }
 
     private fun openApp(packageName: String) {
@@ -1289,7 +1309,7 @@ class MainActivity : Activity() {
             } catch (_: Exception) { null }
 
             if (otaInfo == null) {
-                systemPill.text = if (systemPill.hasFocus()) "🔍  Procurar atualizações" else "🔍"
+                setPillContent(systemPill, R.drawable.ic_rotate_ccw, if (systemPill.hasFocus()) "Procurar atualizações" else "")
                 systemPill.setTextColor(Color.parseColor("#FF6B6B"))
                 if (manual) {
                     Toast.makeText(this@MainActivity, "Falha ao verificar atualizações (sem conexão)", Toast.LENGTH_SHORT).show()
@@ -1300,13 +1320,13 @@ class MainActivity : Activity() {
             val (hasUpdate, remoteVersion, downloadUrl) = otaInfo
 
             if (hasUpdate) {
-                systemPill.text = "⬇  Atualização disponível ($remoteVersion)"
+                setPillContent(systemPill, R.drawable.ic_download, "Atualização disponível ($remoteVersion)")
                 systemPill.setTextColor(Color.parseColor("#5EE6A8"))
                 if (manual) {
                     showOtaConfirmDialog(remoteVersion, downloadUrl)
                 }
             } else {
-                systemPill.text = if (systemPill.hasFocus()) "🔍  Procurar atualizações" else "🔍"
+                setPillContent(systemPill, R.drawable.ic_rotate_ccw, if (systemPill.hasFocus()) "Procurar atualizações" else "")
                 systemPill.setTextColor(Color.parseColor("#5EE6A8"))
                 if (manual) {
                     Toast.makeText(this@MainActivity, "Você já está na versão mais recente", Toast.LENGTH_SHORT).show()
@@ -1341,7 +1361,7 @@ class MainActivity : Activity() {
             ApkDownloader.download(this@MainActivity, url, "TV.Apps_Update").collect { p ->
                 when (p) {
                     is DownloadProgress.Progress -> withContext(Dispatchers.Main) {
-                        systemPill.text = "⬇  Baixando: ${p.percent}%"
+                        setPillContent(systemPill, R.drawable.ic_download, "Baixando: ${p.percent}%")
                     }
                     is DownloadProgress.Done -> withContext(Dispatchers.Main) {
                         systemPill.text = "✓  Download concluído"
