@@ -537,7 +537,7 @@ function Index() {
 
   return (
     <LoginGate>
-    <div className="tv-container relative min-h-dvh bg-background">
+    <div className="relative h-screen w-screen overflow-hidden bg-background">
       {/* Background decoration */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div 
@@ -552,9 +552,9 @@ function Index() {
 
       <main
         onKeyDown={handleKey}
-        className="relative flex flex-col text-foreground"
+        className="relative flex h-screen flex-col text-foreground overflow-hidden"
       >
-      <header className="shrink-0 px-[clamp(1rem,4vw,4rem)] pt-[clamp(0.5rem,2vh,2rem)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <header className="shrink-0 px-[clamp(1rem,4vw,4rem)] pt-[clamp(1rem,3vh,3rem)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="tv-title font-black tracking-tight leading-none">
             TV<span style={{ color: "var(--tv-accent)" }}>.</span>Apps
@@ -608,7 +608,7 @@ function Index() {
         </div>
       </header>
 
-      <section className="tv-card-grid flex-1 min-h-0 items-stretch overflow-visible">
+      <section className="tv-card-grid flex-1 min-h-0 items-stretch">
         {currentApps.map((app, i) => {
           const isFocused = focused === i;
           return (
@@ -628,7 +628,7 @@ function Index() {
                   startDownload(i);
                 }
               }}
-              className="group relative flex h-auto min-h-[clamp(280px,40vh,520px)] max-h-[90vh] w-full max-w-[clamp(220px,24vw,340px)] flex-col items-center justify-center rounded-[clamp(1.5rem,3vw,3rem)] outline-none transition-all duration-300 mx-auto p-[clamp(1rem,2.5vh,2rem)] overflow-hidden"
+              className="group relative flex h-full w-full max-w-[clamp(280px,25vw,420px)] max-h-full min-h-0 flex-col items-center justify-center rounded-[clamp(1.5rem,3vw,3rem)] outline-none transition-all duration-300 mx-auto p-[clamp(1rem,2.5vh,2rem)] overflow-hidden"
               style={{
                 background:
                   "linear-gradient(160deg, var(--tv-card), oklch(0.18 0.04 270))",
@@ -759,7 +759,7 @@ function Index() {
                 {app.description}
               </p>
               <div
-                className="mt-auto flex w-full max-w-full items-center justify-center gap-2 rounded-full px-[clamp(1rem,3vw,2.5rem)] py-[clamp(0.5rem,1.5vh,1.25rem)] text-[clamp(0.85rem,1.3vw,1.1rem)] font-bold transition-all whitespace-nowrap"
+                className="mt-[clamp(0.75rem,2.5vh,2.5rem)] flex items-center gap-2 rounded-full px-[clamp(1rem,3vw,2.5rem)] py-[clamp(0.5rem,1.5vh,1.25rem)] text-[clamp(0.85rem,1.3vw,1.1rem)] font-bold transition-all whitespace-nowrap"
                 style={{
                   background: isFocused ? "var(--tv-accent)" : "transparent",
                   color: isFocused ? "oklch(0.15 0.03 270)" : "white",

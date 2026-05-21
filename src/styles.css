@@ -153,22 +153,19 @@
     width: 100%;
     max-width: 1920px;
     margin: 0 auto;
-    overflow-y: auto;
     overflow-x: hidden;
-    padding: clamp(18px, 2vw, 48px);
-    box-sizing: border-box;
   }
 
   .tv-card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(clamp(280px, 30vw, 420px), 1fr));
     justify-content: center;
-    justify-items: center;
     align-items: stretch;
     gap: clamp(1.5rem, 4vw, 3.5rem);
     width: 100%;
+    max-width: 1600px;
     margin: 0 auto;
-    padding: clamp(1rem, 3vh, 3rem) 0;
+    padding: clamp(1rem, 3vh, 3rem) clamp(1rem, 4vw, 3rem);
     min-height: 0;
   }
 
@@ -185,9 +182,9 @@
 
   .tv-icon-container {
     width: clamp(72px, 12vw, 140px);
+    aspect-ratio: 1 / 1;
     height: auto;
     flex-shrink: 0;
-    margin-bottom: clamp(0.5rem, 2vh, 2rem);
   }
 }
 
