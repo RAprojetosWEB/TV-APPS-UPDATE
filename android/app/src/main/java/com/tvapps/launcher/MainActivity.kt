@@ -791,6 +791,9 @@ class MainActivity : Activity() {
                         // mas o comportamento de abrir o instalador é o mesmo.
                         card.subtitle.text = "Abrindo instalador…"
                         
+                        // Aprende o packageName real do APK baixado para detecção futura precisa
+                        InstalledRegistry.learnFromApk(this@MainActivity, app.name, p.file)
+                        
                         ApkInstaller.install(this@MainActivity, p.file)
                         card.pill.postDelayed({
                             card.progress.visibility = View.GONE
