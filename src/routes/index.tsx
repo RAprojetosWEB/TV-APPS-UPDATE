@@ -459,11 +459,25 @@ function Index() {
               }}
               tabIndex={0}
               onFocus={() => setFocused(i)}
-              onClick={() => startDownload(i)}
+              onClick={() => {
+                if (states[i].hasUpdate) {
+                  setAppToUpdate(i);
+                  setUpdateModalOpen(true);
+                  playClick();
+                } else {
+                  startDownload(i);
+                }
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  startDownload(i);
+                  if (states[i].hasUpdate) {
+                    setAppToUpdate(i);
+                    setUpdateModalOpen(true);
+                    playClick();
+                  } else {
+                    startDownload(i);
+                  }
                 }
               }}
               className="group relative flex aspect-[3/4.2] w-full max-w-[clamp(300px,25vw,420px)] max-h-[clamp(400px,80vh,600px)] flex-col items-center justify-center rounded-[clamp(1.5rem,3vw,3rem)] outline-none transition-all duration-300 mx-auto"
@@ -473,10 +487,20 @@ function Index() {
                 border: `clamp(2px, 0.4vw, 4px) solid ${isFocused ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
                 transform: isFocused ? "scale(1.05)" : "scale(1)",
                 boxShadow: isFocused
-                  ? "0 25px 80px -10px oklch(0.78 0.22 150 / 0.55), 0 0 0 clamp(4px, 0.6vw, 8px) oklch(0.78 0.22 150 / 0.15)"
-                  : "0 10px 30px -10px oklch(0 0 0 / 0.5)",
+                  ? states[i].hasUpdate 
+                    ? "0 25px 80px -10px oklch(0.7 0.25 45 / 0.6), 0 0 0 clamp(4px, 0.6vw, 8px) oklch(0.7 0.25 45 / 0.2)"
+                    : "0 25px 80px -10px oklch(0.78 0.22 150 / 0.55), 0 0 0 clamp(4px, 0.6vw, 8px) oklch(0.78 0.22 150 / 0.15)"
+                  : states[i].hasUpdate
+                    ? "0 15px 40px -10px oklch(0.7 0.25 45 / 0.4)"
+                    : "0 10px 30px -10px oklch(0 0 0 / 0.5)",
               }}
             >
+              {states[i].hasUpdate && (
+                <div className="absolute top-6 left-6 z-10 flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 shadow-[0_0_20px_rgba(249,115,22,0.4)] animate-pulse">
+                  <RefreshCcw size={16} className="text-white" />
+                  <span className="text-sm font-black text-white tracking-wide uppercase">Update</span>
+                </div>
+              )}
               {states[i].status === "downloading" ? (
                 <div className="flex w-full flex-col items-center px-[clamp(1rem,4vw,3rem)]">
                   <div
