@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOtaUpdate } from "@/hooks/useOtaUpdate";
 import { OtaUpdateModal } from "@/components/OtaUpdateModal";
 import { NetworkIndicator } from "@/components/NetworkIndicator";
+import { LoginGate, logout as authLogout } from "@/components/LoginGate";
+import { LogOut } from "lucide-react";
 import { useDateTime } from "@/hooks/useDateTime";
 import { toast } from "sonner";
 import unitvLogo from "@/assets/unitv.png";
