@@ -867,7 +867,7 @@ class MainActivity : Activity() {
             )
         }
 
-        val system = makeStatusPill("⟳  Procurar Atualização", "#E8A85C", scale).apply {
+        val system = makeStatusPill("⟳", "#E8A85C", scale).apply {
             isFocusable = true
             isClickable = true
             setOnClickListener { checkOtaUpdate(this, true) }
@@ -1060,7 +1060,7 @@ class MainActivity : Activity() {
             } catch (_: Exception) { null }
 
             if (otaInfo == null) {
-                systemPill.text = "⟳  Procurar Atualização"
+                systemPill.text = "⟳"
                 systemPill.setTextColor(Color.parseColor("#FF6B6B"))
                 if (manual) {
                     Toast.makeText(this@MainActivity, "Falha ao verificar atualizações (sem conexão)", Toast.LENGTH_SHORT).show()
@@ -1077,7 +1077,7 @@ class MainActivity : Activity() {
                     showOtaConfirmDialog(remoteVersion, downloadUrl)
                 }
             } else {
-                systemPill.text = "⟳  Procurar Atualização"
+                systemPill.text = "⟳"
                 systemPill.setTextColor(Color.parseColor("#5EE6A8"))
                 if (manual) {
                     Toast.makeText(this@MainActivity, "Você já está na versão mais recente", Toast.LENGTH_SHORT).show()
@@ -1122,7 +1122,7 @@ class MainActivity : Activity() {
                     is DownloadProgress.Error -> withContext(Dispatchers.Main) {
                         systemPill.text = "⚠  Erro no download"
                         Toast.makeText(this@MainActivity, "Erro ao baixar atualização: ${p.message}", Toast.LENGTH_LONG).show()
-                        systemPill.postDelayed({ systemPill.text = "Procurar Atualização" }, 3000)
+                        systemPill.postDelayed({ systemPill.text = "⟳" }, 3000)
                     }
                 }
             }
