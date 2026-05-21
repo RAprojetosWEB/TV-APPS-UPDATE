@@ -766,12 +766,17 @@ function Index() {
                   }}
                 />
               </div>
-              {states[i].isInstalled && (
+              {states[i].isInstalled ? (
                 <div className="absolute top-6 right-6 flex items-center gap-2 rounded-full bg-tv-accent/20 px-4 py-2 border border-tv-accent/30 shadow-[0_0_20px_rgba(94,230,168,0.2)] animate-in fade-in zoom-in duration-300">
                   <Check size={18} className="text-tv-accent" />
                   <span className="text-sm font-bold text-tv-accent tracking-wide uppercase">Instalado</span>
                 </div>
-              )}
+              ) : states[i].isDownloaded ? (
+                <div className="absolute top-6 right-6 flex items-center gap-2 rounded-full bg-blue-500/20 px-4 py-2 border border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.2)] animate-in fade-in zoom-in duration-300">
+                  <Cloud size={18} className="text-blue-400" />
+                  <span className="text-sm font-bold text-blue-400 tracking-wide uppercase">Baixado</span>
+                </div>
+              ) : null}
               <h2 className="text-[clamp(1.25rem,2.5vw,2.25rem)] font-bold text-center">{app.name}</h2>
               <p className="mt-[clamp(0.25rem,1vh,1rem)] px-4 text-center text-[clamp(0.8rem,1.4vw,1.15rem)] text-white/60 line-clamp-2">
                 {app.description}
