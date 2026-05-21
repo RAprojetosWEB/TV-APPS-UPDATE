@@ -861,6 +861,13 @@ class MainActivity : Activity() {
         val right = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
+            // Habilita animações de transição de layout (expansão suave)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                layoutTransition = android.animation.LayoutTransition().apply {
+                    setDuration(250)
+                    enableTransitionType(android.animation.LayoutTransition.CHANGING)
+                }
+            }
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
