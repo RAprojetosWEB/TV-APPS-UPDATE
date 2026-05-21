@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Check, Download, Play, AlertCircle, Calendar, Clock, Cloud, RefreshCcw, Search, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useOtaUpdate } from "@/hooks/useOtaUpdate";
+import { OtaUpdateModal } from "@/components/OtaUpdateModal";
 import { NetworkIndicator } from "@/components/NetworkIndicator";
 import { useDateTime } from "@/hooks/useDateTime";
 import { toast } from "sonner";
@@ -108,6 +110,73 @@ function Index() {
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [appToUpdate, setAppToUpdate] = useState<number | null>(null);
   const [dynamicApps, setDynamicApps] = useState<any[]>([]);
+
+  // ---------- OTA (atualização do próprio app TV.Apps) ----------
+  const ota = useOtaUpdate();
+  const [otaModalOpen, setOtaModalOpen] = useState(false);
+  const [otaDownloading, setOtaDownloading] = useState(false);
+  const [otaProgress, setOtaProgress] = useState(0);
+
+  // Abre modal automaticamente quando detecta atualização (e mantém aberto se forceUpdate)
+  useEffect(() => {
+    if (ota.hasUpdate) setOtaModalOpen(true);
+  }, [ota.hasUpdate]);
+
+  const startOtaUpdate = async () => {
+    if (!ota.manifest || otaDownloading) return;
+    const url = ota.manifest.apkUrl;
+
+    // No APK nativo, delega ao instalador do Android
+    if (typeof window !== "undefined" && typeof window.Android?.installApk === "function") {
+      setOtaDownloading(true);
+      setOtaProgress(0);
+      try {
+        window.Android.installApk(url, "TV.Apps");
+      } catch (err) {
+        console.error("OTA native install failed", err);
+        setOtaDownloading(false);
+      }
+      return;
+    }
+
+    // Fallback navegador: baixa via fetch com progresso e abre o APK
+    setOtaDownloading(true);
+    setOtaProgress(0);
+    try {
+      const res = await fetch(url);
+      if (!res.ok || !res.body) throw new Error("HTTP " + res.status);
+      const total = Number(res.headers.get("Content-Length") || 0);
+      const reader = res.body.getReader();
+      const chunks: BlobPart[] = [];
+      let received = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+          chunks.push(value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength) as ArrayBuffer);
+          received += value.length;
+          if (total > 0) setOtaProgress(Math.round((received / total) * 100));
+        }
+      }
+      const blob = new Blob(chunks, { type: "application/vnd.android.package-archive" });
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = "tvapps-latest.apk";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      try { window.location.href = blobUrl; } catch {}
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 5 * 60_000);
+      setOtaDownloading(false);
+      setOtaModalOpen(false);
+    } catch (err) {
+      console.error("OTA download failed", err);
+      toast.error("Falha ao baixar a atualização");
+      setOtaDownloading(false);
+    }
+  };
+  // -----------------------------------------------------------
 
   const fetchDynamicApps = async () => {
     try {
@@ -452,21 +521,30 @@ function Index() {
           <p className="mt-3 tv-text text-white/50 font-medium">
             Central de Downloads Automática
           </p>
+          {ota.hasUpdate && ota.manifest && (
+            <button
+              onClick={() => setOtaModalOpen(true)}
+              className="mt-3 inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 text-sm font-black text-white uppercase tracking-wider shadow-[0_0_30px_rgba(249,115,22,0.6)] animate-pulse hover:scale-105 transition-transform"
+            >
+              <RefreshCcw size={16} />
+              ⬆️ Atualização disponível — v{ota.manifest.version}
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-[clamp(0.5rem,1.5vw,1.5rem)] flex-wrap">
           <button
-            onClick={() => checkUpdates(true)}
-            disabled={checkingUpdates}
-            className={`flex items-center gap-3 px-6 py-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md transition-all active:scale-95 focus:outline-none focus:border-tv-accent ${checkingUpdates ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/10'}`}
+            onClick={() => { checkUpdates(true); ota.checkNow(); }}
+            disabled={checkingUpdates || ota.checking}
+            className={`flex items-center gap-3 px-6 py-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md transition-all active:scale-95 focus:outline-none focus:border-tv-accent ${(checkingUpdates || ota.checking) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/10'}`}
           >
-            {checkingUpdates ? (
+            {(checkingUpdates || ota.checking) ? (
               <RefreshCcw size={20} className="text-tv-accent animate-spin" />
             ) : (
               <Search size={20} className="text-tv-accent" />
             )}
             <span className="text-lg font-bold text-white/90">
-              {checkingUpdates ? "Verificando..." : "Procurar atualização"}
+              {(checkingUpdates || ota.checking) ? "Verificando..." : "Procurar atualizações"}
             </span>
           </button>
 
@@ -964,6 +1042,16 @@ function Index() {
         </div>
       )}
     </main>
+
+    <OtaUpdateModal
+      open={otaModalOpen}
+      manifest={ota.manifest}
+      installedVersion={ota.installedVersion}
+      downloading={otaDownloading}
+      progress={otaProgress}
+      onUpdate={startOtaUpdate}
+      onLater={() => setOtaModalOpen(false)}
+    />
     </div>
   );
 }
