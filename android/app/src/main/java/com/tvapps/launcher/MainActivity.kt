@@ -203,10 +203,38 @@ class MainActivity : Activity() {
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        // Card wrapper (igual ao card da versão web: fundo translúcido,
+        // borda sutil e glow verde ao redor).
+        val cardPadding = dp((40 * scaleFactor).toInt())
+        val cardMaxWidth = dp((420 * scaleFactor).toInt())
+        val screenSideMargin = dp(24)
+        val cardWidth = minOf(cardMaxWidth, dm.widthPixels - screenSideMargin * 2)
+
+        val cardBg = GradientDrawable().apply {
+            setColor(Color.parseColor("#66000000"))
+            cornerRadius = dp(24).toFloat()
+            setStroke(dp(1), Color.parseColor("#1AFFFFFF"))
+        }
+
+        val cardWrapper = FrameLayout(this).apply {
+            background = cardBg
+            setPadding(cardPadding, cardPadding, cardPadding, cardPadding)
             layoutParams = FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
+                cardWidth,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             ).apply { gravity = Gravity.CENTER }
+            // Glow verde discreto (API 28+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                elevation = dp(24).toFloat()
+                outlineSpotShadowColor = Color.parseColor("#4ade80")
+                outlineAmbientShadowColor = Color.parseColor("#4ade80")
+            }
         }
 
         // Logo TV.Apps (igual à versão web)
@@ -365,7 +393,8 @@ class MainActivity : Activity() {
         quickActions.addView(wifiBtn)
         container.addView(quickActions)
 
-        root.addView(container)
+        cardWrapper.addView(container)
+        root.addView(cardWrapper)
         root.addView(updateOverlay)
 
         val footerNotice = TextView(this).apply {
