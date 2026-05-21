@@ -253,6 +253,15 @@ function Index() {
     }
   };
 
+  const handleInstallModalAction = () => {
+    if (installModalAppIndex === null) return;
+    if (modalChoice === "yes" && isNative) {
+      window.Android?.openApp(APPS[installModalAppIndex].packageName);
+    }
+    setInstallModalOpen(false);
+    setInstallModalAppIndex(null);
+  };
+
   const closeModal = () => {
     if (doneIndex === -1) return;
     const url = states[doneIndex].blobUrl;
