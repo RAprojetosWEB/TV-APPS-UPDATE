@@ -195,6 +195,46 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
 
   if (authed) return <>{children}</>;
 
+  if (isTransitioning) {
+    return (
+      <div className="relative min-h-screen w-screen overflow-hidden bg-background text-foreground flex items-center justify-center animate-in fade-in duration-700">
+        {/* Glow verde */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div
+            className="absolute left-1/2 top-1/2 h-[80vmin] w-[80vmin] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[140px]"
+            style={{
+              background:
+                "radial-gradient(circle, oklch(0.78 0.18 155 / 0.15) 0%, transparent 70%)",
+            }}
+          />
+        </div>
+
+        <div className="relative z-10 flex flex-col items-center gap-8 text-center animate-in zoom-in-95 duration-1000">
+          <div className="relative flex items-center justify-center h-24 w-24">
+            {/* Spinner Minimalista */}
+            <div className="absolute inset-0 rounded-full border-[3px] border-white/5" />
+            <div 
+              className="absolute inset-0 rounded-full border-[3px] border-transparent border-t-[oklch(0.78_0.18_155)] animate-spin" 
+              style={{ animationDuration: '0.8s' }}
+            />
+            <div className="size-10 rounded-full bg-white/5 animate-pulse" />
+          </div>
+          
+          <div className="space-y-3">
+            <h2 className="text-3xl font-bold tracking-tight text-white/90">
+              Carregando conteúdo...
+            </h2>
+            <div className="flex items-center justify-center gap-2">
+              <span className="h-1 w-1 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.3s]" />
+              <span className="h-1 w-1 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.15s]" />
+              <span className="h-1 w-1 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative min-h-screen w-screen overflow-hidden bg-background text-foreground flex items-center justify-center px-6">
       {/* Glow verde */}
