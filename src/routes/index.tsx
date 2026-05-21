@@ -253,22 +253,22 @@ function Index() {
   return (
     <main
       onKeyDown={handleKey}
-      className="relative flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground"
+      className="relative flex min-h-screen w-screen flex-col overflow-x-hidden bg-background text-foreground"
       style={{
         backgroundImage:
           "radial-gradient(ellipse at top left, oklch(0.3 0.12 280 / 0.4), transparent 60%), radial-gradient(ellipse at bottom right, oklch(0.3 0.12 150 / 0.35), transparent 60%)",
       }}
     >
       <header className="px-16 pt-10">
-        <h1 className="text-5xl font-black tracking-tight">
+        <h1 className="tv-title font-black tracking-tight">
           TV<span style={{ color: "var(--tv-accent)" }}>.</span>Apps
         </h1>
-        <p className="mt-2 text-lg text-white/60">
+        <p className="mt-2 tv-text text-white/60">
           Use as setas do controle e pressione OK para baixar
         </p>
       </header>
 
-      <section className="flex flex-1 items-center justify-center gap-10 px-16">
+      <section className="tv-card-grid flex-1 items-center">
         {APPS.map((app, i) => {
           const isFocused = focused === i;
           const Icon = app.Icon;
@@ -287,12 +287,12 @@ function Index() {
                   startDownload(i);
                 }
               }}
-              className="group relative flex h-[460px] w-[360px] flex-col items-center justify-center rounded-3xl outline-none transition-all duration-300"
+              className="group relative flex aspect-[3/4] w-full max-w-[360px] flex-col items-center justify-center rounded-3xl outline-none transition-all duration-300 mx-auto"
               style={{
                 background:
                   "linear-gradient(160deg, var(--tv-card), oklch(0.18 0.04 270))",
                 border: `3px solid ${isFocused ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
-                transform: isFocused ? "scale(1.08)" : "scale(1)",
+                transform: isFocused ? "scale(1.05)" : "scale(1)",
                 boxShadow: isFocused
                   ? "0 25px 80px -10px oklch(0.78 0.22 150 / 0.55), 0 0 0 6px oklch(0.78 0.22 150 / 0.15)"
                   : "0 10px 30px -10px oklch(0 0 0 / 0.5)",
