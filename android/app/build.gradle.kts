@@ -23,11 +23,11 @@ val computedVersionName: String = "$versionBase.$buildTimestamp"
 // --------------------------------------------------------------------------
 
 android {
-    namespace = "com.tvapps.launcher"
+    namespace = "com.rastream.platformtv"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.tvapps.launcher"
+        applicationId = "com.rastream.platformtv"
         minSdk = 24
         targetSdk = 34
         versionCode = computedVersionCode
@@ -56,11 +56,11 @@ android {
         }
     }
 
-    // Renomeia o APK final sempre para "tvapps-latest.apk" (estável p/ Supabase).
+    // Renomeia o APK final sempre para "platformtv-latest.apk" (estável p/ Supabase).
     applicationVariants.all {
         outputs.all {
             (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl)
-                .outputFileName = "tvapps-latest.apk"
+                .outputFileName = "platformtv-latest.apk"
         }
     }
 }
@@ -85,7 +85,7 @@ tasks.register("generateUpdateJson") {
                 {
                   "versionCode": $computedVersionCode,
                   "versionName": "$computedVersionName",
-                  "apkUrl": "https://bunvyxogwpwiojzczgwl.supabase.co/storage/v1/object/public/tvapps-updates/tvapps-latest.apk"
+                  "apkUrl": "https://bunvyxogwpwiojzczgwl.supabase.co/storage/v1/object/public/tvapps-updates/platformtv-latest.apk"
                 }
             """.trimIndent()
             JFile(apkDir, "update.json").writeText(json)
