@@ -75,7 +75,7 @@ function Index() {
       clearTimeout(t3);
     };
   }, []);
-  const [focused, setFocused] = useState(1);
+  const [focused, setFocused] = useState(0);
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
   const [states, setStates] = useState<
     Array<{
@@ -171,18 +171,14 @@ function Index() {
     if (modalOpen) return;
     if (e.key === "ArrowRight") {
       e.preventDefault();
-      const next = Math.min(APPS.length - 1, focused + 1);
-      if (next !== focused) {
-        setFocused(next);
-        playTick();
-      }
+      const next = (focused + 1) % APPS.length;
+      setFocused(next);
+      playTick();
     } else if (e.key === "ArrowLeft") {
       e.preventDefault();
-      const next = Math.max(0, focused - 1);
-      if (next !== focused) {
-        setFocused(next);
-        playTick();
-      }
+      const next = (focused - 1 + APPS.length) % APPS.length;
+      setFocused(next);
+      playTick();
     }
   };
 
