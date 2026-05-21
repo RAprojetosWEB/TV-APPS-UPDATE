@@ -603,6 +603,16 @@ function Index() {
           </div>
           
           <NetworkIndicator />
+
+          <button
+            onClick={() => { playClick(); authLogout(); }}
+            title="Sair"
+            aria-label="Sair"
+            className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-white/5 border-2 border-white/10 backdrop-blur-md transition-all active:scale-95 hover:bg-red-500/10 hover:border-red-500/40 focus:outline-none focus:border-red-400 focus:shadow-[0_0_30px_rgba(248,113,113,0.45)]"
+          >
+            <LogOut size={20} className="text-white/70" />
+            <span className="text-base font-bold text-white/80">Sair</span>
+          </button>
         </div>
       </header>
 
