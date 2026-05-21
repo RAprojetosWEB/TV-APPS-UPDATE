@@ -398,9 +398,9 @@ class MainActivity : Activity() {
         val subtitle = TextView(this).apply {
             text = app.description
             setTextColor(Color.parseColor("#99FFFFFF"))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f * scale)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f * scale)
             gravity = Gravity.CENTER
-            setPadding(0, dp((12 * scale).toInt()), 0, dp((24 * scale).toInt()))
+            setPadding(0, dp((8 * scale).toInt()), 0, dp((20 * scale).toInt()))
         }
 
         // Pill "INSTALAR"
