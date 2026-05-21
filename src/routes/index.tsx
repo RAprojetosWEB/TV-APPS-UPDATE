@@ -565,17 +565,14 @@ function Index() {
 
         <div className="flex items-center gap-[clamp(0.5rem,1.5vw,1.5rem)] flex-wrap">
           <button
-            onClick={() => { checkUpdates(true); ota.checkNow(); }}
-            disabled={checkingUpdates || ota.checking}
-            className={`flex items-center gap-3 px-6 py-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md transition-all active:scale-95 focus:outline-none focus:border-tv-accent ${(checkingUpdates || ota.checking) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/10'}`}
+            onClick={() => { playClick(); ota.checkNow(); }}
+            disabled={ota.checking}
+            className={`flex items-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-br from-orange-500/20 to-orange-600/10 border-2 border-orange-500/40 backdrop-blur-md transition-all active:scale-95 focus:outline-none focus:border-orange-400 focus:shadow-[0_0_30px_rgba(249,115,22,0.5)] ${ota.checking ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-500/20 hover:scale-105'}`}
           >
-            {(checkingUpdates || ota.checking) ? (
-              <RefreshCcw size={20} className="text-tv-accent animate-spin" />
-            ) : (
-              <Search size={20} className="text-tv-accent" />
-            )}
+            <Cloud size={20} className="text-orange-400" />
+            <RefreshCcw size={20} className={`text-orange-400 ${ota.checking ? 'animate-spin' : ''}`} />
             <span className="text-lg font-bold text-white/90">
-              {(checkingUpdates || ota.checking) ? "Verificando..." : "Procurar atualizações"}
+              {ota.checking ? "Verificando sistema..." : "Atualizar sistema"}
             </span>
           </button>
 
