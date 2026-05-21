@@ -810,13 +810,17 @@ class MainActivity : Activity() {
 
     private fun updateWifi(online: Boolean) {
         wifiView?.post {
-            if (online) {
-                wifiView?.text = "📶  Wi-Fi"
-                wifiView?.setTextColor(Color.parseColor("#5EE6A8"))
-            } else {
-                wifiView?.text = "⚠  Sem rede"
-                wifiView?.setTextColor(Color.parseColor("#FF6B6B"))
-            }
+            val v = wifiView ?: return@post
+            val iconRes = if (online) R.drawable.ic_wifi else R.drawable.ic_wifi_off
+            val color = if (online) Color.parseColor("#5EE6A8") else Color.parseColor("#FF6B6B")
+            v.text = if (online) "Wi-Fi" else "Sem rede"
+            v.setTextColor(color)
+            val icon = androidx.core.content.ContextCompat.getDrawable(this, iconRes)?.mutate()
+            icon?.setTint(color)
+            val size = dp(16)
+            icon?.setBounds(0, 0, size, size)
+            v.setCompoundDrawables(icon, null, null, null)
+            v.compoundDrawablePadding = dp(6)
         }
     }
 
