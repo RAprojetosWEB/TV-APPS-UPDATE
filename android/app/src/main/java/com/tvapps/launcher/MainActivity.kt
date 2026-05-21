@@ -383,17 +383,17 @@ class MainActivity : Activity() {
             lp.bottomMargin = dp((24 * scale).toInt())
             layoutParams = lp
         }
-        val iconText = TextView(this).apply {
-            text = app.icon
-            setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 56f * scale)
-            gravity = Gravity.CENTER
+        val iconImage = ImageView(this).apply {
+            setImageResource(app.iconRes)
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            val pad = dp((10 * scale).toInt())
+            setPadding(pad, pad, pad, pad)
             layoutParams = FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT,
             ).apply { gravity = Gravity.CENTER }
         }
-        iconBadge.addView(iconText)
+        iconBadge.addView(iconImage)
 
         val title = TextView(this).apply {
             text = app.name
@@ -410,9 +410,9 @@ class MainActivity : Activity() {
             setPadding(0, dp((12 * scale).toInt()), 0, dp((24 * scale).toInt()))
         }
 
-        // Pill "BAIXAR APK"
+        // Pill "INSTALAR"
         val pill = TextView(this).apply {
-            text = "⬇  QUERO INSTALAR"
+            text = "⬇  INSTALAR"
             setTextColor(Color.WHITE)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
@@ -496,7 +496,7 @@ class MainActivity : Activity() {
             it.playSoundEffect(SoundEffectConstants.CLICK)
             startDownload(index) 
         }
-        return CardViews(container, content, iconBadge, iconText, title, subtitle, pill, progress, percent, installedChip)
+        return CardViews(container, content, iconBadge, iconImage, title, subtitle, pill, progress, percent, installedChip)
     }
 
     private fun makeCardBg(focused: Boolean, scale: Float): GradientDrawable {
