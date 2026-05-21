@@ -79,13 +79,18 @@ class MainActivity : Activity() {
 
         val scroll = ScrollView(this).apply {
             isFillViewport = true
+            scrollBarStyle = View.SCROLLBARS_OUTSIDE_OVERLAY
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f,
             )
         }
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
         }
         AppCatalog.apps.forEachIndexed { index, app ->
             val card = buildCard(index, app)
@@ -109,7 +114,8 @@ class MainActivity : Activity() {
             isClickable = true
             background = makeCardBg(false)
             val lp = LinearLayout.LayoutParams(dp(260), dp(280))
-            lp.marginEnd = dp(20)
+            lp.marginStart = dp(10)
+            lp.marginEnd = dp(10)
             layoutParams = lp
             setPadding(dp(20), dp(20), dp(20), dp(20))
         }
