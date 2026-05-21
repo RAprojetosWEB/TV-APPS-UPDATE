@@ -268,7 +268,7 @@ class MainActivity : Activity() {
         
         // Fator de escala base: assumimos que o design ideal foi feito para uma tela de ~1280dp de largura
         // Limitamos para evitar que em telas muito pequenas ou muito grandes fique bizarro
-        val scaleFactor = (widthDp / 1280f).coerceIn(0.7f, 1.3f)
+        val scaleFactor = (widthDp / 1280f).coerceIn(0.85f, 1.1f)
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -279,9 +279,9 @@ class MainActivity : Activity() {
         // Cabeçalho: logo+subtitulo à esquerda, barra de status à direita
         root.addView(buildTopBar(scaleFactor))
 
-        val cardWidth = (380 * scaleFactor).toInt()
-        val cardHeight = (500 * scaleFactor).toInt()
-        val cardMargin = (24 * scaleFactor).toInt()
+        val cardWidth = (300 * scaleFactor).toInt()
+        val cardHeight = (420 * scaleFactor).toInt()
+        val cardMargin = (20 * scaleFactor).toInt()
 
         // Linha de cards centralizada com navegação infinita
         val row = object : LinearLayout(this) {
@@ -371,9 +371,9 @@ class MainActivity : Activity() {
         // Badge de ícone (quadrado arredondado, gradiente quando focado)
         val iconBadge = FrameLayout(this).apply {
             background = makeIconBadgeBg(false, scale)
-            val size = (120 * scale).toInt()
+            val size = (100 * scale).toInt()
             val lp = LinearLayout.LayoutParams(dp(size), dp(size))
-            lp.bottomMargin = dp((24 * scale).toInt())
+            lp.bottomMargin = dp((20 * scale).toInt())
             layoutParams = lp
         }
         val iconImage = ImageView(this).apply {
@@ -391,23 +391,23 @@ class MainActivity : Activity() {
         val title = TextView(this).apply {
             text = app.name
             setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 32f * scale)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 26f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             gravity = Gravity.CENTER
         }
         val subtitle = TextView(this).apply {
             text = app.description
             setTextColor(Color.parseColor("#99FFFFFF"))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f * scale)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f * scale)
             gravity = Gravity.CENTER
-            setPadding(0, dp((12 * scale).toInt()), 0, dp((24 * scale).toInt()))
+            setPadding(0, dp((8 * scale).toInt()), 0, dp((20 * scale).toInt()))
         }
 
         // Pill "INSTALAR"
         val pill = TextView(this).apply {
             text = "⬇  Baixar aplicativo"
             setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f * scale)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             gravity = Gravity.CENTER
             background = makePillBg(false, scale)
@@ -698,7 +698,7 @@ class MainActivity : Activity() {
             )
             text = spanned
             setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 44f * scale)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 36f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
         }
         val sub = TextView(this).apply {
