@@ -36,6 +36,7 @@ class MainActivity : Activity() {
     private val scope: CoroutineScope = MainScope()
     private val cardJobs = mutableMapOf<Int, Job>()
     private val cardViews = mutableListOf<CardViews>()
+    private var webView: WebView? = null
 
     private data class CardViews(
         val container: FrameLayout,
