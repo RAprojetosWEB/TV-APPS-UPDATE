@@ -7,6 +7,8 @@ import { Check, Download, Play, Tv, AlertCircle } from "lucide-react";
 type AndroidBridge = {
   isNative: () => boolean;
   installApk: (url: string, name: string) => void;
+  isAppInstalled: (packageName: string) => boolean;
+  openApp: (packageName: string) => void;
   version?: () => string;
 };
 declare global {
