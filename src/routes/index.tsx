@@ -538,7 +538,7 @@ function Index() {
 
   return (
     <LoginGate>
-    <div className="relative min-h-screen w-screen overflow-x-hidden bg-background">
+    <div className="relative h-screen w-screen overflow-hidden bg-background">
       {/* Background decoration */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div 
@@ -553,9 +553,9 @@ function Index() {
 
       <main
         onKeyDown={handleKey}
-        className="relative flex min-h-screen flex-col text-foreground"
+        className="relative flex h-screen flex-col text-foreground overflow-hidden"
       >
-      <header className="px-[clamp(2rem,6vw,6rem)] pt-[clamp(2rem,6vh,6rem)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <header className="shrink-0 px-[clamp(1rem,4vw,4rem)] pt-[clamp(1rem,3vh,3rem)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="tv-title font-black tracking-tight leading-none">
             TV<span style={{ color: "var(--tv-accent)" }}>.</span>Apps
@@ -618,7 +618,7 @@ function Index() {
         </div>
       </header>
 
-      <section className="tv-card-grid flex-1 items-center">
+      <section className="tv-card-grid flex-1 min-h-0 items-stretch">
         {currentApps.map((app, i) => {
           const isFocused = focused === i;
           return (
@@ -638,7 +638,7 @@ function Index() {
                   startDownload(i);
                 }
               }}
-              className="group relative flex aspect-[3/4.2] w-full max-w-[clamp(300px,25vw,420px)] max-h-[clamp(400px,80vh,600px)] flex-col items-center justify-center rounded-[clamp(1.5rem,3vw,3rem)] outline-none transition-all duration-300 mx-auto"
+              className="group relative flex h-full w-full max-w-[clamp(280px,25vw,420px)] max-h-full min-h-0 flex-col items-center justify-center rounded-[clamp(1.5rem,3vw,3rem)] outline-none transition-all duration-300 mx-auto p-[clamp(1rem,2.5vh,2rem)] overflow-hidden"
               style={{
                 background:
                   "linear-gradient(160deg, var(--tv-card), oklch(0.18 0.04 270))",
@@ -662,7 +662,7 @@ function Index() {
               {states[i].status === "downloading" ? (
                 <div className="flex w-full flex-col items-center px-[clamp(1rem,4vw,3rem)]">
                   <div
-                    className="tv-icon-container mb-8 flex items-center justify-center rounded-2xl"
+                    className="tv-icon-container mb-[clamp(0.5rem,2vh,2rem)] flex items-center justify-center rounded-2xl"
                     style={{
                       background:
                         "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))",
@@ -695,7 +695,7 @@ function Index() {
               ) : states[i].status === "done" ? (
                 <div className="flex flex-col items-center px-8">
                   <div
-                    className="tv-icon-container mb-8 flex items-center justify-center rounded-2xl"
+                    className="tv-icon-container mb-[clamp(0.5rem,2vh,2rem)] flex items-center justify-center rounded-2xl"
                     style={{
                       background:
                         "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))",
@@ -714,7 +714,7 @@ function Index() {
               ) : states[i].status === "error" ? (
                 <div className="flex flex-col items-center px-8">
                   <div
-                    className="tv-icon-container mb-8 flex items-center justify-center rounded-2xl"
+                    className="tv-icon-container mb-[clamp(0.5rem,2vh,2rem)] flex items-center justify-center rounded-2xl"
                     style={{ background: "oklch(0.4 0.2 25)" }}
                   >
                     <AlertCircle className="w-1/2 h-1/2" strokeWidth={1.8} color="white" />
@@ -737,7 +737,7 @@ function Index() {
               ) : (
               <>
               <div
-                className="tv-icon-container mb-8 flex items-center justify-center rounded-2xl transition-all duration-300 overflow-hidden"
+                className="tv-icon-container mb-[clamp(0.5rem,2vh,2rem)] flex items-center justify-center rounded-2xl transition-all duration-300 overflow-hidden"
                 style={{
                   background: isFocused
                     ? "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))"
@@ -764,12 +764,12 @@ function Index() {
                   <span className="text-sm font-bold text-tv-accent tracking-wide uppercase">Instalado</span>
                 </div>
               )}
-              <h2 className="text-4xl font-bold">{app.name}</h2>
-              <p className="mt-4 px-6 text-center text-xl text-white/60">
+              <h2 className="text-[clamp(1.25rem,2.5vw,2.25rem)] font-bold text-center">{app.name}</h2>
+              <p className="mt-[clamp(0.25rem,1vh,1rem)] px-4 text-center text-[clamp(0.8rem,1.4vw,1.15rem)] text-white/60 line-clamp-2">
                 {app.description}
               </p>
               <div
-                className="mt-10 flex items-center gap-3 rounded-full px-10 py-5 text-lg font-bold transition-all"
+                className="mt-[clamp(0.75rem,2.5vh,2.5rem)] flex items-center gap-2 rounded-full px-[clamp(1rem,3vw,2.5rem)] py-[clamp(0.5rem,1.5vh,1.25rem)] text-[clamp(0.85rem,1.3vw,1.1rem)] font-bold transition-all whitespace-nowrap"
                 style={{
                   background: isFocused ? "var(--tv-accent)" : "transparent",
                   color: isFocused ? "oklch(0.15 0.03 270)" : "white",
@@ -796,7 +796,7 @@ function Index() {
         })}
       </section>
 
-      <footer className="px-16 pb-8 text-center text-sm text-white/40">
+      <footer className="shrink-0 px-8 pb-[clamp(0.5rem,2vh,1.5rem)] text-center text-xs md:text-sm text-white/40">
         Após o download, abra o arquivo APK e permita instalação de fontes desconhecidas
       </footer>
 
