@@ -275,6 +275,79 @@ class MainActivity : Activity() {
         container.addView(subtitle)
         container.addView(passwordInput)
         container.addView(loginButton)
+
+        // Linha de ícones rápidos: ⚙️ Configurações  📶 Rede
+        val quickActions = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            val lp = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            lp.topMargin = dp((20 * scaleFactor).toInt())
+            layoutParams = lp
+        }
+
+        val iconSize = dp((52 * scaleFactor).toInt())
+        val iconGap = dp((16 * scaleFactor).toInt())
+
+        fun makeIconButton(label: String, glyph: String, onTap: () -> Unit): TextView {
+            return TextView(this).apply {
+                text = glyph
+                setTextColor(Color.WHITE)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f * scaleFactor)
+                gravity = Gravity.CENTER
+                isFocusable = true
+                isClickable = true
+                contentDescription = label
+                background = GradientDrawable().apply {
+                    setColor(Color.parseColor("#1AFFFFFF"))
+                    cornerRadius = dp((14 * scaleFactor).toInt()).toFloat()
+                    setStroke(dp(2), Color.parseColor("#33FFFFFF"))
+                }
+                layoutParams = LinearLayout.LayoutParams(iconSize, iconSize).apply {
+                    marginStart = iconGap / 2
+                    marginEnd = iconGap / 2
+                }
+                setOnFocusChangeListener { v, hasFocus ->
+                    val bg = v.background as? GradientDrawable ?: return@setOnFocusChangeListener
+                    if (hasFocus) {
+                        bg.setColor(Color.parseColor("#33FFFFFF"))
+                        bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                        v.animate().scaleX(1.08f).scaleY(1.08f).setDuration(150).start()
+                    } else {
+                        bg.setColor(Color.parseColor("#1AFFFFFF"))
+                        bg.setStroke(dp(2), Color.parseColor("#33FFFFFF"))
+                        v.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
+                    }
+                }
+                setOnClickListener { onTap() }
+            }
+        }
+
+        val settingsBtn = makeIconButton("Configurações", "⚙️") {
+            try {
+                startActivity(Intent(android.provider.Settings.ACTION_SETTINGS))
+            } catch (e: Exception) {
+                Toast.makeText(this@MainActivity, "Não foi possível abrir as configurações", Toast.LENGTH_SHORT).show()
+            }
+        }
+        val wifiBtn = makeIconButton("Wi-Fi", "📶") {
+            try {
+                startActivity(Intent(android.provider.Settings.ACTION_WIFI_SETTINGS))
+            } catch (e: Exception) {
+                try {
+                    startActivity(Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS))
+                } catch (_: Exception) {
+                    Toast.makeText(this@MainActivity, "Não foi possível abrir as configurações de rede", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        quickActions.addView(settingsBtn)
+        quickActions.addView(wifiBtn)
+        container.addView(quickActions)
+
         root.addView(container)
         root.addView(updateOverlay)
 
