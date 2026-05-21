@@ -9,6 +9,17 @@ const PASSWORD_HASH =
 const STORAGE_KEY = "tvapps_auth_v1";
 const SESSION_TOKEN = "ok";
 
+// Usa sessionStorage para que toda vez que o app for fechado/reaberto
+// a senha precise ser digitada novamente.
+function getStore(): Storage | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
 async function sha256Hex(value: string): Promise<string> {
   const buf = await crypto.subtle.digest(
     "SHA-256",
@@ -20,17 +31,23 @@ async function sha256Hex(value: string): Promise<string> {
 }
 
 export function isAuthenticated(): boolean {
-  if (typeof window === "undefined") return false;
+  const s = getStore();
+  if (!s) return false;
   try {
-    return localStorage.getItem(STORAGE_KEY) === SESSION_TOKEN;
+    return s.getItem(STORAGE_KEY) === SESSION_TOKEN;
   } catch {
     return false;
   }
 }
 
 export function logout() {
+  const s = getStore();
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    s?.removeItem(STORAGE_KEY);
+    // também limpa qualquer resquício de versão antiga
+    if (typeof window !== "undefined") {
+      try { window.localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+    }
   } catch {
     // ignore
   }
@@ -67,7 +84,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
       const hash = await sha256Hex(password);
       if (hash === PASSWORD_HASH) {
         try {
-          localStorage.setItem(STORAGE_KEY, SESSION_TOKEN);
+          getStore()?.setItem(STORAGE_KEY, SESSION_TOKEN);
         } catch {
           // ignore
         }
