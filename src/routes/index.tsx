@@ -97,9 +97,15 @@ function Index() {
       status: "idle" | "downloading" | "done" | "error";
       progress: number;
       isInstalled: boolean;
+      hasUpdate: boolean;
+      installedVersion?: string;
       blobUrl?: string;
     }>
-  >(() => APPS.map(() => ({ status: "idle", progress: 0, isInstalled: false })));
+  >(() => APPS.map(() => ({ status: "idle", progress: 0, isInstalled: false, hasUpdate: false })));
+
+  const [checkingUpdates, setCheckingUpdates] = useState(false);
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  const [appToUpdate, setAppToUpdate] = useState<number | null>(null);
 
   // Atualiza status de instalação periodicamente
   useEffect(() => {
