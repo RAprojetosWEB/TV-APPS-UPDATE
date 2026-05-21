@@ -268,7 +268,7 @@ class MainActivity : Activity() {
         
         // Fator de escala base: assumimos que o design ideal foi feito para uma tela de ~1280dp de largura
         // Limitamos para evitar que em telas muito pequenas ou muito grandes fique bizarro
-        val scaleFactor = (widthDp / 1280f).coerceIn(0.7f, 1.3f)
+        val scaleFactor = (widthDp / 1280f).coerceIn(0.85f, 1.1f)
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
