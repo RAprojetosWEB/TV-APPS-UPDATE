@@ -54,11 +54,10 @@ export function useOtaUpdate() {
     }
   }, [checking]);
 
-  // Verificação automática ao abrir o app
+  // Verificação automática desativada
   useEffect(() => {
     setInstalledVersion(getInstalledVersion());
-    check(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // check(false); // Removido
   }, []);
 
   return {
