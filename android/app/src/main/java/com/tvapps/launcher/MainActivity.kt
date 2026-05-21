@@ -852,17 +852,31 @@ class MainActivity : Activity() {
         val hasApk = apkFile.exists() && apkFile.length() > 0
 
         if (installed) {
-            card.pill.text = "▶  Abrir aplicativo"
+            setPillContent(card.pill, R.drawable.ic_play, "Abrir aplicativo")
             card.installedChip.visibility = View.VISIBLE
             // Se já está instalado, removemos o APK do cache para liberar espaço
             ApkCache.deleteFor(this, app.name)
         } else if (hasApk) {
-            card.pill.text = "⬇  Instalar aplicativo"
+            setPillContent(card.pill, R.drawable.ic_download, "Instalar aplicativo")
             card.installedChip.visibility = View.GONE
         } else {
-            card.pill.text = "⬇  Baixar aplicativo"
+            setPillContent(card.pill, R.drawable.ic_download, "Baixar aplicativo")
             card.installedChip.visibility = View.GONE
         }
+    }
+
+    /**
+     * Define o ícone (compound drawable à esquerda) e o texto de um pill,
+     * substituindo emojis por vetores estilo lucide (igual à versão Web).
+     */
+    private fun setPillContent(pill: TextView, iconRes: Int, label: String) {
+        val icon = androidx.core.content.ContextCompat.getDrawable(this, iconRes)
+        val size = (pill.textSize * 1.1f).toInt()
+        icon?.setBounds(0, 0, size, size)
+        icon?.setTint(pill.currentTextColor)
+        pill.setCompoundDrawables(icon, null, null, null)
+        pill.compoundDrawablePadding = dp(8)
+        pill.text = label
     }
 
     private fun openApp(packageName: String) {
