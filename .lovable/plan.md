@@ -1,91 +1,56 @@
-# Plano — Opções 1 e 3 do ambiente Android
+# Replicar UI da web no APK Android (TV.Apps)
 
-## Objetivo
+Objetivo: a tela inicial do APK nativo (`MainActivity.kt`) deve ficar visualmente idêntica à imagem de referência da web — mesmo cabeçalho, mesma barra de status no topo direito, mesmos cards com ícones reais e mesmo rodapé.
 
-Deixar o launcher nativo realmente útil para o usuário:
+**Regra combinada:** a partir de agora **toda alteração pedida é aplicada só no Android nativo** (`android/`). Os arquivos da web em `src/` ficam intocados.
 
-1. **Detectar app já instalado de forma confiável** + mostrar isso claramente no card.
-2. **Limpar o cache de APKs automaticamente** depois da instalação e quando ele crescer demais.
+## O que muda visualmente
 
----
+**Cabeçalho (esquerda):**
+- Título "TV.Apps" com o ponto verde neon (#5EE6A8) — já existe.
+- Subtítulo trocado para **"Central de Downloads Automática"**.
 
-## Opção 1 — Detectar app já instalado
+**Barra de status (direita do cabeçalho, mesma linha):**
+- Pill "⟳ Verificando sistema..." (borda laranja translúcida). Liga ao OTA: se houver update vira "⬇ Atualização disponível" (verde); se atualizado, "✓ Sistema atualizado".
+- Pill "🕐 08:25" — relógio ao vivo (HH:mm), atualiza a cada minuto.
+- Pill "📅 Qui, 21 De Mai." — data em pt-BR, capitalizada.
+- Pill "🌥 24°C" — clima atual via Open-Meteo (sem chave), localização aproximada por IP (ipapi.co), fallback São Paulo. Atualiza a cada 30 min.
+- Pill "📶 Wi-Fi" — estado da rede via `ConnectivityManager`. Verde online / vermelho offline.
 
-Hoje a lógica existe (`isAppInstalled` + troca do texto do botão para "▶ ABRIR APP"), mas:
+**Cards (3 apps):**
+- Ícones PNG reais (UniTV, Nexa TV, AlphaPlay) dentro do badge arredondado — `ImageView` no lugar do emoji.
+- Nome "ALPHAPLAY" vira "AlphaPlay".
+- Descrições atualizadas para bater com a referência:
+  - UniTV → "Mais de 400 canais, filmes e séries"
+  - Nexa TV → "Mais de 300 canais"
+  - AlphaPlay → "Mais de 300 canais, filmes e séries"
+- Botão passa de "⬇ QUERO INSTALAR" para **"⬇ INSTALAR"** (igual à web). "▶ ABRIR APP" e chip "INSTALADO" continuam funcionando.
+- Borda neon verde no card focado — mantém.
 
-- Os `packageName` no `AppCatalog.kt` são placeholders (`com.unitv.app`, `com.nexa.tv`, `com.alphaplay.app`), então o `PackageManager` nunca encontra o app instalado.
-- O único sinal visual é a troca do texto do botão — fácil de não perceber.
+**Rodapé:**
+- Texto trocado para: **"Após o download, abra o arquivo APK e permita instalação de fontes desconhecidas"**.
 
-### O que muda
+**Fundo:**
+- Gradiente mais escuro (#0A0D1A central) com glow verde discreto no canto inferior, batendo com a referência.
 
-**a) Descobrir o packageName real automaticamente, sem precisar editar código a cada APK**
+## Arquivos tocados
 
-Em vez de depender de uma string fixa, ler o `packageName` direto do arquivo `.apk` baixado e guardar em `SharedPreferences` por nome de catálogo:
+- `android/app/src/main/java/com/tvapps/launcher/MainActivity.kt` — novo `buildTopBar()`, helpers `makeStatusPill()` e `bindStatusPills()` (relógio/data/clima/rede/OTA), `buildCard()` usa `ImageView`, novos textos, fundo ajustado.
+- `android/app/src/main/java/com/tvapps/launcher/AppCatalog.kt` — adiciona `iconRes: Int`, atualiza nome "AlphaPlay" e descrições.
+- `android/app/src/main/java/com/tvapps/launcher/StatusInfo.kt` (novo) — coroutines para clima e geolocalização por IP.
+- `android/app/src/main/res/drawable/ic_unitv.png`, `ic_nexa.png`, `ic_alphaplay.png` — novos PNGs.
+- `android/app/src/main/AndroidManifest.xml` — adiciona `ACCESS_NETWORK_STATE` se faltar.
 
-- Quando um APK é baixado, usar `PackageManager.getPackageArchiveInfo(apkPath, 0)` para extrair o `packageName` real.
-- Salvar em `SharedPreferences` (`installedApps`) com a chave sendo o `CatalogApp.name`.
-- Na hora de checar "está instalado?", primeiro tentar a string do catálogo, e se falhar, tentar o `packageName` salvo do APK anterior.
+Não toca em: `ApkDownloader.kt`, `ApkInstaller.kt`, `InstalledRegistry.kt`, `ApkCache.kt`, gradle, nenhum arquivo de `src/`.
 
-Resultado: na **primeira instalação** o launcher aprende o package real e a partir daí detecta corretamente, sem o usuário precisar fornecer nada.
+## Ícones PNG
 
-**b) Indicador visual de "Instalado" no card**
-
-- Adicionar um pequeno "chip" verde no topo direito do card com o texto **"INSTALADO"** quando o app é detectado.
-- Manter a troca do botão para "▶ ABRIR APP".
-- Atualizar esse estado também no `onResume()` da Activity, para refletir desinstalações feitas pelo usuário.
-
----
-
-## Opção 3 — Limpeza automática do cache de APKs
-
-Hoje cada APK fica permanentemente em `context.cacheDir/apks/` e nunca é apagado. Três APKs grandes podem ocupar centenas de MB no TV Box.
-
-### Regras de limpeza
-
-1. **Após instalação bem-sucedida** (quando o card detecta que o app passou a estar instalado no `onResume`): apagar o `.apk` correspondente em `cacheDir/apks/`.
-2. **Limite total de cache de 300 MB**: no `onCreate`, varrer `cacheDir/apks/`, e se passar de 300 MB, apagar os arquivos mais antigos (por `lastModified`) até voltar abaixo do limite. Apps já instalados são apagados primeiro.
-3. **Arquivos órfãos** (apks de nomes que não estão mais no catálogo): apagar também na varredura inicial.
-
-### Onde isso vive
-
-Novo objeto utilitário **`ApkCache.kt`** com:
-
-- `fun cleanupInstalled(context, catalog)` — apaga APKs cujo app já está instalado.
-- `fun enforceSizeLimit(context, maxBytes = 300L * 1024 * 1024)` — aplica limite total.
-- `fun deleteFor(context, appName)` — apaga o APK de um app específico (chamado após instalação confirmada).
-
-Chamadas:
-
-- `MainActivity.onCreate` → `ApkCache.cleanupInstalled` + `ApkCache.enforceSizeLimit`
-- `MainActivity.onResume` → reavaliar instalação de cada card e chamar `ApkCache.deleteFor` para os que foram recém-instalados.
-
----
+Vou gerar 3 ícones placeholder estilizados (igual ao estilo da web) e colocar direto em `res/drawable/`. Se você já tem os ícones oficiais dos 3 apps em PNG, manda que eu troco — fica melhor que os gerados.
 
 ## Detalhes técnicos
 
-### Arquivos novos
-- `android/app/src/main/java/com/tvapps/launcher/ApkCache.kt`
-- `android/app/src/main/java/com/tvapps/launcher/InstalledRegistry.kt` (wrapper de `SharedPreferences` para o mapa `catalogName → packageName`)
-
-### Arquivos alterados
-- `android/app/src/main/java/com/tvapps/launcher/MainActivity.kt`
-  - Função `refreshInstalledState(card, app)` que aplica botão + chip "INSTALADO".
-  - Sobrescrever `onResume()` para revalidar todos os cards e disparar limpeza pontual.
-  - Após `ApkInstaller.install(...)`, agendar revalidação (já existe `postDelayed` de 2500 ms — usar essa janela).
-  - Adicionar o chip "INSTALADO" no `buildCard` (overlay no `container` via `FrameLayout.LayoutParams` com `gravity = TOP|END`).
-- `android/app/src/main/java/com/tvapps/launcher/ApkDownloader.kt`
-  - Após gravar o arquivo, chamar `InstalledRegistry.learnFromApk(context, fileNameHint, file)` para extrair e salvar o `packageName` real.
-
-### Sem alterações em
-- `AppCatalog.kt` (continua com os placeholders — eles deixam de importar, pois a detecção passa a usar o registry).
-- `ApkInstaller.kt`.
-- Build/Gradle, permissões do `AndroidManifest` (não precisa de nada novo: `QUERY_ALL_PACKAGES` não é necessário se já estamos consultando packages específicos via `getPackageInfo` que o app conhece após a instalação).
-
----
-
-## Como o usuário percebe
-
-- Abre o launcher → cards aparecem normalmente.
-- Instala "UniTV" → no fim do fluxo o card mostra chip verde **"INSTALADO"** e o botão vira **"▶ ABRIR APP"**.
-- Sai do app e volta → o estado continua correto. Se desinstalou pelas configurações, o chip some.
-- Cache não cresce indefinidamente: APKs já instalados somem do `cacheDir`, e o total fica abaixo de 300 MB.
+- Relógio/data: `Handler.postDelayed(60s)` + `SimpleDateFormat` com `Locale("pt","BR")`.
+- Clima: `GET https://api.open-meteo.com/v1/forecast?latitude=X&longitude=Y&current=temperature_2m,weather_code` → mapeia `weather_code` para emoji.
+- Geo IP: `GET https://ipapi.co/json/` → lat/long, fallback -23.55/-46.63.
+- Rede: `ConnectivityManager.registerDefaultNetworkCallback` em `onResume`/unregister em `onPause`.
+- OTA: GET no `update.json` do bucket `tvapps-updates`, compara com `BuildConfig.VERSION_NAME`.
