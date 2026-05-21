@@ -763,9 +763,6 @@ function Index() {
                     <Play size={22} fill="currentColor" />
                     ABRIR APP
                   </>
-                    <>
-                      <Play size={22} fill="currentColor" />
-                  )
                 ) : (
                   <>
                     <Download size={22} />
