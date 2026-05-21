@@ -393,7 +393,8 @@ class MainActivity : Activity() {
         quickActions.addView(wifiBtn)
         container.addView(quickActions)
 
-        root.addView(container)
+        cardWrapper.addView(container)
+        root.addView(cardWrapper)
         root.addView(updateOverlay)
 
         val footerNotice = TextView(this).apply {
