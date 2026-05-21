@@ -287,6 +287,18 @@ class MainActivity : Activity() {
                         runOnUiThread { startDownload(index) }
                     }
                 }
+
+                @JavascriptInterface
+                fun version(): String = try {
+                    packageManager.getPackageInfo(packageName, 0).versionName ?: ""
+                } catch (_: Exception) { "" }
+
+                @JavascriptInterface
+                fun versionCode(): Long = try {
+                    val info = packageManager.getPackageInfo(packageName, 0)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) info.longVersionCode
+                    else @Suppress("DEPRECATION") info.versionCode.toLong()
+                } catch (_: Exception) { 0L }
             }, "Android")
             
             // Não precisamos carregar nada real aqui se estivermos usando a UI nativa,
