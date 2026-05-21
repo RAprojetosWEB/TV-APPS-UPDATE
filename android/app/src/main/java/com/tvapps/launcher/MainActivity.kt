@@ -145,9 +145,9 @@ class MainActivity : Activity() {
             setPadding(0, dp((20 * scaleFactor).toInt()), 0, dp((20 * scaleFactor).toInt()))
         }
         
-        val cardWidth = (340 * scaleFactor).toInt()
-        val cardHeight = (440 * scaleFactor).toInt()
-        val cardMargin = (20 * scaleFactor).toInt()
+        val cardWidth = (380 * scaleFactor).toInt()
+        val cardHeight = (500 * scaleFactor).toInt()
+        val cardMargin = (24 * scaleFactor).toInt()
 
         AppCatalog.apps.forEachIndexed { index, app ->
             val card = buildCard(index, app, cardWidth, cardHeight, cardMargin, scaleFactor)
