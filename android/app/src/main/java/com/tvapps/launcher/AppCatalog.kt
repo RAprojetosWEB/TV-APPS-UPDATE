@@ -22,9 +22,9 @@ object AppCatalog {
             icon = "📺",
         ),
         CatalogApp(
-            name = "AllApp",
+            name = "ALPHAPLAY",
             description = "Tudo em um só app",
-            url = "https://apyjsxxuuptelmiwnzwq.supabase.co/storage/v1/object/public/Alpicativos%20APKs/AllApp.apk",
+            url = "https://firebasestorage.googleapis.com/v0/b/update-41ccf.appspot.com/o/alphaplay.apk?alt=media&token=cdbe4055-ea90-4f2c-a540-1b458159ade6",
             icon = "⬇",
         ),
     )
