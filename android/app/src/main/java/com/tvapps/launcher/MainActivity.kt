@@ -705,7 +705,7 @@ class MainActivity : Activity() {
 
         // Pill "INSTALAR"
         val pill = TextView(this).apply {
-            text = "⬇  Baixar aplicativo"
+            text = "Baixar aplicativo"
             setTextColor(Color.WHITE)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
@@ -714,6 +714,12 @@ class MainActivity : Activity() {
             val px = (32 * scale).toInt()
             val py = (18 * scale).toInt()
             setPadding(dp(px), dp(py), dp(px), dp(py))
+            val dl = androidx.core.content.ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_download)
+            val s = (textSize * 1.1f).toInt()
+            dl?.setBounds(0, 0, s, s)
+            dl?.setTint(Color.WHITE)
+            setCompoundDrawables(dl, null, null, null)
+            compoundDrawablePadding = dp(8)
         }
 
         // Barra de progresso (escondida no estado idle)
