@@ -812,7 +812,7 @@ function Index() {
       </section>
 
       <footer className="shrink-0 px-8 pb-[clamp(0.5rem,2vh,1.5rem)] text-center text-xs md:text-sm text-white/40">
-        Após o download, abra o arquivo APK e permita instalação de fontes desconhecidas
+        Acesso restrito a clientes. Peça o acesso no WhatsApp 14 99868-1696
       </footer>
 
       {modalOpen && (
