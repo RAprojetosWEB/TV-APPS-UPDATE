@@ -54,21 +54,35 @@ object InstalledRegistry {
             }
         }
 
-        // 2. Opção B: Heurística - procurar por nome nos pacotes instalados
+        // 2. Opção B: Heurística - procurar por nome ou label nos pacotes instalados
         // Isso resolve quando o app já estava instalado de outra fonte
         try {
             val installedApps = pm.getInstalledPackages(0)
             val searchTerms = listOfNotNull(
                 app.name.lowercase(),
+                app.packageName.lowercase(),
                 app.packageName.substringAfterLast(".").lowercase().takeIf { it.length > 3 }
             ).distinct()
 
             for (pkgInfo in installedApps) {
                 val pkgName = pkgInfo.packageName.lowercase()
                 
-                // Se o nome do pacote contém termos-chave (ex: "unitv", "nexa", "alphaplay")
-                if (searchTerms.any { term -> pkgName.contains(term) }) {
-                    // Opcional: Aprender esse pacote para futuras verificações rápidas
+                // 1. Verificar pelo nome do pacote
+                var match = searchTerms.any { term -> pkgName.contains(term) }
+                
+                // 2. Verificar pelo label do aplicativo (nome que o usuário vê)
+                if (!match) {
+                    val label = try {
+                        pm.getApplicationLabel(pkgInfo.applicationInfo).toString().lowercase()
+                    } catch (_: Exception) { "" }
+                    
+                    if (label.isNotEmpty() && label.contains(app.name.lowercase())) {
+                        match = true
+                    }
+                }
+
+                if (match) {
+                    // Aprender esse pacote para futuras verificações rápidas
                     context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                         .edit()
                         .putString(app.name, pkgInfo.packageName)
