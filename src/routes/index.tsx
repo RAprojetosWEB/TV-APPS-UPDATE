@@ -598,9 +598,9 @@ function Index() {
           <button
             onClick={() => { playClick(); ota.checkNow(); }}
             disabled={ota.checking}
-            className={`group flex items-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-br from-orange-500/20 to-orange-600/10 border-2 border-orange-500/40 backdrop-blur-md transition-all duration-300 active:scale-95 focus:outline-none focus:border-orange-400 focus:shadow-[0_0_30px_rgba(249,115,22,0.5)] ${ota.checking ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-500/20 hover:scale-105'}`}
+            className={`group flex items-center justify-center gap-0 px-4 py-4 rounded-2xl bg-gradient-to-br from-orange-500/20 to-orange-600/10 border-2 border-orange-500/40 backdrop-blur-md transition-all duration-300 active:scale-95 focus:outline-none focus:border-orange-400 focus:shadow-[0_0_30px_rgba(249,115,22,0.5)] ${ota.checking ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-500/20 hover:scale-105'}`}
           >
-            <RefreshCcw size={20} className={`text-orange-400 ${ota.checking ? 'animate-spin' : ''}`} />
+            <RefreshCcw size={20} className={`text-orange-400 shrink-0 ${ota.checking ? 'animate-spin' : ''}`} />
             <span className="max-w-0 overflow-hidden whitespace-nowrap text-lg font-bold text-white/90 transition-all duration-300 group-focus:max-w-xs group-focus:ml-2">
               {ota.checking ? "Verificando..." : "Updates"}
             </span>
@@ -615,9 +615,9 @@ function Index() {
                 toast.info("Configurações nativas disponíveis apenas no app Android");
               }
             }}
-            className="group flex items-center gap-3 px-6 py-4 rounded-2xl bg-white/5 border-2 border-white/10 backdrop-blur-md transition-all duration-300 active:scale-95 focus:outline-none focus:border-white/40 focus:bg-white/10 focus:shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:bg-white/10 hover:scale-105"
+            className="group flex items-center justify-center gap-0 px-4 py-4 rounded-2xl bg-white/5 border-2 border-white/10 backdrop-blur-md transition-all duration-300 active:scale-95 focus:outline-none focus:border-white/40 focus:bg-white/10 focus:shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:bg-white/10 hover:scale-105"
           >
-            <Settings size={20} className="text-white/70" />
+            <Settings size={20} className="text-white/70 shrink-0" />
             <span className="max-w-0 overflow-hidden whitespace-nowrap text-lg font-bold text-white/90 transition-all duration-300 group-focus:max-w-xs group-focus:ml-2">
               Configurações
             </span>
