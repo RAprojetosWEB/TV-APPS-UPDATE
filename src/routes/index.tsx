@@ -117,7 +117,9 @@ function Index() {
 
     setStates(prev => prev.map((s, i) => {
       const app = APPS[i];
-      const isInstalled = isNative && window.Android?.isAppInstalled?.(app.packageName);
+      const isInstalled = isNative 
+        ? window.Android?.isAppInstalled?.(app.packageName)
+        : (i === 0); // Mock only the first app as installed in browser demo
       
       // Mock de versão instalada para demonstração (sempre um pouco menor que a versão atual)
       const installedVersion = isNative && window.Android?.version ? window.Android.version() : (parseFloat(app.version) - 0.3).toFixed(1);
