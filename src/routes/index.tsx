@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Check, Download, Play, AlertCircle, Calendar, Clock, Cloud, RefreshCcw, Search, Info, Settings } from "lucide-react";
+import { Check, Download, Play, AlertCircle, Calendar, Clock, Cloud, RefreshCcw, RotateCcw, Search, Info, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOtaUpdate } from "@/hooks/useOtaUpdate";
 import { OtaUpdateModal } from "@/components/OtaUpdateModal";
