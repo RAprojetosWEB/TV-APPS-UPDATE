@@ -378,7 +378,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
         )}
       </div>
 
-      <p className="absolute bottom-6 left-0 right-0 z-10 px-6 text-center text-white/50" style={{ fontSize: "2.25rem" }}>
+      <p className="absolute bottom-6 left-0 right-0 z-10 px-6 text-center text-white/50" style={{ fontSize: "1.5rem" }}>
         Acesso restrito a clientes. Peça o acesso no WhatsApp{" "}
         <span className="font-semibold text-white/80">14 99868-1696</span>
       </p>
