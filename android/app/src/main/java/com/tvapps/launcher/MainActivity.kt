@@ -145,9 +145,9 @@ class MainActivity : Activity() {
             setPadding(0, dp((20 * scaleFactor).toInt()), 0, dp((20 * scaleFactor).toInt()))
         }
         
-        val cardWidth = (340 * scaleFactor).toInt()
-        val cardHeight = (440 * scaleFactor).toInt()
-        val cardMargin = (20 * scaleFactor).toInt()
+        val cardWidth = (380 * scaleFactor).toInt()
+        val cardHeight = (500 * scaleFactor).toInt()
+        val cardMargin = (24 * scaleFactor).toInt()
 
         AppCatalog.apps.forEachIndexed { index, app ->
             val card = buildCard(index, app, cardWidth, cardHeight, cardMargin, scaleFactor)
@@ -233,28 +233,28 @@ class MainActivity : Activity() {
         val title = TextView(this).apply {
             text = app.name
             setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 26f * scale)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 32f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             gravity = Gravity.CENTER
         }
         val subtitle = TextView(this).apply {
             text = app.description
             setTextColor(Color.parseColor("#99FFFFFF"))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f * scale)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f * scale)
             gravity = Gravity.CENTER
-            setPadding(0, dp((10 * scale).toInt()), 0, dp((20 * scale).toInt()))
+            setPadding(0, dp((12 * scale).toInt()), 0, dp((24 * scale).toInt()))
         }
 
         // Pill "BAIXAR APK"
         val pill = TextView(this).apply {
             text = "⬇  QUERO INSTALAR"
             setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f * scale)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             gravity = Gravity.CENTER
             background = makePillBg(false, scale)
-            val px = (22 * scale).toInt()
-            val py = (12 * scale).toInt()
+            val px = (32 * scale).toInt()
+            val py = (18 * scale).toInt()
             setPadding(dp(px), dp(py), dp(px), dp(py))
         }
 

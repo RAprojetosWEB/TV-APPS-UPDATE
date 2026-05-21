@@ -324,7 +324,7 @@ function Index() {
                   startDownload(i);
                 }
               }}
-              className="group relative flex aspect-[3/4] w-full max-w-[360px] flex-col items-center justify-center rounded-3xl outline-none transition-all duration-300 mx-auto"
+              className="group relative flex aspect-[3/4.2] w-full max-w-[420px] flex-col items-center justify-center rounded-3xl outline-none transition-all duration-300 mx-auto"
               style={{
                 background:
                   "linear-gradient(160deg, var(--tv-card), oklch(0.18 0.04 270))",
@@ -426,19 +426,19 @@ function Index() {
                   color={isFocused ? "oklch(0.15 0.03 270)" : "white"}
                 />
               </div>
-              <h2 className="tv-text font-bold">{app.name}</h2>
-              <p className="mt-3 px-6 text-center text-base text-white/60">
+              <h2 className="text-4xl font-bold">{app.name}</h2>
+              <p className="mt-4 px-6 text-center text-xl text-white/60">
                 {app.description}
               </p>
               <div
-                className="mt-8 flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-all"
+                className="mt-10 flex items-center gap-3 rounded-full px-10 py-5 text-lg font-bold transition-all"
                 style={{
                   background: isFocused ? "var(--tv-accent)" : "transparent",
                   color: isFocused ? "oklch(0.15 0.03 270)" : "white",
-                  border: `2px solid ${isFocused ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
+                  border: `3px solid ${isFocused ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
                 }}
               >
-                <Download size={16} />
+                <Download size={22} />
                 QUERO INSTALAR
               </div>
               </>
