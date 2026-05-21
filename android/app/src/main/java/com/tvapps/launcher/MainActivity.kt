@@ -402,6 +402,15 @@ class MainActivity : Activity() {
                 fun openApp(packageName: String) = this@MainActivity.openApp(packageName)
 
                 @JavascriptInterface
+                fun openSettings() {
+                    try {
+                        startActivity(Intent(android.provider.Settings.ACTION_SETTINGS))
+                    } catch (e: Exception) {
+                        // ignore
+                    }
+                }
+
+                @JavascriptInterface
                 fun installApk(url: String, name: String) {
                     val index = AppCatalog.apps.indexOfFirst { it.name == name }
                     if (index != -1) {
