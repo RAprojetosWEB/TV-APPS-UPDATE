@@ -1060,7 +1060,7 @@ class MainActivity : Activity() {
             } catch (_: Exception) { null }
 
             if (otaInfo == null) {
-                systemPill.text = "⟳  Procurar Atualização"
+                systemPill.text = "⟳"
                 systemPill.setTextColor(Color.parseColor("#FF6B6B"))
                 if (manual) {
                     Toast.makeText(this@MainActivity, "Falha ao verificar atualizações (sem conexão)", Toast.LENGTH_SHORT).show()
