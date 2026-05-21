@@ -71,6 +71,8 @@ class MainActivity : Activity() {
         }
     }
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
+    private var packageReceiver: PackageInstallReceiver? = null
+
 
 
     private data class CardViews(
