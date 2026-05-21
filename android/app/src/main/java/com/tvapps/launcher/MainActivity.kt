@@ -963,6 +963,7 @@ class MainActivity : Activity() {
         }
 
         right.addView(system)
+        right.addView(settings)
         right.addView(clock)
         right.addView(date)
         right.addView(weather)
