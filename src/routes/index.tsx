@@ -343,7 +343,7 @@ function Index() {
         onKeyDown={handleKey}
         className="relative flex min-h-screen flex-col text-foreground"
       >
-      <header className="px-16 pt-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <header className="px-[clamp(2rem,6vw,6rem)] pt-[clamp(2rem,6vh,6rem)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
           <h1 className="tv-title font-black tracking-tight leading-none">
             TV<span style={{ color: "var(--tv-accent)" }}>.</span>Apps
