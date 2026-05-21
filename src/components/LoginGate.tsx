@@ -142,7 +142,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
   };
 
   async function handleSubmit() {
-    if (loading) return;
+    if (loading || isTransitioning) return;
     setLoading(true);
     setError(null);
     try {
@@ -153,7 +153,11 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
         } catch {
           // ignore
         }
-        setAuthed(true);
+        setIsTransitioning(true);
+        // Pequeno delay para mostrar a tela de carregamento e melhorar a percepção de TV
+        setTimeout(() => {
+          setAuthed(true);
+        }, 1800);
       } else {
         setError("Senha incorreta");
         setPassword("");
