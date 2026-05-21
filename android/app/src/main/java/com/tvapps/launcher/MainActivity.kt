@@ -59,10 +59,18 @@ class MainActivity : Activity() {
     }
 
     private fun buildRoot(): View {
+        val dm = resources.displayMetrics
+        val widthDp = dm.widthPixels / dm.density
+        val heightDp = dm.heightPixels / dm.density
+        
+        // Fator de escala base: assumimos que o design ideal foi feito para uma tela de ~1280dp de largura
+        // Limitamos para evitar que em telas muito pequenas ou muito grandes fique bizarro
+        val scaleFactor = (widthDp / 1280f).coerceIn(0.7f, 1.3f)
+
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             background = makeRootBackground()
-            setPadding(dp(64), dp(40), dp(64), dp(32))
+            setPadding(dp((64 * scaleFactor).toInt()), dp((40 * scaleFactor).toInt()), dp((64 * scaleFactor).toInt()), dp((32 * scaleFactor).toInt()))
         }
 
         // Header "TV.Apps" — ponto em verde, igual à web
@@ -75,19 +83,19 @@ class MainActivity : Activity() {
             )
             text = spanned
             setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 44f)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 44f * scaleFactor)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
         }
         val sub = TextView(this).apply {
             text = "Use as setas do controle e pressione OK para baixar"
             setTextColor(Color.parseColor("#99FFFFFF"))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
-            setPadding(0, dp(8), 0, 0)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f * scaleFactor)
+            setPadding(0, dp((8 * scaleFactor).toInt()), 0, 0)
         }
         root.addView(header)
         root.addView(sub)
 
-        // Linha de cards centralizada (sem scroll — só 3 cards)
+        // Linha de cards centralizada
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
@@ -96,10 +104,15 @@ class MainActivity : Activity() {
             )
             clipChildren = false
             clipToPadding = false
-            setPadding(0, dp(20), 0, dp(20))
+            setPadding(0, dp((20 * scaleFactor).toInt()), 0, dp((20 * scaleFactor).toInt()))
         }
+        
+        val cardWidth = (340 * scaleFactor).toInt()
+        val cardHeight = (440 * scaleFactor).toInt()
+        val cardMargin = (20 * scaleFactor).toInt()
+
         AppCatalog.apps.forEachIndexed { index, app ->
-            val card = buildCard(index, app)
+            val card = buildCard(index, app, cardWidth, cardHeight, cardMargin, scaleFactor)
             row.addView(card.container)
             cardViews.add(card)
         }
@@ -108,7 +121,7 @@ class MainActivity : Activity() {
         val footer = TextView(this).apply {
             text = "Após o download, permita instalação de fontes desconhecidas"
             setTextColor(Color.parseColor("#66FFFFFF"))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f * scaleFactor)
             gravity = Gravity.CENTER
         }
         root.addView(footer)
