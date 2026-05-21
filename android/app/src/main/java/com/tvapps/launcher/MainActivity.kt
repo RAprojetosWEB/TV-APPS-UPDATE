@@ -421,6 +421,34 @@ class MainActivity : Activity() {
         content.addView(percent)
         container.addView(content)
 
+        // Chip "INSTALADO" sobreposto no canto superior direito do card
+        val installedChip = TextView(this).apply {
+            text = "INSTALADO"
+            setTextColor(Color.parseColor("#15102A"))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f * scale)
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            gravity = Gravity.CENTER
+            val bg = GradientDrawable().apply {
+                setColor(Color.parseColor("#5EE6A8"))
+                cornerRadius = dp((100 * scale).toInt()).toFloat()
+            }
+            background = bg
+            val px = (12 * scale).toInt()
+            val py = (6 * scale).toInt()
+            setPadding(dp(px), dp(py), dp(px), dp(py))
+            visibility = View.GONE
+            val lp = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply {
+                gravity = Gravity.TOP or Gravity.END
+                topMargin = dp((14 * scale).toInt())
+                marginEnd = dp((14 * scale).toInt())
+            }
+            layoutParams = lp
+        }
+        container.addView(installedChip)
+
         container.setOnFocusChangeListener { v, hasFocus ->
             if (hasFocus) {
                 v.playSoundEffect(SoundEffectConstants.NAVIGATION_RIGHT)
@@ -439,7 +467,7 @@ class MainActivity : Activity() {
             it.playSoundEffect(SoundEffectConstants.CLICK)
             startDownload(index) 
         }
-        return CardViews(container, content, iconBadge, iconText, title, subtitle, pill, progress, percent)
+        return CardViews(container, content, iconBadge, iconText, title, subtitle, pill, progress, percent, installedChip)
     }
 
     private fun makeCardBg(focused: Boolean, scale: Float): GradientDrawable {
@@ -490,6 +518,22 @@ class MainActivity : Activity() {
         }
     }
 
+    /**
+     * Aplica no card o estado visual de "instalado" (chip + botão "ABRIR APP")
+     * ou volta para "QUERO INSTALAR" se foi desinstalado.
+     */
+    private fun refreshInstalledState(card: CardViews, app: CatalogApp) {
+        val installed = InstalledRegistry.isInstalled(this, app)
+        if (card.progress.visibility == View.VISIBLE) return // download em andamento
+        if (installed) {
+            card.pill.text = "▶  ABRIR APP"
+            card.installedChip.visibility = View.VISIBLE
+        } else {
+            card.pill.text = "⬇  QUERO INSTALAR"
+            card.installedChip.visibility = View.GONE
+        }
+    }
+
     private fun openApp(packageName: String) {
         val intent = packageManager.getLaunchIntentForPackage(packageName)
         if (intent != null) {
@@ -528,8 +572,8 @@ class MainActivity : Activity() {
         val card = cardViews[index]
         
         // Se já estiver instalado, abre direto
-        if (isAppInstalled(app.packageName)) {
-            openApp(app.packageName)
+        if (InstalledRegistry.isInstalled(this, app)) {
+            openApp(InstalledRegistry.resolvePackage(this, app))
             return
         }
 
@@ -563,8 +607,13 @@ class MainActivity : Activity() {
                             card.progress.visibility = View.GONE
                             card.percent.visibility = View.GONE
                             card.pill.visibility = View.VISIBLE
-                            card.pill.text = "▶  ABRIR APP"
                             card.subtitle.text = AppCatalog.apps[index].description
+                            // Revalida instalação real e atualiza chip/botão;
+                            // se instalado, remove o APK do cache.
+                            refreshInstalledState(card, app)
+                            if (InstalledRegistry.isInstalled(this@MainActivity, app)) {
+                                ApkCache.deleteFor(this@MainActivity, app.name)
+                            }
                         }, 2500)
                     }
                     is DownloadProgress.Error -> withContext(Dispatchers.Main) {
