@@ -861,24 +861,44 @@ class MainActivity : Activity() {
         val right = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
+            // Habilita animações de transição de layout (expansão suave)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                layoutTransition = android.animation.LayoutTransition().apply {
+                    setDuration(250)
+                    enableTransitionType(android.animation.LayoutTransition.CHANGING)
+                }
+            }
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
             )
         }
 
-        val system = makeStatusPill("⟳", "#E8A85C", scale).apply {
+        val system = makeStatusPill("🔍", "#E8A85C", scale).apply {
             isFocusable = true
             isClickable = true
+            // Desativa a mudança de linha automática para permitir animação de largura
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            
             setOnClickListener { checkOtaUpdate(this, true) }
             setOnFocusChangeListener { v, hasFocus ->
-                val bg = (v.background as? GradientDrawable) ?: return@setOnFocusChangeListener
+                val tv = v as TextView
+                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
+                
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#335EE6A8"))
                     bg.setStroke(dp(2), Color.parseColor("#5EE6A8"))
+                    
+                    // Expande com texto e animação
+                    tv.text = "🔍  Procurar atualizações"
+                    tv.animate().alpha(1f).setDuration(200).start()
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    
+                    // Retrai para apenas o ícone
+                    tv.text = "🔍"
                 }
             }
         }
@@ -932,10 +952,18 @@ class MainActivity : Activity() {
             val px = dp((14 * scale).toInt())
             val py = dp((10 * scale).toInt())
             setPadding(px, py, px, py)
+            
+            // Layout animável
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
             )
+            
+            // Ativa animações de layout automáticas no container pai se possível
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                // Configuração para permitir que o texto apareça suavemente
+                animate().duration = 200
+            }
         }
     }
 
@@ -1060,7 +1088,7 @@ class MainActivity : Activity() {
             } catch (_: Exception) { null }
 
             if (otaInfo == null) {
-                systemPill.text = "⟳"
+                systemPill.text = if (systemPill.hasFocus()) "🔍  Procurar atualizações" else "🔍"
                 systemPill.setTextColor(Color.parseColor("#FF6B6B"))
                 if (manual) {
                     Toast.makeText(this@MainActivity, "Falha ao verificar atualizações (sem conexão)", Toast.LENGTH_SHORT).show()
@@ -1077,7 +1105,7 @@ class MainActivity : Activity() {
                     showOtaConfirmDialog(remoteVersion, downloadUrl)
                 }
             } else {
-                systemPill.text = "⟳"
+                systemPill.text = if (systemPill.hasFocus()) "🔍  Procurar atualizações" else "🔍"
                 systemPill.setTextColor(Color.parseColor("#5EE6A8"))
                 if (manual) {
                     Toast.makeText(this@MainActivity, "Você já está na versão mais recente", Toast.LENGTH_SHORT).show()
@@ -1122,7 +1150,7 @@ class MainActivity : Activity() {
                     is DownloadProgress.Error -> withContext(Dispatchers.Main) {
                         systemPill.text = "⚠  Erro no download"
                         Toast.makeText(this@MainActivity, "Erro ao baixar atualização: ${p.message}", Toast.LENGTH_LONG).show()
-                        systemPill.postDelayed({ systemPill.text = "⟳" }, 3000)
+                        systemPill.postDelayed({ systemPill.text = if (systemPill.hasFocus()) "🔍  Procurar atualizações" else "🔍" }, 3000)
                     }
                 }
             }
