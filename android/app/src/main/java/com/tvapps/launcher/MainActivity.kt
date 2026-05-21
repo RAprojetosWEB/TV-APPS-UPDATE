@@ -876,9 +876,9 @@ class MainActivity : Activity() {
 
     // ===================== OTA =====================
 
-    private fun checkOtaUpdate(systemPill: TextView) {
+    private fun checkOtaUpdate(systemPill: TextView, manual: Boolean = false) {
         scope.launch {
-            val updated = try {
+            val otaInfo = try {
                 withContext(Dispatchers.IO) {
                     val url = "https://bunvyxogwpwiojzczgwl.supabase.co/storage/v1/object/public/tvapps-updates/update.json?t=${System.currentTimeMillis()}"
                     val client = okhttp3.OkHttpClient()
@@ -888,24 +888,82 @@ class MainActivity : Activity() {
                         val body = it.body?.string() ?: return@withContext null
                         val json = org.json.JSONObject(body)
                         val remote = json.optString("version", "")
+                        val downloadUrl = json.optString("url", "")
                         val local = try { packageManager.getPackageInfo(packageName, 0).versionName ?: "" } catch (_: Exception) { "" }
-                        compareVersions(remote, local) > 0
+                        
+                        val hasUpdate = compareVersions(remote, local) > 0
+                        Triple(hasUpdate, remote, downloadUrl)
                     }
                 }
             } catch (_: Exception) { null }
 
-            when (updated) {
-                true -> {
-                    systemPill.text = "⬇  Atualização disponível"
-                    systemPill.setTextColor(Color.parseColor("#5EE6A8"))
-                }
-                false -> {
-                    systemPill.text = "✓  Sistema atualizado"
-                    systemPill.setTextColor(Color.parseColor("#5EE6A8"))
-                }
-                null -> {
+            if (otaInfo == null) {
+                if (manual) {
+                    Toast.makeText(this@MainActivity, "Falha ao verificar atualizações", Toast.LENGTH_SHORT).show()
+                } else {
                     systemPill.text = "⚠  Sem conexão"
                     systemPill.setTextColor(Color.parseColor("#FF6B6B"))
+                }
+                return@launch
+            }
+
+            val (hasUpdate, remoteVersion, downloadUrl) = otaInfo
+
+            if (hasUpdate) {
+                systemPill.text = "⬇  Atualização disponível ($remoteVersion)"
+                systemPill.setTextColor(Color.parseColor("#5EE6A8"))
+                
+                if (manual) {
+                    showOtaConfirmDialog(remoteVersion, downloadUrl)
+                }
+            } else {
+                systemPill.text = "✓  Sistema atualizado"
+                systemPill.setTextColor(Color.parseColor("#5EE6A8"))
+                if (manual) {
+                    Toast.makeText(this@MainActivity, "Você já está na versão mais recente", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun showOtaConfirmDialog(version: String, url: String) {
+        if (url.isEmpty()) {
+            Toast.makeText(this, "URL de atualização inválida", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val builder = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+        builder.setTitle("Nova Atualização")
+        builder.setMessage("Uma nova versão ($version) do TV.Apps está disponível. Deseja baixar e instalar agora?")
+        builder.setPositiveButton("Baixar Agora") { dialog, _ ->
+            dialog.dismiss()
+            startLauncherUpdate(url)
+        }
+        builder.setNegativeButton("Mais Tarde") { dialog, _ ->
+            dialog.dismiss()
+        }
+        builder.create().show()
+    }
+
+    private fun startLauncherUpdate(url: String) {
+        val systemPill = otaStatusPill ?: return
+        val originalText = systemPill.text
+        
+        scope.launch {
+            ApkDownloader.download(this@MainActivity, url, "TV.Apps_Update").collect { p ->
+                when (p) {
+                    is DownloadProgress.Progress -> withContext(Dispatchers.Main) {
+                        systemPill.text = "⬇  Baixando: ${p.percent}%"
+                    }
+                    is DownloadProgress.Done -> withContext(Dispatchers.Main) {
+                        systemPill.text = "✓  Download concluído"
+                        ApkInstaller.install(this@MainActivity, p.file)
+                        systemPill.postDelayed({ systemPill.text = "✓  Sistema atualizado" }, 5000)
+                    }
+                    is DownloadProgress.Error -> withContext(Dispatchers.Main) {
+                        systemPill.text = "⚠  Erro no download"
+                        Toast.makeText(this@MainActivity, "Erro ao baixar atualização: ${p.message}", Toast.LENGTH_LONG).show()
+                        systemPill.postDelayed({ systemPill.text = "Procurar Atualização" }, 3000)
+                    }
                 }
             }
         }
