@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { LogIn } from "lucide-react";
 
-// SHA-256("1234"). Para trocar, gere um novo hash e substitua aqui.
+// SHA-256("1555"). Para trocar, gere um novo hash e substitua aqui.
 // Console: crypto.subtle.digest("SHA-256", new TextEncoder().encode("suasenha"))
 const PASSWORD_HASH =
-  "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
+  "2ae7ffb0ec4d1bccf01b12233aaced6949cc5808a4a173315ee508abbbaaaa1c";
 
 const STORAGE_KEY = "tvapps_auth_v1";
 const SESSION_TOKEN = "ok";
