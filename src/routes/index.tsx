@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Check, Download, AlertCircle, Calendar, Clock, Cloud } from "lucide-react";
+import { Check, Download, Play, AlertCircle, Calendar, Clock, Cloud } from "lucide-react";
 import { NetworkIndicator } from "@/components/NetworkIndicator";
 import { useDateTime } from "@/hooks/useDateTime";
 import unitvLogo from "@/assets/unitv.png";
@@ -381,7 +381,6 @@ function Index() {
       <section className="tv-card-grid flex-1 items-center">
         {APPS.map((app, i) => {
           const isFocused = focused === i;
-          const Icon = app.Icon;
           return (
             <button
               key={app.name}
