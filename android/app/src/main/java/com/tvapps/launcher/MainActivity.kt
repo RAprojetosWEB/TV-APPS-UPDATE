@@ -8,13 +8,21 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
+import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -26,6 +34,9 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 import android.view.SoundEffectConstants
 import android.webkit.JavascriptInterface
@@ -40,12 +51,32 @@ class MainActivity : Activity() {
     private var webView: WebView? = null
     private var isUnlocked = false
 
+    // Status bar do topo
+    private var clockView: TextView? = null
+    private var dateView: TextView? = null
+    private var weatherView: TextView? = null
+    private var wifiView: TextView? = null
+    private val statusHandler = Handler(Looper.getMainLooper())
+    private val clockTicker = object : Runnable {
+        override fun run() {
+            updateClockAndDate()
+            statusHandler.postDelayed(this, 30_000)
+        }
+    }
+    private val weatherTicker = object : Runnable {
+        override fun run() {
+            refreshWeather()
+            statusHandler.postDelayed(this, 30 * 60_000L)
+        }
+    }
+    private var networkCallback: ConnectivityManager.NetworkCallback? = null
+
 
     private data class CardViews(
         val container: FrameLayout,
         val content: LinearLayout,
         val iconBadge: FrameLayout,
-        val iconText: TextView,
+        val iconImage: ImageView,
         val title: TextView,
         val subtitle: TextView,
         val pill: TextView,
