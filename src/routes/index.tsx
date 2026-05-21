@@ -535,6 +535,7 @@ function Index() {
   };
 
   return (
+    <LoginGate>
     <div className="relative min-h-screen w-screen overflow-x-hidden bg-background">
       {/* Background decoration */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
