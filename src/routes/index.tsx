@@ -111,6 +111,73 @@ function Index() {
   const [appToUpdate, setAppToUpdate] = useState<number | null>(null);
   const [dynamicApps, setDynamicApps] = useState<any[]>([]);
 
+  // ---------- OTA (atualização do próprio app TV.Apps) ----------
+  const ota = useOtaUpdate();
+  const [otaModalOpen, setOtaModalOpen] = useState(false);
+  const [otaDownloading, setOtaDownloading] = useState(false);
+  const [otaProgress, setOtaProgress] = useState(0);
+
+  // Abre modal automaticamente quando detecta atualização (e mantém aberto se forceUpdate)
+  useEffect(() => {
+    if (ota.hasUpdate) setOtaModalOpen(true);
+  }, [ota.hasUpdate]);
+
+  const startOtaUpdate = async () => {
+    if (!ota.manifest || otaDownloading) return;
+    const url = ota.manifest.apkUrl;
+
+    // No APK nativo, delega ao instalador do Android
+    if (typeof window !== "undefined" && typeof window.Android?.installApk === "function") {
+      setOtaDownloading(true);
+      setOtaProgress(0);
+      try {
+        window.Android.installApk(url, "TV.Apps");
+      } catch (err) {
+        console.error("OTA native install failed", err);
+        setOtaDownloading(false);
+      }
+      return;
+    }
+
+    // Fallback navegador: baixa via fetch com progresso e abre o APK
+    setOtaDownloading(true);
+    setOtaProgress(0);
+    try {
+      const res = await fetch(url);
+      if (!res.ok || !res.body) throw new Error("HTTP " + res.status);
+      const total = Number(res.headers.get("Content-Length") || 0);
+      const reader = res.body.getReader();
+      const chunks: BlobPart[] = [];
+      let received = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+          chunks.push(value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength) as ArrayBuffer);
+          received += value.length;
+          if (total > 0) setOtaProgress(Math.round((received / total) * 100));
+        }
+      }
+      const blob = new Blob(chunks, { type: "application/vnd.android.package-archive" });
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = "tvapps-latest.apk";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      try { window.location.href = blobUrl; } catch {}
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 5 * 60_000);
+      setOtaDownloading(false);
+      setOtaModalOpen(false);
+    } catch (err) {
+      console.error("OTA download failed", err);
+      toast.error("Falha ao baixar a atualização");
+      setOtaDownloading(false);
+    }
+  };
+  // -----------------------------------------------------------
+
   const fetchDynamicApps = async () => {
     try {
       const { data: apps, error } = await supabase
