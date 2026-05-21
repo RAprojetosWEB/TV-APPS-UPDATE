@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Check, Download, Play, AlertCircle, Calendar, Clock, Cloud, RefreshCcw, Search, Info } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { NetworkIndicator } from "@/components/NetworkIndicator";
 import { useDateTime } from "@/hooks/useDateTime";
 import { toast } from "sonner";
@@ -106,17 +107,59 @@ function Index() {
   const [checkingUpdates, setCheckingUpdates] = useState(false);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [appToUpdate, setAppToUpdate] = useState<number | null>(null);
+  const [dynamicApps, setDynamicApps] = useState<any[]>([]);
+
+  const fetchDynamicApps = async () => {
+    try {
+      const { data: apps, error } = await supabase
+        .from('apps')
+        .select(`
+          *,
+          app_versions (*)
+        `)
+        .order('name');
+      
+      if (error) throw error;
+      
+      if (apps && apps.length > 0) {
+        const mappedApps = apps.map(app => {
+          const latestVersion = app.app_versions?.find((v: any) => v.is_latest) || app.app_versions?.[0];
+          return {
+            name: app.name,
+            description: app.description || "",
+            url: latestVersion?.apk_url || "",
+            logo: app.logo_url || (app.name === "UniTV" ? unitvLogo : app.name === "Nexa TV" ? nexatvLogo : alphaplayLogo),
+            packageName: app.package_name,
+            version: latestVersion?.version_name || "1.0",
+            updateDate: latestVersion ? new Date(latestVersion.created_at).toLocaleDateString('pt-BR') : "N/A",
+            size: latestVersion?.apk_size_mb ? `${latestVersion.apk_size_mb}MB` : "N/A",
+          };
+        });
+        setDynamicApps(mappedApps);
+      }
+    } catch (err) {
+      console.error("Erro ao carregar apps do banco:", err);
+      setDynamicApps(APPS); // Fallback
+    }
+  };
+
+  useEffect(() => {
+    fetchDynamicApps();
+  }, []);
+
+  const currentApps = dynamicApps.length > 0 ? dynamicApps : APPS;
 
   const checkUpdates = async (manual = false) => {
     if (checkingUpdates) return;
     setCheckingUpdates(true);
     if (manual) playClick();
 
-    // Simula um delay de rede
-    await new Promise(resolve => setTimeout(resolve, manual ? 2000 : 500));
+    await fetchDynamicApps();
 
     const newStates = states.map((s, i) => {
-      const app = APPS[i];
+      const app = currentApps[i];
+      if (!app) return s;
+
       const isInstalled = isNative 
         ? window.Android?.isAppInstalled?.(app.packageName)
         : (i === 0);
@@ -229,12 +272,12 @@ function Index() {
     if (modalOpen) return;
     if (e.key === "ArrowRight") {
       e.preventDefault();
-      const next = (focused + 1) % APPS.length;
+      const next = (focused + 1) % currentApps.length;
       setFocused(next);
       playTick();
     } else if (e.key === "ArrowLeft") {
       e.preventDefault();
-      const next = (focused - 1 + APPS.length) % APPS.length;
+      const next = (focused - 1 + currentApps.length) % currentApps.length;
       setFocused(next);
       playTick();
     }
@@ -257,7 +300,7 @@ function Index() {
 
   const startDownload = async (i: number, forceDownload = false) => {
     playClick();
-    const app = APPS[i];
+    const app = currentApps[i];
     
     // Se já estiver instalado e NÃO for uma atualização forçada, abre direto
     if (!forceDownload && isNative && window.Android?.isAppInstalled?.(app.packageName)) {
@@ -313,7 +356,7 @@ function Index() {
   useEffect(() => {
     if (!isNative) return;
     window.__onNativeApkProgress = (name, percent, error) => {
-      const idx = APPS.findIndex((a) => a.name === name);
+      const idx = currentApps.findIndex((a) => a.name === name);
       if (idx === -1) return;
       if (percent < 0) {
         updateState(idx, { status: "error", progress: 0 });
@@ -352,7 +395,7 @@ function Index() {
   const handleInstallModalAction = () => {
     if (installModalAppIndex === null) return;
     if (modalChoice === "yes" && isNative) {
-      window.Android?.openApp(APPS[installModalAppIndex].packageName);
+      window.Android?.openApp(currentApps[installModalAppIndex].packageName);
     }
     setInstallModalOpen(false);
     setInstallModalAppIndex(null);
@@ -449,7 +492,7 @@ function Index() {
       </header>
 
       <section className="tv-card-grid flex-1 items-center">
-        {APPS.map((app, i) => {
+        {currentApps.map((app, i) => {
           const isFocused = focused === i;
           return (
             <button
@@ -690,7 +733,7 @@ function Index() {
                 Nova versão disponível!
               </h2>
               <p className="mt-4 text-center text-xl text-white/70">
-                Uma atualização importante para o <span className="text-tv-accent font-bold">{APPS[appToUpdate].name}</span> está pronta.
+                Uma atualização importante para o <span className="text-tv-accent font-bold">{currentApps[appToUpdate].name}</span> está pronta.
               </p>
               
               <div className="mt-8 grid grid-cols-2 gap-4 w-full px-6">
@@ -700,7 +743,7 @@ function Index() {
                 </div>
                 <div className="bg-orange-500/10 rounded-2xl p-4 border border-orange-500/30 flex flex-col items-center">
                   <span className="text-xs text-orange-500/60 uppercase font-bold tracking-wider mb-1">Nova Versão</span>
-                  <span className="text-2xl font-black text-orange-500">{APPS[appToUpdate].version}</span>
+                  <span className="text-2xl font-black text-orange-500">{currentApps[appToUpdate].version}</span>
                 </div>
               </div>
 
@@ -751,12 +794,12 @@ function Index() {
               <div className="mt-6 flex items-center gap-4 text-white/30 text-sm">
                 <div className="flex items-center gap-1">
                   <Calendar size={14} />
-                  <span>{APPS[appToUpdate].updateDate}</span>
+                   <span>{currentApps[appToUpdate].updateDate}</span>
                 </div>
                 <div className="w-1 h-1 rounded-full bg-white/20" />
                 <div className="flex items-center gap-1">
                   <Download size={14} />
-                  <span>{APPS[appToUpdate].size}</span>
+                  <span>{currentApps[appToUpdate].size}</span>
                 </div>
               </div>
             </div>
@@ -858,7 +901,7 @@ function Index() {
                 <Check size={56} strokeWidth={2.5} color="oklch(0.15 0.03 270)" />
               </div>
               <h2 className="text-3xl font-bold text-white">
-                {APPS[doneIndex]?.name}
+                {currentApps[doneIndex]?.name}
               </h2>
               <p className="mt-3 text-center text-lg text-white/80">
                 Download concluído.
