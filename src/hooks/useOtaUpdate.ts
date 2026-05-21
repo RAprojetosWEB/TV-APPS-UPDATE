@@ -84,8 +84,10 @@ export function useOtaUpdate(options: { autoCheck?: boolean } = { autoCheck: tru
   // Verificação automática do OTA reativada
   useEffect(() => {
     setInstalledVersion(getInstalledVersion());
-    check(false);
-  }, [check]);
+    if (options.autoCheck) {
+      check(false);
+    }
+  }, [check, options.autoCheck]);
 
   return {
     manifest,
