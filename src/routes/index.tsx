@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Check, Download, Play, Tv, AlertCircle } from "lucide-react";
+import { Check, Download, Play, Tv, AlertCircle, Calendar, Clock, Cloud } from "lucide-react";
+import { NetworkIndicator } from "@/components/NetworkIndicator";
+import { useDateTime } from "@/hooks/useDateTime";
 
 // Ponte com o APK nativo (WebView host). Se existir, instalamos APK direto
 // via PackageInstaller nativo; senão, fazemos o download "tradicional".
@@ -108,6 +110,7 @@ function Index() {
   const installYesBtnRef = useRef<HTMLButtonElement | null>(null);
   const installNoBtnRef = useRef<HTMLButtonElement | null>(null);
 
+  const { time, date } = useDateTime();
   const doneIndex = states.findIndex((s) => s.status === "done");
   const modalOpen = doneIndex !== -1 || installModalOpen;
 
@@ -323,21 +326,53 @@ function Index() {
   };
 
   return (
-    <main
-      onKeyDown={handleKey}
-      className="relative flex min-h-screen w-screen flex-col overflow-x-hidden bg-background text-foreground"
-      style={{
-        backgroundImage:
-          "radial-gradient(ellipse at top left, oklch(0.3 0.12 280 / 0.4), transparent 60%), radial-gradient(ellipse at bottom right, oklch(0.3 0.12 150 / 0.35), transparent 60%)",
-      }}
-    >
-      <header className="px-16 pt-10">
-        <h1 className="tv-title font-black tracking-tight">
-          TV<span style={{ color: "var(--tv-accent)" }}>.</span>Apps
-        </h1>
-        <p className="mt-2 tv-text text-white/60">
-          Use as setas do controle e pressione OK para baixar
-        </p>
+    <div className="relative min-h-screen w-screen overflow-x-hidden bg-background">
+      {/* Background decoration */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div 
+          className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] rounded-full blur-[120px]"
+          style={{ background: "radial-gradient(circle, oklch(0.6 0.2 150 / 0.15) 0%, transparent 70%)" }}
+        />
+        <div 
+          className="absolute -bottom-[10%] -right-[10%] w-[50%] h-[50%] rounded-full blur-[120px]"
+          style={{ background: "radial-gradient(circle, oklch(0.6 0.2 280 / 0.1) 0%, transparent 70%)" }}
+        />
+      </div>
+
+      <main
+        onKeyDown={handleKey}
+        className="relative flex min-h-screen flex-col text-foreground"
+      >
+      <header className="px-16 pt-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div>
+          <h1 className="tv-title font-black tracking-tight leading-none">
+            TV<span style={{ color: "var(--tv-accent)" }}>.</span>Apps
+          </h1>
+          <p className="mt-3 tv-text text-white/50 font-medium">
+            Central de Downloads Automática
+          </p>
+        </div>
+
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-6 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+            <div className="flex items-center gap-2 text-white/90">
+              <Clock size={20} className="text-tv-accent" />
+              <span className="text-2xl font-bold tabular-nums">{time}</span>
+            </div>
+            <div className="h-6 w-px bg-white/10" />
+            <div className="flex items-center gap-2 text-white/70">
+              <Calendar size={18} className="text-tv-accent" />
+              <span className="text-xl font-medium capitalize">{date}</span>
+            </div>
+            <div className="h-6 w-px bg-white/10" />
+            <div className="flex items-center gap-2 text-white/70">
+              <Cloud size={20} className="text-tv-accent" />
+              <span className="text-xl font-medium">24°C</span>
+            </div>
+          </div>
+          
+          <NetworkIndicator />
+        </div>
       </header>
 
       <section className="tv-card-grid flex-1 items-center">
@@ -669,5 +704,6 @@ function Index() {
         </div>
       )}
     </main>
+    </div>
   );
 }
