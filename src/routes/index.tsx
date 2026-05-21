@@ -343,6 +343,9 @@ function Index() {
       if (installModalOpen) {
         setInstallModalOpen(false);
         setInstallModalAppIndex(null);
+      } else if (updateModalOpen) {
+        setUpdateModalOpen(false);
+        setAppToUpdate(null);
       } else {
         closeModal();
       }
