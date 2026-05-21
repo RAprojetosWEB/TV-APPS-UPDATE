@@ -1042,6 +1042,16 @@ function Index() {
         </div>
       )}
     </main>
+
+    <OtaUpdateModal
+      open={otaModalOpen}
+      manifest={ota.manifest}
+      installedVersion={ota.installedVersion}
+      downloading={otaDownloading}
+      progress={otaProgress}
+      onUpdate={startOtaUpdate}
+      onLater={() => setOtaModalOpen(false)}
+    />
     </div>
   );
 }
