@@ -809,7 +809,8 @@ class MainActivity : Activity() {
         updateClockAndDate()
         refreshWeather()
         updateWifi(isNetworkOnline())
-        checkOtaUpdate(system)
+        // checkOtaUpdate removido daqui para desativar verificação automática pós-login
+        // Só será possível verificar manualmente via clique no botão.
 
         return row
     }
