@@ -54,11 +54,11 @@ export function useOtaUpdate() {
     }
   }, [checking]);
 
-  // Verificação automática desativada
+  // Verificação automática do OTA reativada
   useEffect(() => {
     setInstalledVersion(getInstalledVersion());
-    // check(false); // Removido
-  }, []);
+    check(false);
+  }, [check]);
 
   return {
     manifest,

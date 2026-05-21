@@ -118,12 +118,10 @@ function Index() {
   const [otaProgress, setOtaProgress] = useState(0);
 
   // Abre modal automaticamente quando detecta atualização (e mantém aberto se forceUpdate)
-  // Verificação automática removida a pedido do usuário
-  /*
+  // Abre modal automaticamente quando detecta atualização do sistema (OTA)
   useEffect(() => {
     if (ota.hasUpdate) setOtaModalOpen(true);
   }, [ota.hasUpdate]);
-  */
 
   const startOtaUpdate = async () => {
     if (!ota.manifest || otaDownloading) return;
@@ -244,7 +242,7 @@ function Index() {
         : (i === 0);
       
       const installedVersion = isNative && window.Android?.version ? window.Android.version() : (parseFloat(app.version) - 0.3).toFixed(1);
-      const hasUpdate = manual ? !!(isInstalled && parseFloat(app.version) > parseFloat(installedVersion || "0")) : false;
+      const hasUpdate = false; // Verificação de atualização para apps de terceiros removida permanentemente
 
       return {
         ...s,
@@ -614,24 +612,12 @@ function Index() {
               tabIndex={0}
               onFocus={() => setFocused(i)}
               onClick={() => {
-                if (states[i].hasUpdate) {
-                  setAppToUpdate(i);
-                  setUpdateModalOpen(true);
-                  playClick();
-                } else {
-                  startDownload(i);
-                }
+                startDownload(i);
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  if (states[i].hasUpdate) {
-                    setAppToUpdate(i);
-                    setUpdateModalOpen(true);
-                    playClick();
-                  } else {
-                    startDownload(i);
-                  }
+                  startDownload(i);
                 }
               }}
               className="group relative flex aspect-[3/4.2] w-full max-w-[clamp(300px,25vw,420px)] max-h-[clamp(400px,80vh,600px)] flex-col items-center justify-center rounded-[clamp(1.5rem,3vw,3rem)] outline-none transition-all duration-300 mx-auto"
@@ -773,16 +759,12 @@ function Index() {
                 }}
               >
                 {states[i].isInstalled ? (
-                  states[i].hasUpdate ? (
-                    <>
-                      <RefreshCcw size={22} className="animate-spin-slow" />
-                      ATUALIZAR
-                    </>
-                  ) : (
+                  <>
+                    <Play size={22} fill="currentColor" />
+                    ABRIR APP
+                  </>
                     <>
                       <Play size={22} fill="currentColor" />
-                      ABRIR APP
-                    </>
                   )
                 ) : (
                   <>
