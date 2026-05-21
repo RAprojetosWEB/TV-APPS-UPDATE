@@ -394,19 +394,19 @@ function Index() {
                   startDownload(i);
                 }
               }}
-              className="group relative flex aspect-[3/4.2] w-full max-w-[420px] flex-col items-center justify-center rounded-3xl outline-none transition-all duration-300 mx-auto"
+              className="group relative flex aspect-[3/4.2] w-full max-w-[clamp(300px,25vw,420px)] max-h-[clamp(400px,80vh,600px)] flex-col items-center justify-center rounded-[clamp(1.5rem,3vw,3rem)] outline-none transition-all duration-300 mx-auto"
               style={{
                 background:
                   "linear-gradient(160deg, var(--tv-card), oklch(0.18 0.04 270))",
-                border: `3px solid ${isFocused ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
+                border: `clamp(2px, 0.4vw, 4px) solid ${isFocused ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
                 transform: isFocused ? "scale(1.05)" : "scale(1)",
                 boxShadow: isFocused
-                  ? "0 25px 80px -10px oklch(0.78 0.22 150 / 0.55), 0 0 0 6px oklch(0.78 0.22 150 / 0.15)"
+                  ? "0 25px 80px -10px oklch(0.78 0.22 150 / 0.55), 0 0 0 clamp(4px, 0.6vw, 8px) oklch(0.78 0.22 150 / 0.15)"
                   : "0 10px 30px -10px oklch(0 0 0 / 0.5)",
               }}
             >
               {states[i].status === "downloading" ? (
-                <div className="flex w-full flex-col items-center px-8">
+                <div className="flex w-full flex-col items-center px-[clamp(1rem,4vw,3rem)]">
                   <div
                     className="tv-icon-container mb-8 flex items-center justify-center rounded-2xl"
                     style={{
