@@ -1,6 +1,10 @@
 package com.tvapps.launcher
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
@@ -301,8 +305,57 @@ class MainActivity : Activity() {
         return gd
     }
 
+    private fun isAppInstalled(packageName: String): Boolean {
+        return try {
+            packageManager.getPackageInfo(packageName, 0)
+            true
+        } catch (e: PackageManager.NameNotFoundException) {
+            false
+        }
+    }
+
+    private fun openApp(packageName: String) {
+        val intent = packageManager.getLaunchIntentForPackage(packageName)
+        if (intent != null) {
+            startActivity(intent)
+        } else {
+            Toast.makeText(this, "Não foi possível abrir o aplicativo", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun showAlreadyInstalledDialog(app: CatalogApp) {
+        // Estilo customizado para o Dialog ficaria melhor com um layout XML, 
+        // mas como estamos fazendo via código, usaremos o AlertDialog padrão
+        // que segue o tema do sistema (Android TV geralmente é escuro).
+        val builder = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+        builder.setTitle("Este aplicativo já está instalado.")
+        builder.setMessage("Deseja abrir o aplicativo?")
+        
+        builder.setPositiveButton("Sim, abrir") { dialog, _ ->
+            openApp(app.packageName)
+            dialog.dismiss()
+        }
+        
+        builder.setNegativeButton("Não") { dialog, _ ->
+            dialog.dismiss()
+        }
+        
+        val dialog = builder.create()
+        dialog.show()
+        
+        // Foco inicial no botão "Sim" (Positive Button)
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).requestFocus()
+    }
+
     private fun startDownload(index: Int) {
         val app = AppCatalog.apps[index]
+        
+        // VERIFICAÇÃO SE O APP JÁ ESTÁ INSTALADO
+        if (isAppInstalled(app.packageName)) {
+            showAlreadyInstalledDialog(app)
+            return
+        }
+
         val card = cardViews[index]
         if (cardJobs[index]?.isActive == true) return
 
