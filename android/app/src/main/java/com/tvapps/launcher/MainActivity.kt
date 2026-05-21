@@ -1077,7 +1077,7 @@ class MainActivity : Activity() {
                     showOtaConfirmDialog(remoteVersion, downloadUrl)
                 }
             } else {
-                systemPill.text = "⟳  Procurar Atualização"
+                systemPill.text = "⟳"
                 systemPill.setTextColor(Color.parseColor("#5EE6A8"))
                 if (manual) {
                     Toast.makeText(this@MainActivity, "Você já está na versão mais recente", Toast.LENGTH_SHORT).show()
