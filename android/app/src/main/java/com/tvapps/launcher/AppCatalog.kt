@@ -1,4 +1,4 @@
-package com.rastream.platformtv
+package com.tvapps.launcher
 
 data class CatalogApp(
     val name: String,
