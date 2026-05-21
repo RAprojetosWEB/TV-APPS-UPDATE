@@ -71,6 +71,8 @@ class MainActivity : Activity() {
         }
     }
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
+    private var packageReceiver: PackageInstallReceiver? = null
+
 
 
     private data class CardViews(
@@ -110,7 +112,37 @@ class MainActivity : Activity() {
             ApkCache.enforceSizeLimit(this)
         } catch (_: Exception) {
         }
+
+        setupPackageReceiver()
     }
+
+    private fun setupPackageReceiver() {
+        packageReceiver = PackageInstallReceiver { packageName ->
+            // Busca o app no catálogo que corresponde ao package instalado
+            val app = AppCatalog.apps.find { 
+                InstalledRegistry.resolvePackage(this, it) == packageName 
+            }
+
+            if (app != null) {
+                ApkCache.deleteFor(this, app.name)
+                runOnUiThread {
+                    Toast.makeText(this, "Instalação concluída. Arquivo temporário removido.", Toast.LENGTH_LONG).show()
+                    // Atualiza a UI se o app estiver visível
+                    if (cardViews.isNotEmpty()) {
+                        val index = AppCatalog.apps.indexOf(app)
+                        if (index != -1) {
+                            cardViews.getOrNull(index)?.let { refreshInstalledState(it, app) }
+                        }
+                    }
+                }
+            }
+
+        }
+        PackageInstallReceiver.register(this, packageReceiver!!)
+    }
+
+
+
 
     override fun onResume() {
         super.onResume()
@@ -979,9 +1011,11 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        packageReceiver?.let { PackageInstallReceiver.unregister(this, it) }
         scope.cancel()
         statusHandler.removeCallbacksAndMessages(null)
         unregisterNetworkCallback()
         super.onDestroy()
     }
+
 }
