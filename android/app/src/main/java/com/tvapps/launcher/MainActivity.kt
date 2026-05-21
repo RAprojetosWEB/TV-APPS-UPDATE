@@ -466,7 +466,7 @@ class MainActivity : Activity() {
         root.addView(row)
 
         val footer = TextView(this).apply {
-            text = "Após o download, abra o arquivo APK e permita instalação de fontes desconhecidas"
+            text = "Selecione um aplicativo e pressione OK para instalar ou abrir"
             setTextColor(Color.parseColor("#66FFFFFF"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f * scaleFactor)
             gravity = Gravity.CENTER
