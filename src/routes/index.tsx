@@ -521,21 +521,30 @@ function Index() {
           <p className="mt-3 tv-text text-white/50 font-medium">
             Central de Downloads Automática
           </p>
+          {ota.hasUpdate && ota.manifest && (
+            <button
+              onClick={() => setOtaModalOpen(true)}
+              className="mt-3 inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 text-sm font-black text-white uppercase tracking-wider shadow-[0_0_30px_rgba(249,115,22,0.6)] animate-pulse hover:scale-105 transition-transform"
+            >
+              <RefreshCcw size={16} />
+              ⬆️ Atualização disponível — v{ota.manifest.version}
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-[clamp(0.5rem,1.5vw,1.5rem)] flex-wrap">
           <button
-            onClick={() => checkUpdates(true)}
-            disabled={checkingUpdates}
-            className={`flex items-center gap-3 px-6 py-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md transition-all active:scale-95 focus:outline-none focus:border-tv-accent ${checkingUpdates ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/10'}`}
+            onClick={() => { checkUpdates(true); ota.checkNow(); }}
+            disabled={checkingUpdates || ota.checking}
+            className={`flex items-center gap-3 px-6 py-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md transition-all active:scale-95 focus:outline-none focus:border-tv-accent ${(checkingUpdates || ota.checking) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/10'}`}
           >
-            {checkingUpdates ? (
+            {(checkingUpdates || ota.checking) ? (
               <RefreshCcw size={20} className="text-tv-accent animate-spin" />
             ) : (
               <Search size={20} className="text-tv-accent" />
             )}
             <span className="text-lg font-bold text-white/90">
-              {checkingUpdates ? "Verificando..." : "Procurar atualização"}
+              {(checkingUpdates || ota.checking) ? "Verificando..." : "Procurar atualizações"}
             </span>
           </button>
 
