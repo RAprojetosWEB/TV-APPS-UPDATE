@@ -209,7 +209,7 @@ class MainActivity : Activity() {
 
         // Pill "BAIXAR APK"
         val pill = TextView(this).apply {
-            text = "⬇  BAIXAR APK"
+            text = "⬇  INSTALAR ESSE APLICATIVO"
             setTextColor(Color.WHITE)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)

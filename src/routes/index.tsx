@@ -402,7 +402,7 @@ function Index() {
                 }}
               >
                 <Download size={16} />
-                BAIXAR APK
+                INSTALAR ESSE APLICATIVO
               </div>
               </>
               )}
