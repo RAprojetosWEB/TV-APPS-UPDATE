@@ -623,6 +623,8 @@ function Index() {
             </span>
           </button>
 
+          <NetworkIndicator compact />
+
           <div className="flex items-center gap-[clamp(1rem,2vw,2rem)] px-[clamp(1rem,2vw,2rem)] py-[clamp(0.5rem,1vh,1rem)] rounded-[clamp(1rem,2vw,1.5rem)] bg-white/5 border border-white/10 backdrop-blur-md">
             <div className="flex items-center gap-2 text-white/90">
               <Clock size={20} className="text-tv-accent" />
@@ -639,8 +641,6 @@ function Index() {
               <span className="text-[clamp(0.9rem,1.8vw,1.25rem)] font-medium">24°C</span>
             </div>
           </div>
-          
-          <NetworkIndicator />
 
         </div>
       </header>
