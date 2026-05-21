@@ -485,19 +485,23 @@ function Index() {
               ) : (
               <>
               <div
-                className="tv-icon-container mb-8 flex items-center justify-center rounded-2xl transition-all duration-300"
+                className="tv-icon-container mb-8 flex items-center justify-center rounded-2xl transition-all duration-300 overflow-hidden"
                 style={{
                   background: isFocused
                     ? "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))"
                     : "oklch(0.95 0.005 270)",
-                  padding: "clamp(0.5rem, 1vw, 1rem)",
+                  padding: 0,
                 }}
               >
                 <img
                   src={app.logo}
                   alt={`${app.name} logo`}
-                  className="w-full h-full object-contain transition-all duration-300"
+                  className="block transition-all duration-300"
                   style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    aspectRatio: "1 / 1",
                     filter: isFocused ? "drop-shadow(0 4px 12px rgba(0,0,0,0.3))" : "none",
                   }}
                 />
