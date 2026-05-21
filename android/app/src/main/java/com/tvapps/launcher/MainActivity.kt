@@ -279,27 +279,8 @@ class MainActivity : Activity() {
             setPadding(dp((64 * scaleFactor).toInt()), dp((40 * scaleFactor).toInt()), dp((64 * scaleFactor).toInt()), dp((32 * scaleFactor).toInt()))
         }
 
-        // Header "TV.Apps" — ponto em verde, igual à web
-        val header = TextView(this).apply {
-            val accent = "#5EE6A8"
-            val spanned = android.text.SpannableString("TV.Apps")
-            spanned.setSpan(
-                android.text.style.ForegroundColorSpan(Color.parseColor(accent)),
-                2, 3, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE,
-            )
-            text = spanned
-            setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 44f * scaleFactor)
-            setTypeface(typeface, android.graphics.Typeface.BOLD)
-        }
-        val sub = TextView(this).apply {
-            text = "Use as setas do controle e pressione OK para baixar"
-            setTextColor(Color.parseColor("#99FFFFFF"))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f * scaleFactor)
-            setPadding(0, dp((8 * scaleFactor).toInt()), 0, 0)
-        }
-        root.addView(header)
-        root.addView(sub)
+        // Cabeçalho: logo+subtitulo à esquerda, barra de status à direita
+        root.addView(buildTopBar(scaleFactor))
 
         val cardWidth = (380 * scaleFactor).toInt()
         val cardHeight = (500 * scaleFactor).toInt()
@@ -341,7 +322,7 @@ class MainActivity : Activity() {
         root.addView(row)
 
         val footer = TextView(this).apply {
-            text = "Após o download, permita instalação de fontes desconhecidas"
+            text = "Após o download, abra o arquivo APK e permita instalação de fontes desconhecidas"
             setTextColor(Color.parseColor("#66FFFFFF"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f * scaleFactor)
             gravity = Gravity.CENTER
