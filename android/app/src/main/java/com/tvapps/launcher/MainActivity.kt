@@ -391,7 +391,7 @@ class MainActivity : Activity() {
         val title = TextView(this).apply {
             text = app.name
             setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 32f * scale)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 26f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             gravity = Gravity.CENTER
         }
