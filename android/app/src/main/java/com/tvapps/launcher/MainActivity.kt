@@ -147,16 +147,16 @@ class MainActivity : Activity() {
         return LayerDrawable(arrayOf(base, glowTopLeft, glowBottomRight))
     }
 
-    private fun buildCard(index: Int, app: CatalogApp): CardViews {
+    private fun buildCard(index: Int, app: CatalogApp, width: Int, height: Int, margin: Int, scale: Float): CardViews {
         // Container externo (FrameLayout) recebe o foco e o background com borda
         val container = FrameLayout(this).apply {
             isFocusable = true
             isFocusableInTouchMode = true
             isClickable = true
-            background = makeCardBg(false)
-            val lp = LinearLayout.LayoutParams(dp(340), dp(440))
-            lp.marginStart = dp(20)
-            lp.marginEnd = dp(20)
+            background = makeCardBg(false, scale)
+            val lp = LinearLayout.LayoutParams(dp(width), dp(height))
+            lp.marginStart = dp(margin)
+            lp.marginEnd = dp(margin)
             layoutParams = lp
         }
 
@@ -164,7 +164,8 @@ class MainActivity : Activity() {
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
-            setPadding(dp(28), dp(28), dp(28), dp(28))
+            val p = (28 * scale).toInt()
+            setPadding(dp(p), dp(p), dp(p), dp(p))
             layoutParams = FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -173,15 +174,16 @@ class MainActivity : Activity() {
 
         // Badge de ícone (quadrado arredondado, gradiente quando focado)
         val iconBadge = FrameLayout(this).apply {
-            background = makeIconBadgeBg(false)
-            val lp = LinearLayout.LayoutParams(dp(120), dp(120))
-            lp.bottomMargin = dp(24)
+            background = makeIconBadgeBg(false, scale)
+            val size = (120 * scale).toInt()
+            val lp = LinearLayout.LayoutParams(dp(size), dp(size))
+            lp.bottomMargin = dp((24 * scale).toInt())
             layoutParams = lp
         }
         val iconText = TextView(this).apply {
             text = app.icon
             setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 56f)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 56f * scale)
             gravity = Gravity.CENTER
             layoutParams = FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -193,27 +195,29 @@ class MainActivity : Activity() {
         val title = TextView(this).apply {
             text = app.name
             setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 26f)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 26f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             gravity = Gravity.CENTER
         }
         val subtitle = TextView(this).apply {
             text = app.description
             setTextColor(Color.parseColor("#99FFFFFF"))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f * scale)
             gravity = Gravity.CENTER
-            setPadding(0, dp(10), 0, dp(20))
+            setPadding(0, dp((10 * scale).toInt()), 0, dp((20 * scale).toInt()))
         }
 
         // Pill "BAIXAR APK"
         val pill = TextView(this).apply {
             text = "⬇  BAIXAR APK"
             setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             gravity = Gravity.CENTER
-            background = makePillBg(false)
-            setPadding(dp(22), dp(12), dp(22), dp(12))
+            background = makePillBg(false, scale)
+            val px = (22 * scale).toInt()
+            val py = (12 * scale).toInt()
+            setPadding(dp(px), dp(py), dp(px), dp(py))
         }
 
         // Barra de progresso (escondida no estado idle)
@@ -221,18 +225,18 @@ class MainActivity : Activity() {
             max = 100
             progress = 0
             visibility = View.GONE
-            val lp = LinearLayout.LayoutParams(dp(220), dp(8))
-            lp.topMargin = dp(14)
+            val lp = LinearLayout.LayoutParams(dp((220 * scale).toInt()), dp((8 * scale).toInt()))
+            lp.topMargin = dp((14 * scale).toInt())
             layoutParams = lp
         }
         val percent = TextView(this).apply {
             text = ""
             setTextColor(Color.parseColor("#5EE6A8"))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 28f)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 28f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             gravity = Gravity.CENTER
             visibility = View.GONE
-            setPadding(0, dp(6), 0, 0)
+            setPadding(0, dp((6 * scale).toInt()), 0, 0)
         }
 
         content.addView(iconBadge)
@@ -244,9 +248,9 @@ class MainActivity : Activity() {
         container.addView(content)
 
         container.setOnFocusChangeListener { v, hasFocus ->
-            v.background = makeCardBg(hasFocus)
-            iconBadge.background = makeIconBadgeBg(hasFocus)
-            pill.background = makePillBg(hasFocus)
+            v.background = makeCardBg(hasFocus, scale)
+            iconBadge.background = makeIconBadgeBg(hasFocus, scale)
+            pill.background = makePillBg(hasFocus, scale)
             pill.setTextColor(
                 if (hasFocus) Color.parseColor("#15102A") else Color.WHITE,
             )
