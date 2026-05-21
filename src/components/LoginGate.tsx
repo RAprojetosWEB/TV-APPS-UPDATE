@@ -78,12 +78,66 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (mounted && !authed) {
-      // foco inicial no campo de senha
+    if (mounted && !authed && !ota.hasUpdate) {
+      // foco inicial no campo de senha apenas se não houver atualização pendente
       const t = setTimeout(() => inputRef.current?.focus(), 50);
       return () => clearTimeout(t);
+    } else if (mounted && ota.hasUpdate) {
+      // foco no botão de atualizar
+      const t = setTimeout(() => updateBtnRef.current?.focus(), 50);
+      return () => clearTimeout(t);
     }
-  }, [mounted, authed]);
+  }, [mounted, authed, ota.hasUpdate]);
+
+  const startOtaUpdate = async () => {
+    if (!ota.manifest || otaDownloading) return;
+    const url = ota.manifest.apkUrl ?? ota.manifest.url ?? "";
+    if (!url) return;
+
+    if (typeof window !== "undefined" && typeof window.Android?.installApk === "function") {
+      setOtaDownloading(true);
+      setOtaProgress(0);
+      try {
+        window.Android.installApk(url, "TV.Apps");
+      } catch (err) {
+        console.error("OTA native install failed", err);
+        setOtaDownloading(false);
+      }
+      return;
+    }
+
+    setOtaDownloading(true);
+    setOtaProgress(0);
+    try {
+      const res = await fetch(url);
+      if (!res.ok || !res.body) throw new Error("HTTP " + res.status);
+      const total = Number(res.headers.get("Content-Length") || 0);
+      const reader = res.body.getReader();
+      const chunks: BlobPart[] = [];
+      let received = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+          chunks.push(value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength) as ArrayBuffer);
+          received += value.length;
+          if (total > 0) setOtaProgress(Math.round((received / total) * 100));
+        }
+      }
+      const blob = new Blob(chunks, { type: "application/vnd.android.package-archive" });
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = "tvapps-latest.apk";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setOtaDownloading(false);
+    } catch (err) {
+      console.error("OTA download failed", err);
+      setOtaDownloading(false);
+    }
+  };
 
   async function handleSubmit() {
     if (loading) return;
