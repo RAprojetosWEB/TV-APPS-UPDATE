@@ -407,7 +407,7 @@ class MainActivity : Activity() {
         val pill = TextView(this).apply {
             text = "⬇  Baixar aplicativo"
             setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f * scale)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             gravity = Gravity.CENTER
             background = makePillBg(false, scale)
