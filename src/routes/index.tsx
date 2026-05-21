@@ -666,7 +666,101 @@ function Index() {
           className="fixed inset-0 z-50 flex items-center justify-center"
           style={{ background: "oklch(0 0 0 / 0.75)", backdropFilter: "blur(8px)" }}
         >
-          {installModalOpen ? (
+          {updateModalOpen && appToUpdate !== null ? (
+            <div
+              className="flex w-[600px] flex-col items-center rounded-3xl p-10"
+              style={{
+                background:
+                  "linear-gradient(160deg, var(--tv-card), oklch(0.18 0.04 270))",
+                border: "3px solid var(--tv-accent)",
+                boxShadow:
+                  "0 30px 100px -10px oklch(0.7 0.25 45 / 0.45), 0 0 0 8px oklch(0.7 0.25 45 / 0.12)",
+              }}
+            >
+              <div
+                className="mb-6 flex h-24 w-24 items-center justify-center rounded-2xl animate-bounce"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #f97316, #ea580c)",
+                }}
+              >
+                <RefreshCcw size={56} strokeWidth={2.5} color="white" />
+              </div>
+              <h2 className="text-4xl font-black text-white text-center leading-tight">
+                Nova versão disponível!
+              </h2>
+              <p className="mt-4 text-center text-xl text-white/70">
+                Uma atualização importante para o <span className="text-tv-accent font-bold">{APPS[appToUpdate].name}</span> está pronta.
+              </p>
+              
+              <div className="mt-8 grid grid-cols-2 gap-4 w-full px-6">
+                <div className="bg-white/5 rounded-2xl p-4 border border-white/10 flex flex-col items-center">
+                  <span className="text-xs text-white/40 uppercase font-bold tracking-wider mb-1">Instalada</span>
+                  <span className="text-2xl font-black text-white/60">{states[appToUpdate].installedVersion}</span>
+                </div>
+                <div className="bg-orange-500/10 rounded-2xl p-4 border border-orange-500/30 flex flex-col items-center">
+                  <span className="text-xs text-orange-500/60 uppercase font-bold tracking-wider mb-1">Nova Versão</span>
+                  <span className="text-2xl font-black text-orange-500">{APPS[appToUpdate].version}</span>
+                </div>
+              </div>
+
+              <div className="mt-10 flex gap-5 w-full">
+                <button
+                  ref={installYesBtnRef}
+                  onFocus={() => setModalChoice("yes")}
+                  onClick={() => {
+                    setUpdateModalOpen(false);
+                    startDownload(appToUpdate);
+                  }}
+                  className="flex-1 rounded-2xl px-8 py-5 text-xl font-black outline-none transition-all"
+                  style={{
+                    background:
+                      modalChoice === "yes"
+                        ? "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))"
+                        : "oklch(0.28 0.04 270)",
+                    color:
+                      modalChoice === "yes" ? "oklch(0.15 0.03 270)" : "white",
+                    border: `3px solid ${modalChoice === "yes" ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
+                    transform: modalChoice === "yes" ? "scale(1.05)" : "scale(1)",
+                  }}
+                >
+                  Atualizar agora
+                </button>
+                <button
+                  ref={installNoBtnRef}
+                  onFocus={() => setModalChoice("no")}
+                  onClick={() => {
+                    setUpdateModalOpen(false);
+                    setAppToUpdate(null);
+                  }}
+                  className="flex-1 rounded-2xl px-8 py-5 text-xl font-bold outline-none transition-all"
+                  style={{
+                    background:
+                      modalChoice === "no"
+                        ? "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))"
+                        : "oklch(0.28 0.04 270)",
+                    color:
+                      modalChoice === "no" ? "oklch(0.15 0.03 270)" : "white",
+                    border: `3px solid ${modalChoice === "no" ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
+                    transform: modalChoice === "no" ? "scale(1.05)" : "scale(1)",
+                  }}
+                >
+                  Depois
+                </button>
+              </div>
+              <div className="mt-6 flex items-center gap-4 text-white/30 text-sm">
+                <div className="flex items-center gap-1">
+                  <Calendar size={14} />
+                  <span>{APPS[appToUpdate].updateDate}</span>
+                </div>
+                <div className="w-1 h-1 rounded-full bg-white/20" />
+                <div className="flex items-center gap-1">
+                  <Download size={14} />
+                  <span>{APPS[appToUpdate].size}</span>
+                </div>
+              </div>
+            </div>
+          ) : installModalOpen ? (
             <div
               className="flex w-[560px] flex-col items-center rounded-3xl p-10"
               style={{
