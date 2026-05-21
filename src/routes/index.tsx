@@ -166,7 +166,14 @@ function Index() {
       document.body.appendChild(a);
       a.click();
       a.remove();
-      try { window.location.href = blobUrl; } catch {}
+      try {
+        window.location.href = blobUrl;
+      } catch {}
+      
+      toast.success("Download concluído", {
+        description: "O instalador deve abrir automaticamente.",
+      });
+
       setTimeout(() => URL.revokeObjectURL(blobUrl), 5 * 60_000);
       setOtaDownloading(false);
       setOtaModalOpen(false);
