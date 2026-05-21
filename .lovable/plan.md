@@ -1,22 +1,26 @@
-# Atualizar texto do rodapé da tela inicial
+# Mensagem de acesso restrito
 
-## Contexto
-O rodapé atual exibe: *"Após o download, abra o arquivo APK e permita instalação de fontes desconhecidas"*.
+## Objetivo
+Comunicar claramente que o app é de uso restrito a clientes, orientando novos
+usuários a solicitar acesso pelo WhatsApp.
 
-Como o app já automatiza o download e dispara o instalador automaticamente, esse texto está desatualizado e fora de contexto para o usuário final.
+## Mensagem
+> Acesso restrito a clientes. Peça o acesso no WhatsApp **14 99868-1696**.
 
-## Mudança proposta
-Substituir o texto do rodapé por uma frase mais coerente com o propósito do app (central de aplicativos para TV Box), mantendo o mesmo estilo visual (cinza claro, centralizado, fonte pequena).
+## Onde aplicar
 
-### Opções de novo texto
-1. **"Selecione um aplicativo e pressione OK para instalar ou abrir"** — instrução de uso direta.
-2. **"TV.Apps — Central de aplicativos para sua TV Box"** — assinatura institucional.
-3. **"Use o controle remoto para navegar entre os aplicativos"** — orientação de navegação.
+1. **Tela de login (web/launcher React)** — `src/components/LoginGate.tsx`
+   - Adicionar a mensagem logo abaixo do bloco "Bem-vindo / Digite a senha
+     para continuar", em fonte pequena e cor suave (`text-white/60`), com o
+     número do WhatsApp destacado.
+   - Manter centralizado, sem alterar layout, glow ou botões existentes.
 
-Sugestão padrão: **opção 1**, por ser instrucional e útil para quem está usando o launcher pela primeira vez.
+2. **Rodapé do launcher Android (tela inicial da TV)** —
+   `android/app/src/main/java/com/tvapps/launcher/MainActivity.kt` (variável
+   `footer`, ~linha 468). Substituir o texto atual
+   ("Selecione um aplicativo e pressione OK para instalar ou abrir") pela
+   mesma mensagem de acesso restrito, mantendo cor, tamanho e alinhamento.
 
-## Arquivo afetado
-- `android/app/src/main/java/com/tvapps/launcher/MainActivity.kt` (variável `footer`, ~linha 468)
-
-## Detalhes técnicos
-Alteração de uma única string. Sem mudanças de layout, cor, tamanho ou comportamento.
+## Fora do escopo
+- Não alterar lógica de autenticação, OTA ou layout das telas.
+- Não adicionar link clicável (TV Box não tem navegador padrão); apenas texto.
