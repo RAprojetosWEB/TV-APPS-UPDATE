@@ -20,6 +20,8 @@ type AndroidBridge = {
   isAppInstalled: (packageName: string) => boolean;
   openApp: (packageName: string) => void;
   version?: () => string;
+  isApkDownloaded?: (packageName: string, version: string) => boolean;
+  installLocalApk?: (packageName: string) => void;
 };
 declare global {
   interface Window {
