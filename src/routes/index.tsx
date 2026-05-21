@@ -492,7 +492,7 @@ function Index() {
       </header>
 
       <section className="tv-card-grid flex-1 items-center">
-        {APPS.map((app, i) => {
+        {currentApps.map((app, i) => {
           const isFocused = focused === i;
           return (
             <button
