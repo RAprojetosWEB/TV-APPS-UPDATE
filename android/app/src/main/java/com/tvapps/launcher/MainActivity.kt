@@ -558,7 +558,7 @@ class MainActivity : Activity() {
             card.pill.text = "▶  ABRIR APP"
             card.installedChip.visibility = View.VISIBLE
         } else {
-            card.pill.text = "⬇  QUERO INSTALAR"
+            card.pill.text = "⬇  INSTALAR"
             card.installedChip.visibility = View.GONE
         }
     }
