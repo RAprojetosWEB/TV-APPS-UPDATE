@@ -262,20 +262,20 @@ class MainActivity : Activity() {
         return CardViews(container, content, iconBadge, iconText, title, subtitle, pill, progress, percent)
     }
 
-    private fun makeCardBg(focused: Boolean): GradientDrawable {
+    private fun makeCardBg(focused: Boolean, scale: Float): GradientDrawable {
         val gd = GradientDrawable(
             GradientDrawable.Orientation.TOP_BOTTOM,
             intArrayOf(Color.parseColor("#2A1F44"), Color.parseColor("#1E1638")),
         )
-        gd.cornerRadius = dp(28).toFloat()
+        gd.cornerRadius = dp((28 * scale).toInt()).toFloat()
         gd.setStroke(
-            dp(if (focused) 3 else 2),
+            dp(if (focused) (3 * scale).toInt().coerceAtLeast(1) else (2 * scale).toInt().coerceAtLeast(1)),
             if (focused) Color.parseColor("#5EE6A8") else Color.parseColor("#3F3360"),
         )
         return gd
     }
 
-    private fun makeIconBadgeBg(focused: Boolean): GradientDrawable {
+    private fun makeIconBadgeBg(focused: Boolean, scale: Float): GradientDrawable {
         val gd = if (focused) {
             GradientDrawable(
                 GradientDrawable.Orientation.TL_BR,
@@ -284,19 +284,19 @@ class MainActivity : Activity() {
         } else {
             GradientDrawable().apply { setColor(Color.parseColor("#38305A")) }
         }
-        gd.cornerRadius = dp(20).toFloat()
+        gd.cornerRadius = dp((20 * scale).toInt()).toFloat()
         return gd
     }
 
-    private fun makePillBg(focused: Boolean): GradientDrawable {
+    private fun makePillBg(focused: Boolean, scale: Float): GradientDrawable {
         val gd = GradientDrawable()
-        gd.cornerRadius = dp(100).toFloat()
+        gd.cornerRadius = dp((100 * scale).toInt()).toFloat()
         if (focused) {
             gd.setColor(Color.parseColor("#5EE6A8"))
-            gd.setStroke(dp(2), Color.parseColor("#5EE6A8"))
+            gd.setStroke(dp((2 * scale).toInt().coerceAtLeast(1)), Color.parseColor("#5EE6A8"))
         } else {
             gd.setColor(Color.TRANSPARENT)
-            gd.setStroke(dp(2), Color.parseColor("#3F3360"))
+            gd.setStroke(dp((2 * scale).toInt().coerceAtLeast(1)), Color.parseColor("#3F3360"))
         }
         return gd
     }
