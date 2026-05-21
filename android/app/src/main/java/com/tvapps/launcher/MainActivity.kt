@@ -272,9 +272,99 @@ class MainActivity : Activity() {
         container.addView(passwordInput)
         container.addView(loginButton)
         root.addView(container)
+        root.addView(updateOverlay)
 
         passwordInput.requestFocus()
+
+        // Verificação automática de OTA ANTES do login
+        checkOtaUpdateBlocking(updateOverlay, scaleFactor)
+
         return root
+    }
+
+    private fun checkOtaUpdateBlocking(overlay: LinearLayout, scale: Float) {
+        scope.launch {
+            val otaInfo = try {
+                withContext(Dispatchers.IO) {
+                    val url = "https://bunvyxogwpwiojzczgwl.supabase.co/storage/v1/object/public/tvapps-updates/update.json?t=${System.currentTimeMillis()}"
+                    val client = okhttp3.OkHttpClient()
+                    val res = client.newCall(okhttp3.Request.Builder().url(url).build()).execute()
+                    res.use {
+                        if (!it.isSuccessful) return@withContext null
+                        val body = it.body?.string() ?: return@withContext null
+                        val json = org.json.JSONObject(body)
+                        val remoteName = json.optString("versionName", json.optString("version", ""))
+                        val remoteCode = json.optLong("versionCode", -1L)
+                        val downloadUrl = json.optString("apkUrl", json.optString("url", ""))
+
+                        val pkgInfo = try { packageManager.getPackageInfo(packageName, 0) } catch (_: Exception) { null }
+                        val localCode: Long = if (pkgInfo == null) 0L else {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) pkgInfo.longVersionCode
+                            else @Suppress("DEPRECATION") pkgInfo.versionCode.toLong()
+                        }
+
+                        val hasUpdate = if (remoteCode > 0L) remoteCode > localCode else false 
+                        if (hasUpdate) Triple(true, remoteName, downloadUrl) else null
+                    }
+                }
+            } catch (_: Exception) { null }
+
+            if (otaInfo != null) {
+                val (_, remoteVersion, downloadUrl) = otaInfo
+                runOnUiThread {
+                    overlay.visibility = View.VISIBLE
+                    overlay.removeAllViews()
+
+                    val warnIcon = TextView(this@MainActivity).apply {
+                        text = "⚠"
+                        setTextColor(Color.parseColor("#E8A85C"))
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 64f * scale)
+                        gravity = Gravity.CENTER
+                    }
+
+                    val title = TextView(this@MainActivity).apply {
+                        text = "Atualização Obrigatória"
+                        setTextColor(Color.WHITE)
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 28f * scale)
+                        setTypeface(null, android.graphics.Typeface.BOLD)
+                        gravity = Gravity.CENTER
+                        setPadding(0, dp((16 * scale).toInt()), 0, dp((8 * scale).toInt()))
+                    }
+
+                    val msg = TextView(this@MainActivity).apply {
+                        text = "Uma nova versão ($remoteVersion) está disponível.\nAtualize para continuar acessando o app."
+                        setTextColor(Color.parseColor("#CCFFFFFF"))
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f * scale)
+                        gravity = Gravity.CENTER
+                        setPadding(0, 0, 0, dp((32 * scale).toInt()))
+                    }
+
+                    val btn = TextView(this@MainActivity).apply {
+                        text = "ATUALIZAR AGORA"
+                        setTextColor(Color.BLACK)
+                        background = makePillBg(true, scale)
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f * scale)
+                        setTypeface(null, android.graphics.Typeface.BOLD)
+                        gravity = Gravity.CENTER
+                        isFocusable = true
+                        isClickable = true
+                        val px = dp((40 * scale).toInt())
+                        val py = dp((16 * scale).toInt())
+                        setPadding(px, py, px, py)
+                        
+                        setOnClickListener {
+                            showOtaConfirmDialog(remoteVersion, downloadUrl)
+                        }
+                    }
+
+                    overlay.addView(warnIcon)
+                    overlay.addView(title)
+                    overlay.addView(msg)
+                    overlay.addView(btn)
+                    btn.requestFocus()
+                }
+            }
+        }
     }
 
 
