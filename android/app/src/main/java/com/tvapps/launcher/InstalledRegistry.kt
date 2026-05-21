@@ -39,10 +39,13 @@ object InstalledRegistry {
 
     fun isInstalled(context: Context, app: CatalogApp): Boolean {
         val pm = context.packageManager
+        
+        // 1. Verificar candidatos diretos (aprendido ou placeholder)
         val candidates = listOfNotNull(
             getLearnedPackage(context, app.name),
             app.packageName,
         ).distinct()
+        
         for (pkg in candidates) {
             try {
                 pm.getPackageInfo(pkg, 0)
@@ -50,6 +53,32 @@ object InstalledRegistry {
             } catch (_: PackageManager.NameNotFoundException) {
             }
         }
+
+        // 2. Opção B: Heurística - procurar por nome nos pacotes instalados
+        // Isso resolve quando o app já estava instalado de outra fonte
+        try {
+            val installedApps = pm.getInstalledPackages(0)
+            val searchTerms = listOfNotNull(
+                app.name.lowercase(),
+                app.packageName.substringAfterLast(".").lowercase().takeIf { it.length > 3 }
+            ).distinct()
+
+            for (pkgInfo in installedApps) {
+                val pkgName = pkgInfo.packageName.lowercase()
+                
+                // Se o nome do pacote contém termos-chave (ex: "unitv", "nexa", "alphaplay")
+                if (searchTerms.any { term -> pkgName.contains(term) }) {
+                    // Opcional: Aprender esse pacote para futuras verificações rápidas
+                    context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                        .edit()
+                        .putString(app.name, pkgInfo.packageName)
+                        .apply()
+                    return true
+                }
+            }
+        } catch (_: Exception) {
+        }
+
         return false
     }
 }
