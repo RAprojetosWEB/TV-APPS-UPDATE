@@ -1303,7 +1303,7 @@ class MainActivity : Activity() {
             } catch (_: Exception) { null }
 
             if (otaInfo == null) {
-                systemPill.text = if (systemPill.hasFocus()) "🔍  Procurar atualizações" else "🔍"
+                setPillContent(systemPill, R.drawable.ic_rotate_ccw, if (systemPill.hasFocus()) "Procurar atualizações" else "")
                 systemPill.setTextColor(Color.parseColor("#FF6B6B"))
                 if (manual) {
                     Toast.makeText(this@MainActivity, "Falha ao verificar atualizações (sem conexão)", Toast.LENGTH_SHORT).show()
@@ -1314,13 +1314,13 @@ class MainActivity : Activity() {
             val (hasUpdate, remoteVersion, downloadUrl) = otaInfo
 
             if (hasUpdate) {
-                systemPill.text = "⬇  Atualização disponível ($remoteVersion)"
+                setPillContent(systemPill, R.drawable.ic_download, "Atualização disponível ($remoteVersion)")
                 systemPill.setTextColor(Color.parseColor("#5EE6A8"))
                 if (manual) {
                     showOtaConfirmDialog(remoteVersion, downloadUrl)
                 }
             } else {
-                systemPill.text = if (systemPill.hasFocus()) "🔍  Procurar atualizações" else "🔍"
+                setPillContent(systemPill, R.drawable.ic_rotate_ccw, if (systemPill.hasFocus()) "Procurar atualizações" else "")
                 systemPill.setTextColor(Color.parseColor("#5EE6A8"))
                 if (manual) {
                     Toast.makeText(this@MainActivity, "Você já está na versão mais recente", Toast.LENGTH_SHORT).show()
@@ -1355,7 +1355,7 @@ class MainActivity : Activity() {
             ApkDownloader.download(this@MainActivity, url, "TV.Apps_Update").collect { p ->
                 when (p) {
                     is DownloadProgress.Progress -> withContext(Dispatchers.Main) {
-                        systemPill.text = "⬇  Baixando: ${p.percent}%"
+                        setPillContent(systemPill, R.drawable.ic_download, "Baixando: ${p.percent}%")
                     }
                     is DownloadProgress.Done -> withContext(Dispatchers.Main) {
                         systemPill.text = "✓  Download concluído"
