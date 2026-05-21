@@ -40,7 +40,7 @@ export const Route = createFileRoute("/")({
 // ⬇️ SUBSTITUA AS URLs ABAIXO PELOS LINKS DIRETOS DOS SEUS APKs ⬇️
 const APPS = [
   {
-    name: "ALPHAPLAY",
+    name: "AlphaPlay",
     description: "Mais de 300 canais, filmes e séries",
     url: "https://firebasestorage.googleapis.com/v0/b/update-41ccf.appspot.com/o/alphaplay.apk?alt=media&token=cdbe4055-ea90-4f2c-a540-1b458159ade6",
     logo: alphaplayLogo,
@@ -212,12 +212,12 @@ function Index() {
             size: latestVersion?.apk_size_mb ? `${latestVersion.apk_size_mb}MB` : "N/A",
           };
         });
-        const order = ["ALPHAPLAY", "Nexa TV", "UniTV"];
-        mappedApps.sort(
-          (a, b) =>
-            (order.indexOf(a.name) === -1 ? 99 : order.indexOf(a.name)) -
-            (order.indexOf(b.name) === -1 ? 99 : order.indexOf(b.name)),
-        );
+        const order = ["alphaplay", "nexa tv", "unitv"];
+        mappedApps.sort((a, b) => {
+          const idxA = order.indexOf(a.name.toLowerCase());
+          const idxB = order.indexOf(b.name.toLowerCase());
+          return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
+        });
         setDynamicApps(mappedApps);
       }
     } catch (err) {
