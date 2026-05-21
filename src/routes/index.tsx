@@ -333,13 +333,36 @@ function Index() {
           "radial-gradient(ellipse at top left, oklch(0.3 0.12 280 / 0.4), transparent 60%), radial-gradient(ellipse at bottom right, oklch(0.3 0.12 150 / 0.35), transparent 60%)",
       }}
     >
-      <header className="px-16 pt-10">
-        <h1 className="tv-title font-black tracking-tight">
-          TV<span style={{ color: "var(--tv-accent)" }}>.</span>Apps
-        </h1>
-        <p className="mt-2 tv-text text-white/60">
-          Use as setas do controle e pressione OK para baixar
-        </p>
+      <header className="px-16 pt-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div>
+          <h1 className="tv-title font-black tracking-tight leading-none">
+            TV<span style={{ color: "var(--tv-accent)" }}>.</span>Apps
+          </h1>
+          <p className="mt-3 tv-text text-white/50 font-medium">
+            Central de Downloads Automática
+          </p>
+        </div>
+
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-6 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+            <div className="flex items-center gap-2 text-white/90">
+              <Clock size={20} className="text-tv-accent" />
+              <span className="text-2xl font-bold tabular-nums">{time}</span>
+            </div>
+            <div className="h-6 w-px bg-white/10" />
+            <div className="flex items-center gap-2 text-white/70">
+              <Calendar size={18} className="text-tv-accent" />
+              <span className="text-xl font-medium capitalize">{date}</span>
+            </div>
+            <div className="h-6 w-px bg-white/10" />
+            <div className="flex items-center gap-2 text-white/70">
+              <Cloud size={20} className="text-tv-accent" />
+              <span className="text-xl font-medium">24°C</span>
+            </div>
+          </div>
+          
+          <NetworkIndicator />
+        </div>
       </header>
 
       <section className="tv-card-grid flex-1 items-center">
