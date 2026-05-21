@@ -123,12 +123,12 @@ function Index() {
       const installedVersion = isNative && window.Android?.version ? window.Android.version() : (parseFloat(app.version) - 0.3).toFixed(1);
       
       // Consideramos que tem update se a versão do servidor for maior que a instalada
-      const hasUpdate = isInstalled && parseFloat(app.version) > parseFloat(installedVersion);
+      const hasUpdate = !!(isInstalled && parseFloat(app.version) > parseFloat(installedVersion || "0"));
 
       return {
         ...s,
         isInstalled: !!isInstalled,
-        installedVersion,
+        installedVersion: installedVersion || "0",
         hasUpdate
       };
     }));
@@ -136,13 +136,16 @@ function Index() {
     setCheckingUpdates(false);
 
     if (manual) {
-      const updatesFound = states.some(s => s.hasUpdate);
-      if (!updatesFound) {
-        toast.success("O aplicativo já está atualizado", {
-          description: "Todos os seus apps estão na versão mais recente.",
-          duration: 3000,
-        });
-      }
+      setStates(currentStates => {
+        const updatesFound = currentStates.some(s => s.hasUpdate);
+        if (!updatesFound) {
+          toast.success("O aplicativo já está atualizado", {
+            description: "Todos os seus apps estão na versão mais recente.",
+            duration: 3000,
+          });
+        }
+        return currentStates;
+      });
     }
   };
 
