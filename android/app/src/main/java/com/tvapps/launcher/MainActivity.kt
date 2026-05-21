@@ -337,17 +337,13 @@ class MainActivity : Activity() {
 
     private fun makeRootBackground(): LayerDrawable {
         val base = GradientDrawable().apply {
-            setColor(Color.parseColor("#15102A"))
+            setColor(Color.parseColor("#0A0D1A"))
         }
-        val glowTopLeft = GradientDrawable(
+        val glowBottom = GradientDrawable(
             GradientDrawable.Orientation.TL_BR,
-            intArrayOf(Color.parseColor("#663B2F66"), Color.TRANSPARENT),
-        ).apply { gradientType = GradientDrawable.RADIAL_GRADIENT; gradientRadius = dp(700).toFloat() }
-        val glowBottomRight = GradientDrawable(
-            GradientDrawable.Orientation.TL_BR,
-            intArrayOf(Color.TRANSPARENT, Color.parseColor("#552DD4A8")),
+            intArrayOf(Color.TRANSPARENT, Color.parseColor("#3315E68A")),
         )
-        return LayerDrawable(arrayOf(base, glowTopLeft, glowBottomRight))
+        return LayerDrawable(arrayOf(base, glowBottom))
     }
 
     private fun buildCard(index: Int, app: CatalogApp, width: Int, height: Int, margin: Int, scale: Float): CardViews {
