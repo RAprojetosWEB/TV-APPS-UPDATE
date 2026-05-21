@@ -1122,7 +1122,7 @@ class MainActivity : Activity() {
                     is DownloadProgress.Error -> withContext(Dispatchers.Main) {
                         systemPill.text = "⚠  Erro no download"
                         Toast.makeText(this@MainActivity, "Erro ao baixar atualização: ${p.message}", Toast.LENGTH_LONG).show()
-                        systemPill.postDelayed({ systemPill.text = "Procurar Atualização" }, 3000)
+                        systemPill.postDelayed({ systemPill.text = "⟳" }, 3000)
                     }
                 }
             }
