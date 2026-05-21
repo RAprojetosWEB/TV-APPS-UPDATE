@@ -945,10 +945,18 @@ class MainActivity : Activity() {
             val px = dp((14 * scale).toInt())
             val py = dp((10 * scale).toInt())
             setPadding(px, py, px, py)
+            
+            // Layout animável
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
             )
+            
+            // Ativa animações de layout automáticas no container pai se possível
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                // Configuração para permitir que o texto apareça suavemente
+                animate().duration = 200
+            }
         }
     }
 
