@@ -117,7 +117,7 @@ function Index() {
   const [dynamicApps, setDynamicApps] = useState<any[]>([]);
 
   // ---------- OTA (atualização do próprio app TV.Apps) ----------
-  const ota = useOtaUpdate();
+  const ota = useOtaUpdate({ autoCheck: false });
   const [otaModalOpen, setOtaModalOpen] = useState(false);
   const [otaDownloading, setOtaDownloading] = useState(false);
   const [otaProgress, setOtaProgress] = useState(0);
