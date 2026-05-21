@@ -51,6 +51,7 @@ class MainActivity : Activity() {
         val pill: TextView,
         val progress: ProgressBar,
         val percent: TextView,
+        val installedChip: TextView,
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,6 +71,26 @@ class MainActivity : Activity() {
         setupWebViewBridge()
         // No lugar do buildRoot() direto, vamos construir a UI do login
         setContentView(buildLoginScreen())
+
+        // Limpeza inicial do cache de APKs (apps já instalados + órfãos + limite)
+        try {
+            ApkCache.cleanupInstalled(this, AppCatalog.apps)
+            ApkCache.enforceSizeLimit(this)
+        } catch (_: Exception) {
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Revalida estado de instalação de cada card e limpa APKs já instalados
+        if (cardViews.isNotEmpty()) {
+            AppCatalog.apps.forEachIndexed { index, app ->
+                cardViews.getOrNull(index)?.let { refreshInstalledState(it, app) }
+                if (InstalledRegistry.isInstalled(this, app)) {
+                    ApkCache.deleteFor(this, app.name)
+                }
+            }
+        }
     }
 
     private fun buildLoginScreen(): View {
@@ -265,13 +286,9 @@ class MainActivity : Activity() {
             val card = buildCard(index, app, cardWidth, cardHeight, cardMargin, scaleFactor)
             row.addView(card.container)
             cardViews.add(card)
-            
-            // Atualiza estado inicial do botão
-            if (isAppInstalled(app.packageName)) {
-                card.pill.text = "▶  ABRIR APP"
-                // Adiciona um pequeno indicador visual de "Instalado" se desejar, 
-                // ou apenas muda o texto do botão como solicitado.
-            }
+
+            // Atualiza estado inicial do botão + chip "INSTALADO"
+            refreshInstalledState(card, app)
         }
         root.addView(row)
 
