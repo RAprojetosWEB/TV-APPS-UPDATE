@@ -368,7 +368,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
               >
                 <Settings className="size-6" />
               </button>
-              <NetworkIndicator compact />
+              <NetworkIndicator />
             </div>
 
             <p className="mt-6 text-center text-xs text-white/30">
