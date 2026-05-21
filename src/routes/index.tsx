@@ -253,22 +253,22 @@ function Index() {
   return (
     <main
       onKeyDown={handleKey}
-      className="relative flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground"
+      className="relative flex min-h-screen w-screen flex-col overflow-x-hidden bg-background text-foreground"
       style={{
         backgroundImage:
           "radial-gradient(ellipse at top left, oklch(0.3 0.12 280 / 0.4), transparent 60%), radial-gradient(ellipse at bottom right, oklch(0.3 0.12 150 / 0.35), transparent 60%)",
       }}
     >
       <header className="px-16 pt-10">
-        <h1 className="text-5xl font-black tracking-tight">
+        <h1 className="tv-title font-black tracking-tight">
           TV<span style={{ color: "var(--tv-accent)" }}>.</span>Apps
         </h1>
-        <p className="mt-2 text-lg text-white/60">
+        <p className="mt-2 tv-text text-white/60">
           Use as setas do controle e pressione OK para baixar
         </p>
       </header>
 
-      <section className="flex flex-1 items-center justify-center gap-10 px-16">
+      <section className="tv-card-grid flex-1 items-center">
         {APPS.map((app, i) => {
           const isFocused = focused === i;
           const Icon = app.Icon;
@@ -287,12 +287,12 @@ function Index() {
                   startDownload(i);
                 }
               }}
-              className="group relative flex h-[460px] w-[360px] flex-col items-center justify-center rounded-3xl outline-none transition-all duration-300"
+              className="group relative flex aspect-[3/4] w-full max-w-[360px] flex-col items-center justify-center rounded-3xl outline-none transition-all duration-300 mx-auto"
               style={{
                 background:
                   "linear-gradient(160deg, var(--tv-card), oklch(0.18 0.04 270))",
                 border: `3px solid ${isFocused ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
-                transform: isFocused ? "scale(1.08)" : "scale(1)",
+                transform: isFocused ? "scale(1.05)" : "scale(1)",
                 boxShadow: isFocused
                   ? "0 25px 80px -10px oklch(0.78 0.22 150 / 0.55), 0 0 0 6px oklch(0.78 0.22 150 / 0.15)"
                   : "0 10px 30px -10px oklch(0 0 0 / 0.5)",
@@ -301,15 +301,15 @@ function Index() {
               {states[i].status === "downloading" ? (
                 <div className="flex w-full flex-col items-center px-8">
                   <div
-                    className="mb-8 flex h-32 w-32 items-center justify-center rounded-2xl"
+                    className="tv-icon-container mb-8 flex items-center justify-center rounded-2xl"
                     style={{
                       background:
                         "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))",
                     }}
                   >
-                    <Download size={64} strokeWidth={1.8} color="oklch(0.15 0.03 270)" />
+                    <Download className="w-1/2 h-1/2" strokeWidth={1.8} color="oklch(0.15 0.03 270)" />
                   </div>
-                  <h2 className="text-3xl font-bold">{app.name}</h2>
+                  <h2 className="tv-text font-bold">{app.name}</h2>
                   <p className="mt-2 text-sm text-white/60">Baixando…</p>
                   <div
                     className="mt-6 h-3 w-full overflow-hidden rounded-full"
@@ -334,15 +334,15 @@ function Index() {
               ) : states[i].status === "done" ? (
                 <div className="flex flex-col items-center px-8">
                   <div
-                    className="mb-8 flex h-32 w-32 items-center justify-center rounded-2xl"
+                    className="tv-icon-container mb-8 flex items-center justify-center rounded-2xl"
                     style={{
                       background:
                         "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))",
                     }}
                   >
-                    <Check size={64} strokeWidth={2.5} color="oklch(0.15 0.03 270)" />
+                    <Check className="w-1/2 h-1/2" strokeWidth={2.5} color="oklch(0.15 0.03 270)" />
                   </div>
-                  <h2 className="text-3xl font-bold">{app.name}</h2>
+                  <h2 className="tv-text font-bold">{app.name}</h2>
                   <p className="mt-3 text-center text-base text-white/70">
                     Download concluído!
                   </p>
@@ -353,12 +353,12 @@ function Index() {
               ) : states[i].status === "error" ? (
                 <div className="flex flex-col items-center px-8">
                   <div
-                    className="mb-8 flex h-32 w-32 items-center justify-center rounded-2xl"
+                    className="tv-icon-container mb-8 flex items-center justify-center rounded-2xl"
                     style={{ background: "oklch(0.4 0.2 25)" }}
                   >
-                    <AlertCircle size={64} strokeWidth={1.8} color="white" />
+                    <AlertCircle className="w-1/2 h-1/2" strokeWidth={1.8} color="white" />
                   </div>
-                  <h2 className="text-3xl font-bold">{app.name}</h2>
+                  <h2 className="tv-text font-bold">{app.name}</h2>
                   <p className="mt-3 text-center text-base text-white/70">
                     Falha no download
                   </p>
@@ -376,7 +376,7 @@ function Index() {
               ) : (
               <>
               <div
-                className="mb-8 flex h-32 w-32 items-center justify-center rounded-2xl transition-all duration-300"
+                className="tv-icon-container mb-8 flex items-center justify-center rounded-2xl transition-all duration-300"
                 style={{
                   background: isFocused
                     ? "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))"
@@ -384,13 +384,12 @@ function Index() {
                 }}
               >
                 <Icon
-                  className="transition-all"
-                  size={64}
+                  className="transition-all w-1/2 h-1/2"
                   strokeWidth={1.8}
                   color={isFocused ? "oklch(0.15 0.03 270)" : "white"}
                 />
               </div>
-              <h2 className="text-3xl font-bold">{app.name}</h2>
+              <h2 className="tv-text font-bold">{app.name}</h2>
               <p className="mt-3 px-6 text-center text-base text-white/60">
                 {app.description}
               </p>

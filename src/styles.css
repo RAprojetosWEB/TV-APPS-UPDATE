@@ -146,3 +146,34 @@
     color: var(--color-foreground);
   }
 }
+
+@layer components {
+  .tv-container {
+    width: 100%;
+    max-width: 1920px;
+    margin: 0 auto;
+    overflow-x: hidden;
+  }
+
+  .tv-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 360px));
+    justify-content: center;
+    gap: clamp(1rem, 3vw, 2.5rem);
+    width: 100%;
+    padding: clamp(1rem, 4vw, 4rem);
+  }
+
+  .tv-title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+  }
+
+  .tv-text {
+    font-size: clamp(0.875rem, 1.6vw, 1.25rem);
+  }
+
+  .tv-icon-container {
+    width: clamp(80px, 15vw, 128px);
+    height: clamp(80px, 15vw, 128px);
+  }
+}
