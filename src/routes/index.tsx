@@ -1060,5 +1060,6 @@ function Index() {
       onLater={() => setOtaModalOpen(false)}
     />
     </div>
+    </LoginGate>
   );
 }
