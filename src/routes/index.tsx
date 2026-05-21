@@ -385,8 +385,10 @@ function Index() {
     
     // Se já estiver instalado e NÃO for uma atualização forçada, abre direto
     if (!forceDownload && isNative && window.Android?.isAppInstalled?.(app.packageName)) {
-      window.Android.openApp(app.packageName);
-      return;
+      if (typeof window.Android.openApp === "function") {
+        window.Android.openApp(app.packageName);
+        return;
+      }
     }
 
     if (states[i].status === "downloading") return;
