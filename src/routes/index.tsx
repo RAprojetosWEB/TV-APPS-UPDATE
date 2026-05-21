@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Check, Download, Play, Tv, AlertCircle, Calendar, Clock, Cloud } from "lucide-react";
+import { Check, Download, Play, AlertCircle, Calendar, Clock, Cloud } from "lucide-react";
 import { NetworkIndicator } from "@/components/NetworkIndicator";
 import { useDateTime } from "@/hooks/useDateTime";
+import unitvLogo from "@/assets/unitv.png";
+import nexatvLogo from "@/assets/nexatv.png";
+import alphaplayLogo from "@/assets/alphaplay.webp";
 
 // Ponte com o APK nativo (WebView host). Se existir, instalamos APK direto
 // via PackageInstaller nativo; senão, fazemos o download "tradicional".
@@ -36,21 +39,21 @@ const APPS = [
     name: "UniTV",
     description: "Streaming de filmes e séries",
     url: "https://apyjsxxuuptelmiwnzwq.supabase.co/storage/v1/object/public/Alpicativos%20APKs/unitv.apk",
-    Icon: Play,
+    logo: unitvLogo,
     packageName: "com.unitv.app",
   },
   {
     name: "Nexa TV",
     description: "Player de mídia universal",
     url: "https://apyjsxxuuptelmiwnzwq.supabase.co/storage/v1/object/public/Alpicativos%20APKs/Nexa_TV.apk",
-    Icon: Tv,
+    logo: nexatvLogo,
     packageName: "com.nexa.tv",
   },
   {
     name: "ALPHAPLAY",
     description: "Tudo em um só app",
     url: "https://firebasestorage.googleapis.com/v0/b/update-41ccf.appspot.com/o/alphaplay.apk?alt=media&token=cdbe4055-ea90-4f2c-a540-1b458159ade6",
-    Icon: Download,
+    logo: alphaplayLogo,
     packageName: "com.alphaplay.app",
   },
 ];
@@ -378,7 +381,6 @@ function Index() {
       <section className="tv-card-grid flex-1 items-center">
         {APPS.map((app, i) => {
           const isFocused = focused === i;
-          const Icon = app.Icon;
           return (
             <button
               key={app.name}
@@ -487,13 +489,17 @@ function Index() {
                 style={{
                   background: isFocused
                     ? "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))"
-                    : "oklch(0.28 0.04 270)",
+                    : "oklch(0.95 0.005 270)",
+                  padding: "clamp(0.5rem, 1vw, 1rem)",
                 }}
               >
-                <Icon
-                  className="transition-all w-1/2 h-1/2"
-                  strokeWidth={1.8}
-                  color={isFocused ? "oklch(0.15 0.03 270)" : "white"}
+                <img
+                  src={app.logo}
+                  alt={`${app.name} logo`}
+                  className="w-full h-full object-contain transition-all duration-300"
+                  style={{
+                    filter: isFocused ? "drop-shadow(0 4px 12px rgba(0,0,0,0.3))" : "none",
+                  }}
                 />
               </div>
               {states[i].isInstalled && (
