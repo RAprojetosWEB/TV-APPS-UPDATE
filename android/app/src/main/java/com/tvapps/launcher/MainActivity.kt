@@ -56,6 +56,7 @@ class MainActivity : Activity() {
     private var dateView: TextView? = null
     private var weatherView: TextView? = null
     private var wifiView: TextView? = null
+    private var otaStatusPill: TextView? = null
     private val statusHandler = Handler(Looper.getMainLooper())
     private val clockTicker = object : Runnable {
         override fun run() {
