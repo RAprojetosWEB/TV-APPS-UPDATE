@@ -771,17 +771,6 @@ function Index() {
                 )}
               </div>
               
-              <div className="mt-6 flex flex-col items-center gap-1">
-                <div className="flex items-center gap-2 text-white/40 text-sm font-medium">
-                  <Info size={14} />
-                  <span>Versão {app.version} • {app.size}</span>
-                </div>
-                {states[i].isInstalled && (
-                  <span className="text-white/30 text-[10px] uppercase tracking-widest font-bold">
-                    Instalada: {states[i].installedVersion}
-                  </span>
-                )}
-              </div>
               </>
               )}
             </button>
