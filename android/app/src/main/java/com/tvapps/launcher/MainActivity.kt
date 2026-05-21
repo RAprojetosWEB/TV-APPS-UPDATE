@@ -646,12 +646,8 @@ class MainActivity : Activity() {
                             card.percent.visibility = View.GONE
                             card.pill.visibility = View.VISIBLE
                             card.subtitle.text = AppCatalog.apps[index].description
-                            // Revalida instalação real e atualiza chip/botão;
-                            // se instalado, remove o APK do cache.
+                            // Revalida instalação real, cache e atualiza chip/botão
                             refreshInstalledState(card, app)
-                            if (InstalledRegistry.isInstalled(this@MainActivity, app)) {
-                                ApkCache.deleteFor(this@MainActivity, app.name)
-                            }
                         }, 2500)
                     }
                     is DownloadProgress.Error -> withContext(Dispatchers.Main) {
