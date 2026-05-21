@@ -61,7 +61,6 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --animate-spin-slow: spin 3s linear infinite;
 }
-}
 
 :root {
   --radius: 0.625rem;
