@@ -68,6 +68,8 @@ object ApkDownloader {
                     }
                 }
             }
+            // Aprende o packageName real a partir do APK baixado
+            InstalledRegistry.learnFromApk(context, fileNameHint, outFile)
             emit(DownloadProgress.Done(outFile))
         } catch (e: Exception) {
             emit(DownloadProgress.Error(e.message ?: "Erro desconhecido"))
