@@ -371,9 +371,9 @@ class MainActivity : Activity() {
         // Badge de ícone (quadrado arredondado, gradiente quando focado)
         val iconBadge = FrameLayout(this).apply {
             background = makeIconBadgeBg(false, scale)
-            val size = (120 * scale).toInt()
+            val size = (100 * scale).toInt()
             val lp = LinearLayout.LayoutParams(dp(size), dp(size))
-            lp.bottomMargin = dp((24 * scale).toInt())
+            lp.bottomMargin = dp((20 * scale).toInt())
             layoutParams = lp
         }
         val iconImage = ImageView(this).apply {
