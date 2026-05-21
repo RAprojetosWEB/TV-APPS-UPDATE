@@ -764,12 +764,12 @@ function Index() {
                   <span className="text-sm font-bold text-tv-accent tracking-wide uppercase">Instalado</span>
                 </div>
               )}
-              <h2 className="text-4xl font-bold">{app.name}</h2>
-              <p className="mt-4 px-6 text-center text-xl text-white/60">
+              <h2 className="text-[clamp(1.25rem,2.5vw,2.25rem)] font-bold text-center">{app.name}</h2>
+              <p className="mt-[clamp(0.25rem,1vh,1rem)] px-4 text-center text-[clamp(0.8rem,1.4vw,1.15rem)] text-white/60 line-clamp-2">
                 {app.description}
               </p>
               <div
-                className="mt-10 flex items-center gap-3 rounded-full px-10 py-5 text-lg font-bold transition-all"
+                className="mt-[clamp(0.75rem,2.5vh,2.5rem)] flex items-center gap-2 rounded-full px-[clamp(1rem,3vw,2.5rem)] py-[clamp(0.5rem,1.5vh,1.25rem)] text-[clamp(0.85rem,1.3vw,1.1rem)] font-bold transition-all whitespace-nowrap"
                 style={{
                   background: isFocused ? "var(--tv-accent)" : "transparent",
                   color: isFocused ? "oklch(0.15 0.03 270)" : "white",
@@ -796,7 +796,7 @@ function Index() {
         })}
       </section>
 
-      <footer className="px-16 pb-8 text-center text-sm text-white/40">
+      <footer className="shrink-0 px-8 pb-[clamp(0.5rem,2vh,1.5rem)] text-center text-xs md:text-sm text-white/40">
         Após o download, abra o arquivo APK e permita instalação de fontes desconhecidas
       </footer>
 
