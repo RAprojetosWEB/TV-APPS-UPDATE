@@ -118,9 +118,12 @@ function Index() {
   const [otaProgress, setOtaProgress] = useState(0);
 
   // Abre modal automaticamente quando detecta atualização (e mantém aberto se forceUpdate)
+  // Verificação automática removida a pedido do usuário
+  /*
   useEffect(() => {
     if (ota.hasUpdate) setOtaModalOpen(true);
   }, [ota.hasUpdate]);
+  */
 
   const startOtaUpdate = async () => {
     if (!ota.manifest || otaDownloading) return;
@@ -266,15 +269,11 @@ function Index() {
   };
 
   // Atualiza status de instalação e checa updates periodicamente
+  // Atualiza status de instalação apenas uma vez ao carregar
   useEffect(() => {
-    const checkAll = () => {
-      if (isNative && window.Android?.isAppInstalled) {
-        checkUpdates();
-      }
-    };
-    checkAll();
-    const interval = setInterval(checkAll, 15000); // Check every 15s
-    return () => clearInterval(interval);
+    if (isNative && window.Android?.isAppInstalled) {
+      checkUpdates();
+    }
   }, [isNative]);
   const [modalChoice, setModalChoice] = useState<"yes" | "no">("yes");
   const [installModalOpen, setInstallModalOpen] = useState(false);
