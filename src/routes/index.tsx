@@ -258,12 +258,12 @@ function Index() {
     });
   };
 
-  const startDownload = async (i: number) => {
+  const startDownload = async (i: number, forceDownload = false) => {
     playClick();
     const app = APPS[i];
     
-    // Se já estiver instalado, abre direto ao clicar
-    if (isNative && window.Android?.isAppInstalled?.(app.packageName)) {
+    // Se já estiver instalado e NÃO for uma atualização forçada, abre direto
+    if (!forceDownload && isNative && window.Android?.isAppInstalled?.(app.packageName)) {
       window.Android.openApp(app.packageName);
       return;
     }
