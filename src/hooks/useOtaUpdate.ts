@@ -8,15 +8,6 @@ import {
   type UpdateManifest,
 } from "@/lib/app-version";
 
-declare global {
-  interface Window {
-    Android?: {
-      version?: () => string;
-      versionCode?: () => number;
-      [k: string]: unknown;
-    };
-  }
-}
 
 function getInstalledVersion(): string {
   if (typeof window !== "undefined" && typeof window.Android?.version === "function") {
