@@ -537,7 +537,7 @@ function Index() {
 
   return (
     <LoginGate>
-    <div className="relative h-screen w-screen overflow-hidden bg-background">
+    <div className="tv-container relative min-h-dvh bg-background">
       {/* Background decoration */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div 
@@ -552,7 +552,7 @@ function Index() {
 
       <main
         onKeyDown={handleKey}
-        className="relative flex min-h-dvh flex-col text-foreground"
+        className="relative flex flex-col text-foreground"
       >
       <header className="shrink-0 px-[clamp(1rem,4vw,4rem)] pt-[clamp(0.5rem,2vh,2rem)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
