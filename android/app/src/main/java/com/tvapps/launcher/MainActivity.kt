@@ -665,6 +665,8 @@ class MainActivity : Activity() {
 
     override fun onDestroy() {
         scope.cancel()
+        statusHandler.removeCallbacksAndMessages(null)
+        unregisterNetworkCallback()
         super.onDestroy()
     }
 }
