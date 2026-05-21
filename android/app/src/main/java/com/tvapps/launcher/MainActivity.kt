@@ -1030,13 +1030,21 @@ class MainActivity : Activity() {
             )
         }
 
-        val system = makeStatusPill("🔍", "#E8A85C", scale).apply {
+        val system = makeStatusPill("", "#E8A85C", scale).apply {
             isFocusable = true
             isClickable = true
             // Desativa a mudança de linha automática para permitir animação de largura
             maxLines = 1
             ellipsize = android.text.TextUtils.TruncateAt.END
-            
+
+            // Ícone de refresh (estilo lucide RotateCcw)
+            val refresh = androidx.core.content.ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_rotate_ccw)
+            val rs = dp((16 * scale).toInt())
+            refresh?.setBounds(0, 0, rs, rs)
+            refresh?.setTint(Color.parseColor("#E8A85C"))
+            setCompoundDrawables(refresh, null, null, null)
+            compoundDrawablePadding = dp((6 * scale).toInt())
+
             setOnClickListener { checkOtaUpdate(this, true) }
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
@@ -1047,14 +1055,14 @@ class MainActivity : Activity() {
                     bg.setStroke(dp(2), Color.parseColor("#5EE6A8"))
                     
                     // Expande com texto e animação
-                    tv.text = "🔍  Procurar atualizações"
+                    tv.text = "Procurar atualizações"
                     tv.animate().alpha(1f).setDuration(200).start()
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
                     
                     // Retrai para apenas o ícone
-                    tv.text = "🔍"
+                    tv.text = ""
                 }
             }
         }
