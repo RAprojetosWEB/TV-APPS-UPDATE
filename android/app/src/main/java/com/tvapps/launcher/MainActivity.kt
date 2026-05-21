@@ -1009,9 +1009,11 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        packageReceiver?.let { PackageInstallReceiver.unregister(this, it) }
         scope.cancel()
         statusHandler.removeCallbacksAndMessages(null)
         unregisterNetworkCallback()
         super.onDestroy()
     }
+
 }
