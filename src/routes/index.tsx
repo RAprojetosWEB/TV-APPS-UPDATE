@@ -413,8 +413,19 @@ function Index() {
       document.body.appendChild(a);
       a.click();
       a.remove();
+      
+      // Abre automaticamente o instalador
+      try {
+        window.location.href = blobUrl;
+      } catch (err) {
+        console.error("Auto-open APK failed", err);
+      }
+      
       setTimeout(() => URL.revokeObjectURL(blobUrl), 5 * 60_000);
-      updateState(i, { status: "done", progress: 100, blobUrl });
+      updateState(i, { status: "idle", progress: 0 }); // Volta para idle em vez de "done" para evitar modal
+      toast.success("Download concluído", {
+        description: "O instalador deve abrir automaticamente.",
+      });
     } catch (err) {
       console.error(err);
       updateState(i, { status: "error", progress: 0 });
