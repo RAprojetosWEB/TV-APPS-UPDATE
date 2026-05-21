@@ -64,7 +64,36 @@ class MainActivity : Activity() {
                 or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
             )
+        setupWebViewBridge()
         setContentView(buildRoot())
+    }
+
+    private fun setupWebViewBridge() {
+        // WebView invisível apenas para servir de bridge para o código React
+        webView = WebView(this).apply {
+            settings.javaScriptEnabled = true
+            addJavascriptInterface(object {
+                @JavascriptInterface
+                fun isNative(): Boolean = true
+
+                @JavascriptInterface
+                fun isAppInstalled(packageName: String): Boolean = this@MainActivity.isAppInstalled(packageName)
+
+                @JavascriptInterface
+                fun openApp(packageName: String) = this@MainActivity.openApp(packageName)
+
+                @JavascriptInterface
+                fun installApk(url: String, name: String) {
+                    val index = AppCatalog.apps.indexOfFirst { it.name == name }
+                    if (index != -1) {
+                        runOnUiThread { startDownload(index) }
+                    }
+                }
+            }, "Android")
+            
+            // Não precisamos carregar nada real aqui se estivermos usando a UI nativa,
+            // mas o código React no index.tsx espera a bridge.
+        }
     }
 
     private fun buildRoot(): View {
