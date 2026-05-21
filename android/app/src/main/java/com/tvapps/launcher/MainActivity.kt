@@ -756,6 +756,7 @@ class MainActivity : Activity() {
         dateView = date
         weatherView = weather
         wifiView = wifi
+        otaStatusPill = system
 
         row.addView(left)
         row.addView(right)
