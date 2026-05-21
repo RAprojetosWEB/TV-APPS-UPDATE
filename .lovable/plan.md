@@ -1,14 +1,5 @@
-# Plano de Compilação (Atualizado)
+# Corrigir erro de build MainActivity.kt:192
 
-## Estado Atual
-- Package Name revertido para `com.tvapps.launcher` para manter compatibilidade com usuários existentes.
-- Estrutura de pastas restaurada em `android/app/src/main/java/com/tvapps/launcher/`.
-- Configurado versionamento automático baseado em timestamp no `build.gradle.kts`.
-- Geração automática de `update.json` após o build.
-- Nome do APK de saída padronizado para `app-release-latest.apk`.
+Trocar `background = Color.parseColor("#E60A0D1A")` por `setBackgroundColor(Color.parseColor("#E60A0D1A"))` no bloco `updateOverlay`.
 
-## Próximos Passos recomendados
-1. Gerar a build com `./gradlew assembleRelease`.
-2. O APK estará em `android/app/build/outputs/apk/release/app-release-latest.apk`.
-3. O arquivo `update.json` correspondente estará na mesma pasta.
-4. Fazer upload de ambos para o bucket do Supabase.
+Isso resolve o erro Kotlin "Type mismatch: inferred type is Int but Drawable! was expected" e libera o `./gradlew assembleRelease`.
