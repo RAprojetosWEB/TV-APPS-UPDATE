@@ -1,18 +1,27 @@
-# Remover exibição de versão dos cards
+# Botão dedicado de verificação OTA
 
-Como a verificação de atualização dos aplicativos foi removida, mostrar "Versão X.Y" e "Instalada: Z" nos cards não traz mais utilidade.
+Atualmente o botão "Procurar atualizações" no header dispara tanto a verificação dos apps (já removida) quanto a OTA. Vamos criar um botão dedicado e claro para o usuário verificar/atualizar o sistema (TV.Apps) manualmente.
 
-## Mudanças
+## Mudanças em `src/routes/index.tsx`
 
-- Em `src/routes/index.tsx`, remover o bloco abaixo do botão INSTALAR/ABRIR APP que mostra:
-  - "Versão {app.version} • {app.size}"
-  - "Instalada: {states[i].installedVersion}"
-- Manter o badge "Instalado" no canto do card (indica status, não versão).
-- Não remover dados do banco nem campos `version`/`size` do objeto — apenas a exibição.
+- Adicionar no header, ao lado do botão "Procurar atualizações", um novo botão:
+  - Texto: "Atualizar sistema" (ou "Verificando sistema..." durante a checagem).
+  - Ícone: `Cloud` + `RefreshCcw` (spin quando `ota.checking`).
+  - Cor de destaque laranja para diferenciar do botão de apps.
+  - Ao clicar:
+    1. Chama `ota.checkNow()`.
+    2. Se `ota.hasUpdate` ficar true, o modal OTA já abre automaticamente (efeito existente).
+    3. Se não houver update, o próprio hook exibe toast "✅ aplicativo já está atualizado".
+- Manter navegação por DPAD (focusable, outline-none, focus styles).
+- Remover a chamada `ota.checkNow()` do botão "Procurar atualizações" antigo (que agora só serve para apps), deixando-o exclusivo para o sistema OTA — ou simplesmente substituir aquele botão pelo novo, já que a verificação de apps foi removida.
+
+## Decisão de UX
+
+Substituir o botão atual "Procurar atualizações" por **"Atualizar sistema"** com ícone Cloud + RefreshCcw, em vez de manter dois botões redundantes. O texto deixa claro que é a atualização do próprio TV.Apps.
 
 ## Resultado
 
-Cards mais limpos, sem informação de versão redundante.
+Usuário tem um botão claro no header para verificar atualizações OTA a qualquer momento.
 # Sistema OTA (Over-The-Air Update)
 
 Transformar o app em uma central com atualização automática do próprio APK via Lovable Cloud Storage.
