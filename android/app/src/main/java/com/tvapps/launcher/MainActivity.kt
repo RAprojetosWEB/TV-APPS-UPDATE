@@ -867,7 +867,7 @@ class MainActivity : Activity() {
             )
         }
 
-        val system = makeStatusPill("⟳  Procurar Atualização", "#E8A85C", scale).apply {
+        val system = makeStatusPill("⟳", "#E8A85C", scale).apply {
             isFocusable = true
             isClickable = true
             setOnClickListener { checkOtaUpdate(this, true) }
