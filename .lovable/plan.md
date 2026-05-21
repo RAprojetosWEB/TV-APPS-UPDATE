@@ -1,20 +1,19 @@
-Implementar o sistema de atualização OTA (Over-The-Air) completo no Android, adicionando um botão dedicado na barra superior que permite verificar, baixar e instalar novas versões do aplicativo (launcher).
+Corrigir o botão "Procurar Atualização" no Android para que o rótulo permaneça sempre visível.
 
-### Mudanças no Android (MainActivity.kt)
+### Problema
 
-1. **Botão de Atualização**: Adicionar um novo botão focável na barra superior (ao lado das pílulas de status) com o texto "Procurar Atualização".
-2. **Lógica de Verificação**:
-    - Ao clicar, o app fará uma requisição ao arquivo `update.json` no Supabase.
-    - Se a versão remota for maior que a local, abrirá um diálogo de confirmação: "Nova versão disponível. Deseja atualizar agora?".
-    - Se a versão for a mesma, exibirá um aviso: "O sistema já está atualizado".
-3. **Download e Instalação**:
-    - Se o usuário confirmar a atualização, o app baixará o APK do launcher (usando a URL contida no `update.json`).
-    - Exibirá o progresso do download.
-    - Ao concluir, abrirá automaticamente o instalador nativo do Android para substituir a versão atual.
-4. **Resiliência**: Tratar erros de conexão e arquivos inexistentes (404) com mensagens claras para o usuário.
+O botão é criado corretamente na barra superior, mas a verificação automática (`checkOtaUpdate`) que dispara ao abrir o app sobrescreve o texto da pílula com mensagens de status ("✓ Sistema atualizado", "⚠ Sem conexão", "⬇ Atualização disponível"). Resultado: o usuário nunca vê o rótulo "Procurar Atualização" — ele aparece como uma pílula de status passiva e parece que o botão não existe.
 
-### Detalhes Técnicos
+### Solução
 
-- **Interface**: O botão seguirá o estilo visual dos "cards" e "pills" já existentes, com bordas arredondadas, cores contrastantes e feedback visual ao receber foco do controle remoto.
-- **OTA JSON**: O sistema passará a esperar que o `update.json` contenha pelo menos: `{"version": "1.0.1", "url": "https://.../launcher-v1.0.1.apk"}`.
-- **Permissões**: O app já possui as permissões necessárias para baixar e solicitar instalação de pacotes.
+Manter o texto da pílula fixo como **"⟳ Procurar Atualização"** em todos os estados, mudando apenas a cor para indicar o status:
+
+- **Verde** quando o sistema está atualizado ou após verificação bem-sucedida
+- **Vermelho** quando não conseguiu conectar
+- **Verde + diálogo** quando existe atualização disponível (continua disparando o pop-up de confirmação no clique manual)
+
+Os feedbacks ricos ("Você já está na versão mais recente", "Falha ao verificar") seguem aparecendo via Toast quando o usuário clica manualmente, mas não poluem mais o rótulo do botão.
+
+### Arquivo alterado
+
+- `android/app/src/main/java/com/tvapps/launcher/MainActivity.kt` — função `checkOtaUpdate()`
