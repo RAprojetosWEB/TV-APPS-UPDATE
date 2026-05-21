@@ -212,7 +212,7 @@ function Index() {
             size: latestVersion?.apk_size_mb ? `${latestVersion.apk_size_mb}MB` : "N/A",
           };
         });
-        const order = ["alphaplay", "nexa tv", "unitv"];
+        const order = ["unitv", "nexa tv", "alphaplay"];
         mappedApps.sort((a, b) => {
           const idxA = order.indexOf(a.name.toLowerCase());
           const idxB = order.indexOf(b.name.toLowerCase());
