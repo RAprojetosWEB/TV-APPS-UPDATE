@@ -20,6 +20,8 @@ type AndroidBridge = {
   isAppInstalled: (packageName: string) => boolean;
   openApp: (packageName: string) => void;
   version?: () => string;
+  isApkDownloaded?: (packageName: string, version: string) => boolean;
+  installLocalApk?: (packageName: string) => void;
 };
 declare global {
   interface Window {
@@ -101,11 +103,12 @@ function Index() {
       status: "idle" | "downloading" | "done" | "error";
       progress: number;
       isInstalled: boolean;
+      isDownloaded: boolean;
       hasUpdate: boolean;
       installedVersion?: string;
       blobUrl?: string;
     }>
-  >(() => APPS.map(() => ({ status: "idle", progress: 0, isInstalled: false, hasUpdate: false })));
+  >(() => APPS.map(() => ({ status: "idle", progress: 0, isInstalled: false, isDownloaded: false, hasUpdate: false })));
 
   const [checkingUpdates, setCheckingUpdates] = useState(false);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
@@ -248,12 +251,17 @@ function Index() {
         ? window.Android?.isAppInstalled?.(app.packageName)
         : (i === 0);
       
+      const isDownloaded = isNative
+        ? !!window.Android?.isApkDownloaded?.(app.packageName, app.version)
+        : false;
+      
       const installedVersion = isNative && window.Android?.version ? window.Android.version() : (parseFloat(app.version) - 0.3).toFixed(1);
       const hasUpdate = false; // Verificação de atualização para apps de terceiros removida permanentemente
 
       return {
         ...s,
         isInstalled: !!isInstalled,
+        isDownloaded,
         installedVersion: installedVersion || "0",
         hasUpdate
       };
@@ -368,6 +376,7 @@ function Index() {
     patch: Partial<{
       status: "idle" | "downloading" | "done" | "error";
       progress: number;
+      isDownloaded?: boolean;
       blobUrl?: string;
     }>,
   ) => {
@@ -388,6 +397,16 @@ function Index() {
         window.Android.openApp(app.packageName);
         return;
       }
+    }
+
+    // Cache inteligente: verifica se o APK já foi baixado anteriormente
+    if (isNative && window.Android?.isApkDownloaded?.(app.packageName, app.version)) {
+      toast.info("APK já baixado anteriormente.", {
+        description: "Iniciando instalação...",
+        duration: 3000,
+      });
+      window.Android.installLocalApk?.(app.packageName);
+      return;
     }
 
     if (states[i].status === "downloading") return;
@@ -474,6 +493,8 @@ function Index() {
       if (percent >= 100) {
         // Instalador nativo já abriu — voltamos pro estado idle sem modal.
         updateState(idx, { status: "idle", progress: 0 });
+        // Agenda uma verificação para atualizar os badges de "Baixado"
+        setTimeout(() => checkUpdates(), 1000);
         return;
       }
       updateState(idx, { status: "downloading", progress: percent });
@@ -748,12 +769,17 @@ function Index() {
                   }}
                 />
               </div>
-              {states[i].isInstalled && (
+              {states[i].isInstalled ? (
                 <div className="absolute top-6 right-6 flex items-center gap-2 rounded-full bg-tv-accent/20 px-4 py-2 border border-tv-accent/30 shadow-[0_0_20px_rgba(94,230,168,0.2)] animate-in fade-in zoom-in duration-300">
                   <Check size={18} className="text-tv-accent" />
                   <span className="text-sm font-bold text-tv-accent tracking-wide uppercase">Instalado</span>
                 </div>
-              )}
+              ) : states[i].isDownloaded ? (
+                <div className="absolute top-6 right-6 flex items-center gap-2 rounded-full bg-blue-500/20 px-4 py-2 border border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.2)] animate-in fade-in zoom-in duration-300">
+                  <Cloud size={18} className="text-blue-400" />
+                  <span className="text-sm font-bold text-blue-400 tracking-wide uppercase">Baixado</span>
+                </div>
+              ) : null}
               <h2 className="text-[clamp(1.25rem,2.5vw,2.25rem)] font-bold text-center">{app.name}</h2>
               <p className="mt-[clamp(0.25rem,1vh,1rem)] px-4 text-center text-[clamp(0.8rem,1.4vw,1.15rem)] text-white/60 line-clamp-2">
                 {app.description}
