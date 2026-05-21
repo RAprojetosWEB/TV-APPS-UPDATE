@@ -489,13 +489,17 @@ function Index() {
                 style={{
                   background: isFocused
                     ? "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))"
-                    : "oklch(0.28 0.04 270)",
+                    : "oklch(0.95 0.005 270)",
+                  padding: "clamp(0.5rem, 1vw, 1rem)",
                 }}
               >
-                <Icon
-                  className="transition-all w-1/2 h-1/2"
-                  strokeWidth={1.8}
-                  color={isFocused ? "oklch(0.15 0.03 270)" : "white"}
+                <img
+                  src={app.logo}
+                  alt={`${app.name} logo`}
+                  className="w-full h-full object-contain transition-all duration-300"
+                  style={{
+                    filter: isFocused ? "drop-shadow(0 4px 12px rgba(0,0,0,0.3))" : "none",
+                  }}
                 />
               </div>
               {states[i].isInstalled && (
