@@ -244,7 +244,7 @@ function Index() {
         : (i === 0);
       
       const installedVersion = isNative && window.Android?.version ? window.Android.version() : (parseFloat(app.version) - 0.3).toFixed(1);
-      const hasUpdate = !!(isInstalled && parseFloat(app.version) > parseFloat(installedVersion || "0"));
+      const hasUpdate = manual ? !!(isInstalled && parseFloat(app.version) > parseFloat(installedVersion || "0")) : false;
 
       return {
         ...s,
