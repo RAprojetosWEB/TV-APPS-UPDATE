@@ -151,14 +151,38 @@ function Index() {
     }
   }, [modalChoice, modalOpen, installModalOpen]);
 
+  const playTick = () => {
+    try {
+      const audio = new Audio("https://pub-777ce89a8a364563a9200e0426021991.r2.dev/tick.mp3");
+      audio.volume = 0.4;
+      audio.play().catch(() => {});
+    } catch (e) {}
+  };
+
+  const playClick = () => {
+    try {
+      const audio = new Audio("https://pub-777ce89a8a364563a9200e0426021991.r2.dev/click.mp3");
+      audio.volume = 0.5;
+      audio.play().catch(() => {});
+    } catch (e) {}
+  };
+
   const handleKey = (e: React.KeyboardEvent) => {
     if (modalOpen) return;
     if (e.key === "ArrowRight") {
       e.preventDefault();
-      setFocused((i) => Math.min(APPS.length - 1, i + 1));
+      const next = Math.min(APPS.length - 1, focused + 1);
+      if (next !== focused) {
+        setFocused(next);
+        playTick();
+      }
     } else if (e.key === "ArrowLeft") {
       e.preventDefault();
-      setFocused((i) => Math.max(0, i - 1));
+      const next = Math.max(0, focused - 1);
+      if (next !== focused) {
+        setFocused(next);
+        playTick();
+      }
     }
   };
 
@@ -178,6 +202,7 @@ function Index() {
   };
 
   const startDownload = async (i: number) => {
+    playClick();
     const app = APPS[i];
     
     // Se já estiver instalado, abre direto ao clicar
