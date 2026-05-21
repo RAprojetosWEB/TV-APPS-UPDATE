@@ -898,11 +898,10 @@ class MainActivity : Activity() {
             } catch (_: Exception) { null }
 
             if (otaInfo == null) {
+                systemPill.text = "⟳  Procurar Atualização"
+                systemPill.setTextColor(Color.parseColor("#FF6B6B"))
                 if (manual) {
-                    Toast.makeText(this@MainActivity, "Falha ao verificar atualizações", Toast.LENGTH_SHORT).show()
-                } else {
-                    systemPill.text = "⚠  Sem conexão"
-                    systemPill.setTextColor(Color.parseColor("#FF6B6B"))
+                    Toast.makeText(this@MainActivity, "Falha ao verificar atualizações (sem conexão)", Toast.LENGTH_SHORT).show()
                 }
                 return@launch
             }
@@ -912,12 +911,11 @@ class MainActivity : Activity() {
             if (hasUpdate) {
                 systemPill.text = "⬇  Atualização disponível ($remoteVersion)"
                 systemPill.setTextColor(Color.parseColor("#5EE6A8"))
-                
                 if (manual) {
                     showOtaConfirmDialog(remoteVersion, downloadUrl)
                 }
             } else {
-                systemPill.text = "✓  Sistema atualizado"
+                systemPill.text = "⟳  Procurar Atualização"
                 systemPill.setTextColor(Color.parseColor("#5EE6A8"))
                 if (manual) {
                     Toast.makeText(this@MainActivity, "Você já está na versão mais recente", Toast.LENGTH_SHORT).show()
