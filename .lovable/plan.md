@@ -1,3 +1,18 @@
+# Remover exibição de versão dos cards
+
+Como a verificação de atualização dos aplicativos foi removida, mostrar "Versão X.Y" e "Instalada: Z" nos cards não traz mais utilidade.
+
+## Mudanças
+
+- Em `src/routes/index.tsx`, remover o bloco abaixo do botão INSTALAR/ABRIR APP que mostra:
+  - "Versão {app.version} • {app.size}"
+  - "Instalada: {states[i].installedVersion}"
+- Manter o badge "Instalado" no canto do card (indica status, não versão).
+- Não remover dados do banco nem campos `version`/`size` do objeto — apenas a exibição.
+
+## Resultado
+
+Cards mais limpos, sem informação de versão redundante.
 # Sistema OTA (Over-The-Air Update)
 
 Transformar o app em uma central com atualização automática do próprio APK via Lovable Cloud Storage.
