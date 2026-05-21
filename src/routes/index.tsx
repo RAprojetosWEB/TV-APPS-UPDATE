@@ -353,12 +353,12 @@ function Index() {
               ) : states[i].status === "error" ? (
                 <div className="flex flex-col items-center px-8">
                   <div
-                    className="mb-8 flex h-32 w-32 items-center justify-center rounded-2xl"
+                    className="tv-icon-container mb-8 flex items-center justify-center rounded-2xl"
                     style={{ background: "oklch(0.4 0.2 25)" }}
                   >
-                    <AlertCircle size={64} strokeWidth={1.8} color="white" />
+                    <AlertCircle className="w-1/2 h-1/2" strokeWidth={1.8} color="white" />
                   </div>
-                  <h2 className="text-3xl font-bold">{app.name}</h2>
+                  <h2 className="tv-text font-bold">{app.name}</h2>
                   <p className="mt-3 text-center text-base text-white/70">
                     Falha no download
                   </p>
