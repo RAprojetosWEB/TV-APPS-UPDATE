@@ -326,14 +326,23 @@ function Index() {
   };
 
   return (
-    <main
-      onKeyDown={handleKey}
-      className="relative flex min-h-screen w-screen flex-col overflow-x-hidden bg-background text-foreground"
-      style={{
-        backgroundImage:
-          "radial-gradient(ellipse at top left, oklch(0.3 0.12 280 / 0.4), transparent 60%), radial-gradient(ellipse at bottom right, oklch(0.3 0.12 150 / 0.35), transparent 60%)",
-      }}
-    >
+    <div className="relative min-h-screen w-screen overflow-x-hidden bg-background">
+      {/* Background decoration */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div 
+          className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] rounded-full blur-[120px]"
+          style={{ background: "radial-gradient(circle, oklch(0.6 0.2 150 / 0.15) 0%, transparent 70%)" }}
+        />
+        <div 
+          className="absolute -bottom-[10%] -right-[10%] w-[50%] h-[50%] rounded-full blur-[120px]"
+          style={{ background: "radial-gradient(circle, oklch(0.6 0.2 280 / 0.1) 0%, transparent 70%)" }}
+        />
+      </div>
+
+      <main
+        onKeyDown={handleKey}
+        className="relative flex min-h-screen flex-col text-foreground"
+      >
       <header className="px-16 pt-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
           <h1 className="tv-title font-black tracking-tight leading-none">
