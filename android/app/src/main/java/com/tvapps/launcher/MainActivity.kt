@@ -172,8 +172,8 @@ class MainActivity : Activity() {
         }
         root.addView(footer)
 
-        cardViews.getOrNull(1)?.container?.post {
-            cardViews[1].container.requestFocus()
+        cardViews.getOrNull(0)?.container?.post {
+            cardViews[0].container.requestFocus()
         }
         return root
     }
