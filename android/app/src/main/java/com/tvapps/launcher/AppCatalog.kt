@@ -4,6 +4,7 @@ data class CatalogApp(
     val name: String,
     val description: String,
     val url: String,
+    val icon: String,
 )
 
 object AppCatalog {
@@ -12,16 +13,19 @@ object AppCatalog {
             name = "UniTV",
             description = "Streaming de filmes e séries",
             url = "https://apyjsxxuuptelmiwnzwq.supabase.co/storage/v1/object/public/Alpicativos%20APKs/unitv.apk",
+            icon = "▶",
         ),
         CatalogApp(
             name = "Nexa TV",
             description = "Player de mídia universal",
             url = "https://apyjsxxuuptelmiwnzwq.supabase.co/storage/v1/object/public/Alpicativos%20APKs/Nexa_TV.apk",
+            icon = "📺",
         ),
         CatalogApp(
             name = "AllApp",
             description = "Tudo em um só app",
             url = "https://apyjsxxuuptelmiwnzwq.supabase.co/storage/v1/object/public/Alpicativos%20APKs/AllApp.apk",
+            icon = "⬇",
         ),
     )
 }
