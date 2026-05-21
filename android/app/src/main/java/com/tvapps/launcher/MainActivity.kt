@@ -118,25 +118,29 @@ class MainActivity : Activity() {
 
     private fun setupPackageReceiver() {
         packageReceiver = PackageInstallReceiver { packageName ->
-            // Busca o app no catálogo que corresponde ao package instalado
-            val app = AppCatalog.apps.find { 
-                InstalledRegistry.resolvePackage(this, it) == packageName 
+            // Busca o app no catálogo que corresponde ao package instalado.
+            // Usamos isInstalled para garantir que a heurística rode e "aprenda" o pacote se necessário.
+            val app = AppCatalog.apps.find { app ->
+                InstalledRegistry.isInstalled(this, app) && InstalledRegistry.resolvePackage(this, app) == packageName
             }
 
             if (app != null) {
                 ApkCache.deleteFor(this, app.name)
                 runOnUiThread {
                     Toast.makeText(this, "Instalação concluída. Arquivo temporário removido.", Toast.LENGTH_LONG).show()
-                    // Atualiza a UI se o app estiver visível
-                    if (cardViews.isNotEmpty()) {
-                        val index = AppCatalog.apps.indexOf(app)
-                        if (index != -1) {
-                            cardViews.getOrNull(index)?.let { refreshInstalledState(it, app) }
-                        }
+                    // Atualiza todos os cards para garantir que o estado reflita a mudança
+                    cardViews.forEachIndexed { index, views ->
+                        refreshInstalledState(views, AppCatalog.apps[index])
+                    }
+                }
+            } else {
+                // Caso não encontre mapeamento direto, atualiza tudo por segurança
+                runOnUiThread {
+                    cardViews.forEachIndexed { index, views ->
+                        refreshInstalledState(views, AppCatalog.apps[index])
                     }
                 }
             }
-
         }
         PackageInstallReceiver.register(this, packageReceiver!!)
     }
