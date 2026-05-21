@@ -244,7 +244,12 @@ function Index() {
       setModalChoice((c) => (c === "yes" ? "no" : "yes"));
     } else if (e.key === "Escape" || e.key === "Backspace") {
       e.preventDefault();
-      closeModal();
+      if (installModalOpen) {
+        setInstallModalOpen(false);
+        setInstallModalAppIndex(null);
+      } else {
+        closeModal();
+      }
     }
   };
 
