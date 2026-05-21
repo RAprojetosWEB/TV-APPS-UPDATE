@@ -85,11 +85,15 @@ function Index() {
     }>
   >(() => APPS.map(() => ({ status: "idle", progress: 0 })));
   const [modalChoice, setModalChoice] = useState<"yes" | "no">("yes");
+  const [installModalOpen, setInstallModalOpen] = useState(false);
+  const [installModalAppIndex, setInstallModalAppIndex] = useState<number | null>(null);
   const yesBtnRef = useRef<HTMLButtonElement | null>(null);
   const noBtnRef = useRef<HTMLButtonElement | null>(null);
+  const installYesBtnRef = useRef<HTMLButtonElement | null>(null);
+  const installNoBtnRef = useRef<HTMLButtonElement | null>(null);
 
   const doneIndex = states.findIndex((s) => s.status === "done");
-  const modalOpen = doneIndex !== -1;
+  const modalOpen = doneIndex !== -1 || installModalOpen;
 
   useEffect(() => {
     if (!modalOpen) refs.current[focused]?.focus();
