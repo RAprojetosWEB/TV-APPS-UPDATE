@@ -103,11 +103,12 @@ function Index() {
       status: "idle" | "downloading" | "done" | "error";
       progress: number;
       isInstalled: boolean;
+      isDownloaded: boolean;
       hasUpdate: boolean;
       installedVersion?: string;
       blobUrl?: string;
     }>
-  >(() => APPS.map(() => ({ status: "idle", progress: 0, isInstalled: false, hasUpdate: false })));
+  >(() => APPS.map(() => ({ status: "idle", progress: 0, isInstalled: false, isDownloaded: false, hasUpdate: false })));
 
   const [checkingUpdates, setCheckingUpdates] = useState(false);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
