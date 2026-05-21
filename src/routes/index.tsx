@@ -35,18 +35,21 @@ const APPS = [
     description: "Streaming de filmes e séries",
     url: "https://apyjsxxuuptelmiwnzwq.supabase.co/storage/v1/object/public/Alpicativos%20APKs/unitv.apk",
     Icon: Play,
+    packageName: "com.unitv.app",
   },
   {
     name: "Nexa TV",
     description: "Player de mídia universal",
     url: "https://apyjsxxuuptelmiwnzwq.supabase.co/storage/v1/object/public/Alpicativos%20APKs/Nexa_TV.apk",
     Icon: Tv,
+    packageName: "com.nexa.tv",
   },
   {
     name: "ALPHAPLAY",
     description: "Tudo em um só app",
     url: "https://firebasestorage.googleapis.com/v0/b/update-41ccf.appspot.com/o/alphaplay.apk?alt=media&token=cdbe4055-ea90-4f2c-a540-1b458159ade6",
     Icon: Download,
+    packageName: "com.alphaplay.app",
   },
 ];
 
