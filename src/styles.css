@@ -157,23 +157,23 @@
 
   .tv-card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 360px));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 420px));
     justify-content: center;
-    gap: clamp(1rem, 3vw, 2.5rem);
+    gap: clamp(1.5rem, 4vw, 3.5rem);
     width: 100%;
-    padding: clamp(1rem, 4vw, 4rem);
+    padding: clamp(1rem, 5vw, 6rem);
   }
 
   .tv-title {
-    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
   }
 
   .tv-text {
-    font-size: clamp(0.875rem, 1.6vw, 1.25rem);
+    font-size: clamp(1.125rem, 2vw, 1.75rem);
   }
 
   .tv-icon-container {
-    width: clamp(80px, 15vw, 128px);
-    height: clamp(80px, 15vw, 128px);
+    width: clamp(100px, 18vw, 160px);
+    height: clamp(100px, 18vw, 160px);
   }
 }
