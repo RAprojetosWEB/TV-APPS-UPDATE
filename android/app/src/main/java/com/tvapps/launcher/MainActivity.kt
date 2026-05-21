@@ -153,6 +153,13 @@ class MainActivity : Activity() {
             val card = buildCard(index, app, cardWidth, cardHeight, cardMargin, scaleFactor)
             row.addView(card.container)
             cardViews.add(card)
+            
+            // Atualiza estado inicial do botão
+            if (isAppInstalled(app.packageName)) {
+                card.pill.text = "▶  ABRIR APP"
+                // Adiciona um pequeno indicador visual de "Instalado" se desejar, 
+                // ou apenas muda o texto do botão como solicitado.
+            }
         }
         root.addView(row)
 
@@ -383,14 +390,14 @@ class MainActivity : Activity() {
 
     private fun startDownload(index: Int) {
         val app = AppCatalog.apps[index]
+        val card = cardViews[index]
         
-        // VERIFICAÇÃO SE O APP JÁ ESTÁ INSTALADO
+        // Se já estiver instalado, abre direto
         if (isAppInstalled(app.packageName)) {
-            showAlreadyInstalledDialog(app)
+            openApp(app.packageName)
             return
         }
 
-        val card = cardViews[index]
         if (cardJobs[index]?.isActive == true) return
 
         card.progress.visibility = View.VISIBLE
@@ -417,6 +424,7 @@ class MainActivity : Activity() {
                             card.progress.visibility = View.GONE
                             card.percent.visibility = View.GONE
                             card.pill.visibility = View.VISIBLE
+                            card.pill.text = "▶  ABRIR APP"
                             card.subtitle.text = AppCatalog.apps[index].description
                         }, 2500)
                     }
