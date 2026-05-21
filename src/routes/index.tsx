@@ -436,6 +436,22 @@ function Index() {
   useEffect(() => {
     if (!isNative) return;
     window.__onNativeApkProgress = (name, percent, error) => {
+      // Caso seja a atualização do próprio app (OTA)
+      if (name === "TV.Apps") {
+        if (percent < 0) {
+          setOtaDownloading(false);
+          toast.error("Falha ao baixar atualização");
+          return;
+        }
+        if (percent >= 100) {
+          setOtaDownloading(false);
+          setOtaModalOpen(false);
+          return;
+        }
+        setOtaProgress(percent);
+        return;
+      }
+
       const idx = currentApps.findIndex((a) => a.name === name);
       if (idx === -1) return;
       if (percent < 0) {
