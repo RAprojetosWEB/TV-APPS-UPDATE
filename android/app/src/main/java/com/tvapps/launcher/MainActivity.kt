@@ -721,7 +721,21 @@ class MainActivity : Activity() {
             )
         }
 
-        val system = makeStatusPill("⟳  Verificando sistema...", "#E8A85C", scale)
+        val system = makeStatusPill("⟳  Procurar Atualização", "#E8A85C", scale).apply {
+            isFocusable = true
+            isClickable = true
+            setOnClickListener { checkOtaUpdate(this, true) }
+            setOnFocusChangeListener { v, hasFocus ->
+                val bg = (v.background as? GradientDrawable) ?: return@setOnFocusChangeListener
+                if (hasFocus) {
+                    bg.setColor(Color.parseColor("#335EE6A8"))
+                    bg.setStroke(dp(2), Color.parseColor("#5EE6A8"))
+                } else {
+                    bg.setColor(Color.parseColor("#1AFFFFFF"))
+                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                }
+            }
+        }
         val clock = makeStatusPill("🕐  --:--", "#FFFFFF", scale)
         val date = makeStatusPill("📅  ---", "#FFFFFF", scale)
         val weather = makeStatusPill("🌥  --°C", "#FFFFFF", scale)
