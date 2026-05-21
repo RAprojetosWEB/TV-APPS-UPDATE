@@ -117,16 +117,13 @@ function Index() {
   const [dynamicApps, setDynamicApps] = useState<any[]>([]);
 
   // ---------- OTA (atualização do próprio app TV.Apps) ----------
-  const ota = useOtaUpdate();
+  const ota = useOtaUpdate({ autoCheck: false });
   const [otaModalOpen, setOtaModalOpen] = useState(false);
   const [otaDownloading, setOtaDownloading] = useState(false);
   const [otaProgress, setOtaProgress] = useState(0);
 
-  // Abre modal automaticamente quando detecta atualização (e mantém aberto se forceUpdate)
-  // Abre modal automaticamente quando detecta atualização do sistema (OTA)
-  useEffect(() => {
-    if (ota.hasUpdate) setOtaModalOpen(true);
-  }, [ota.hasUpdate]);
+  // Abre modal manualmente via botão (autoCheck desativado no Index)
+  // No Index, a verificação automática não ocorre mais por regra de negócio.
 
   const startOtaUpdate = async () => {
     if (!ota.manifest || otaDownloading) return;

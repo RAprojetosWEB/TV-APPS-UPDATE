@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { LogIn } from "lucide-react";
+import { LogIn, RefreshCcw, AlertTriangle } from "lucide-react";
+import { useOtaUpdate } from "@/hooks/useOtaUpdate";
+import { OtaUpdateModal } from "./OtaUpdateModal";
 
 // SHA-256("1555"). Para trocar, gere um novo hash e substitua aqui.
 // Console: crypto.subtle.digest("SHA-256", new TextEncoder().encode("suasenha"))
@@ -60,8 +62,15 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  
+  // OTA (Verificação obrigatória antes do login)
+  const ota = useOtaUpdate({ autoCheck: true });
+  const [otaDownloading, setOtaDownloading] = useState(false);
+  const [otaProgress, setOtaProgress] = useState(0);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const updateBtnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -69,12 +78,66 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (mounted && !authed) {
-      // foco inicial no campo de senha
+    if (mounted && !authed && !ota.hasUpdate) {
+      // foco inicial no campo de senha apenas se não houver atualização pendente
       const t = setTimeout(() => inputRef.current?.focus(), 50);
       return () => clearTimeout(t);
+    } else if (mounted && ota.hasUpdate) {
+      // foco no botão de atualizar
+      const t = setTimeout(() => updateBtnRef.current?.focus(), 50);
+      return () => clearTimeout(t);
     }
-  }, [mounted, authed]);
+  }, [mounted, authed, ota.hasUpdate]);
+
+  const startOtaUpdate = async () => {
+    if (!ota.manifest || otaDownloading) return;
+    const url = ota.manifest.apkUrl ?? ota.manifest.url ?? "";
+    if (!url) return;
+
+    if (typeof window !== "undefined" && typeof window.Android?.installApk === "function") {
+      setOtaDownloading(true);
+      setOtaProgress(0);
+      try {
+        window.Android.installApk(url, "TV.Apps");
+      } catch (err) {
+        console.error("OTA native install failed", err);
+        setOtaDownloading(false);
+      }
+      return;
+    }
+
+    setOtaDownloading(true);
+    setOtaProgress(0);
+    try {
+      const res = await fetch(url);
+      if (!res.ok || !res.body) throw new Error("HTTP " + res.status);
+      const total = Number(res.headers.get("Content-Length") || 0);
+      const reader = res.body.getReader();
+      const chunks: BlobPart[] = [];
+      let received = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+          chunks.push(value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength) as ArrayBuffer);
+          received += value.length;
+          if (total > 0) setOtaProgress(Math.round((received / total) * 100));
+        }
+      }
+      const blob = new Blob(chunks, { type: "application/vnd.android.package-archive" });
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = "tvapps-latest.apk";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setOtaDownloading(false);
+    } catch (err) {
+      console.error("OTA download failed", err);
+      setOtaDownloading(false);
+    }
+  };
 
   async function handleSubmit() {
     if (loading) return;
@@ -149,63 +212,107 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
       <div
         className="relative z-10 w-full max-w-md rounded-3xl border border-white/10 bg-black/40 p-10 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-500"
         style={{
-          boxShadow:
-            "0 0 60px oklch(0.78 0.18 155 / 0.25), 0 0 0 1px oklch(0.78 0.18 155 / 0.2) inset",
+          boxShadow: ota.hasUpdate 
+            ? "0 0 60px oklch(0.6 0.2 20 / 0.25), 0 0 0 1px oklch(0.6 0.2 20 / 0.2) inset"
+            : "0 0 60px oklch(0.78 0.18 155 / 0.25), 0 0 0 1px oklch(0.78 0.18 155 / 0.2) inset",
         }}
       >
-        {/* Logo */}
-        <div className="flex flex-col items-center text-center">
-          <h1 className="text-5xl font-black tracking-tight leading-none">
-            TV<span style={{ color: "var(--tv-accent, #4ade80)" }}>.</span>Apps
-          </h1>
-          <h2 className="mt-8 text-3xl font-bold">Bem-vindo</h2>
-          <p className="mt-2 text-base text-white/60">
-            Digite a senha para continuar
-          </p>
-        </div>
-
-        <div className="mt-8 space-y-4">
-          <input
-            ref={inputRef}
-            type="password"
-            inputMode="numeric"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              if (error) setError(null);
-            }}
-            onKeyDown={handleKey}
-            placeholder="••••••"
-            aria-label="Senha"
-            className="w-full h-16 rounded-2xl border-2 border-white/10 bg-white/5 px-6 text-2xl tracking-[0.3em] text-white text-center outline-none transition-all duration-200 placeholder:text-white/20 placeholder:tracking-normal focus:border-[oklch(0.78_0.18_155)] focus:bg-white/10 focus:shadow-[0_0_0_4px_oklch(0.78_0.18_155/0.25),0_0_30px_oklch(0.78_0.18_155/0.45)]"
-          />
-
-          {error && (
-            <p
-              role="alert"
-              className="text-center text-sm font-semibold text-red-400 animate-in fade-in slide-in-from-top-1"
-            >
-              {error}
+        {ota.hasUpdate ? (
+          <div className="flex flex-col items-center text-center">
+            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-500/20 text-amber-500">
+              <AlertTriangle size={40} />
+            </div>
+            <h2 className="text-3xl font-bold">Atualização Obrigatória</h2>
+            <p className="mt-4 text-base text-white/70">
+              Uma nova versão do <span className="font-bold text-white">TV.Apps</span> está disponível e é necessária para continuar.
             </p>
-          )}
+            
+            <div className="mt-8 w-full space-y-4">
+              {otaDownloading ? (
+                <div className="space-y-3">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                    <div 
+                      className="h-full bg-amber-500 transition-all duration-300"
+                      style={{ width: `${otaProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-sm font-medium text-amber-500">
+                    Baixando atualização... {otaProgress}%
+                  </p>
+                </div>
+              ) : (
+                <button
+                  ref={updateBtnRef}
+                  onClick={startOtaUpdate}
+                  className="flex h-16 w-full items-center justify-center gap-3 rounded-2xl bg-amber-500 text-xl font-bold text-black transition-all hover:scale-[1.02] focus:ring-4 focus:ring-amber-500/50"
+                >
+                  <RefreshCcw className="size-6 animate-spin-slow" />
+                  ATUALIZAR AGORA
+                </button>
+              )}
+            </div>
+            
+            <p className="mt-6 text-xs text-white/30 uppercase tracking-widest">
+              Versão {ota.manifest?.versionName ?? ota.manifest?.version} disponível
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Logo */}
+            <div className="flex flex-col items-center text-center">
+              <h1 className="text-5xl font-black tracking-tight leading-none">
+                TV<span style={{ color: "var(--tv-accent, #4ade80)" }}>.</span>Apps
+              </h1>
+              <h2 className="mt-8 text-3xl font-bold">Bem-vindo</h2>
+              <p className="mt-2 text-base text-white/60">
+                Digite a senha para continuar
+              </p>
+            </div>
 
-          <button
-            ref={buttonRef}
-            type="button"
-            onClick={() => void handleSubmit()}
-            onKeyDown={handleKey}
-            disabled={loading || password.length === 0}
-            className="group relative flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[oklch(0.78_0.18_155)] text-lg font-bold tracking-wide text-black transition-all duration-200 hover:brightness-110 focus:outline-none focus:ring-4 focus:ring-[oklch(0.78_0.18_155/0.5)] focus:shadow-[0_0_40px_oklch(0.78_0.18_155/0.6)] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <LogIn className="size-5" />
-            ENTRAR
-          </button>
-        </div>
+            <div className="mt-8 space-y-4">
+              <input
+                ref={inputRef}
+                type="password"
+                inputMode="numeric"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (error) setError(null);
+                }}
+                onKeyDown={handleKey}
+                placeholder="••••••"
+                aria-label="Senha"
+                className="w-full h-16 rounded-2xl border-2 border-white/10 bg-white/5 px-6 text-2xl tracking-[0.3em] text-white text-center outline-none transition-all duration-200 placeholder:text-white/20 placeholder:tracking-normal focus:border-[oklch(0.78_0.18_155)] focus:bg-white/10 focus:shadow-[0_0_0_4px_oklch(0.78_0.18_155/0.25),0_0_30px_oklch(0.78_0.18_155/0.45)]"
+              />
 
-        <p className="mt-6 text-center text-xs text-white/30">
-          Use ↑ ↓ para navegar · Enter para confirmar
-        </p>
+              {error && (
+                <p
+                  role="alert"
+                  className="text-center text-sm font-semibold text-red-400 animate-in fade-in slide-in-from-top-1"
+                >
+                  {error}
+                </p>
+              )}
+
+              <button
+                ref={buttonRef}
+                type="button"
+                onClick={() => void handleSubmit()}
+                onKeyDown={handleKey}
+                disabled={loading || password.length === 0}
+                className="group relative flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[oklch(0.78_0.18_155)] text-lg font-bold tracking-wide text-black transition-all duration-200 hover:brightness-110 focus:outline-none focus:ring-4 focus:ring-[oklch(0.78_0.18_155/0.5)] focus:shadow-[0_0_40px_oklch(0.78_0.18_155/0.6)] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <LogIn className="size-5" />
+                ENTRAR
+              </button>
+            </div>
+
+            <p className="mt-6 text-center text-xs text-white/30">
+              Use ↑ ↓ para navegar · Enter para confirmar
+            </p>
+          </>
+        )}
       </div>
     </div>
   );
