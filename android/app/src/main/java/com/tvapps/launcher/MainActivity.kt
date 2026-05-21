@@ -336,12 +336,8 @@ class MainActivity : Activity() {
         val iconSize = dp((52 * scaleFactor).toInt())
         val iconGap = dp((16 * scaleFactor).toInt())
 
-        fun makeIconButton(label: String, glyph: String, onTap: () -> Unit): TextView {
-            return TextView(this).apply {
-                text = glyph
-                setTextColor(Color.WHITE)
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f * scaleFactor)
-                gravity = Gravity.CENTER
+        fun makeIconButton(label: String, drawableRes: Int, onTap: () -> Unit): FrameLayout {
+            val wrapper = FrameLayout(this).apply {
                 isFocusable = true
                 isClickable = true
                 contentDescription = label
@@ -368,16 +364,26 @@ class MainActivity : Activity() {
                 }
                 setOnClickListener { onTap() }
             }
+            val iv = ImageView(this).apply {
+                setImageResource(drawableRes)
+                setColorFilter(Color.WHITE)
+                val s = (iconSize * 0.5f).toInt()
+                layoutParams = FrameLayout.LayoutParams(s, s).apply {
+                    gravity = Gravity.CENTER
+                }
+            }
+            wrapper.addView(iv)
+            return wrapper
         }
 
-        val settingsBtn = makeIconButton("Configurações", "⚙️") {
+        val settingsBtn = makeIconButton("Configurações", R.drawable.ic_settings) {
             try {
                 startActivity(Intent(android.provider.Settings.ACTION_SETTINGS))
             } catch (e: Exception) {
                 Toast.makeText(this@MainActivity, "Não foi possível abrir as configurações", Toast.LENGTH_SHORT).show()
             }
         }
-        val wifiBtn = makeIconButton("Wi-Fi", "📶") {
+        val wifiBtn = makeIconButton("Wi-Fi", R.drawable.ic_wifi) {
             try {
                 startActivity(Intent(android.provider.Settings.ACTION_WIFI_SETTINGS))
             } catch (e: Exception) {
