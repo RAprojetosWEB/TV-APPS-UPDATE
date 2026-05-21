@@ -160,11 +160,13 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(clamp(280px, 30vw, 420px), 1fr));
     justify-content: center;
+    align-items: stretch;
     gap: clamp(1.5rem, 4vw, 3.5rem);
     width: 100%;
     max-width: 1600px;
     margin: 0 auto;
-    padding: clamp(2rem, 8vh, 6rem) clamp(1rem, 5vw, 4rem);
+    padding: clamp(1rem, 3vh, 3rem) clamp(1rem, 4vw, 3rem);
+    min-height: 0;
   }
 
   .tv-title {
@@ -179,9 +181,10 @@
   }
 
   .tv-icon-container {
-    width: clamp(80px, 15vw, 140px);
+    width: clamp(72px, 12vw, 140px);
     aspect-ratio: 1 / 1;
     height: auto;
+    flex-shrink: 0;
   }
 }
 
