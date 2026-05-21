@@ -166,7 +166,14 @@ function Index() {
       document.body.appendChild(a);
       a.click();
       a.remove();
-      try { window.location.href = blobUrl; } catch {}
+      try {
+        window.location.href = blobUrl;
+      } catch {}
+      
+      toast.success("Download concluído", {
+        description: "O instalador deve abrir automaticamente.",
+      });
+
       setTimeout(() => URL.revokeObjectURL(blobUrl), 5 * 60_000);
       setOtaDownloading(false);
       setOtaModalOpen(false);
@@ -413,8 +420,19 @@ function Index() {
       document.body.appendChild(a);
       a.click();
       a.remove();
+      
+      // Abre automaticamente o instalador
+      try {
+        window.location.href = blobUrl;
+      } catch (err) {
+        console.error("Auto-open APK failed", err);
+      }
+      
       setTimeout(() => URL.revokeObjectURL(blobUrl), 5 * 60_000);
-      updateState(i, { status: "done", progress: 100, blobUrl });
+      updateState(i, { status: "idle", progress: 0 }); // Volta para idle em vez de "done" para evitar modal
+      toast.success("Download concluído", {
+        description: "O instalador deve abrir automaticamente.",
+      });
     } catch (err) {
       console.error(err);
       updateState(i, { status: "error", progress: 0 });
@@ -425,6 +443,22 @@ function Index() {
   useEffect(() => {
     if (!isNative) return;
     window.__onNativeApkProgress = (name, percent, error) => {
+      // Caso seja a atualização do próprio app (OTA)
+      if (name === "TV.Apps") {
+        if (percent < 0) {
+          setOtaDownloading(false);
+          toast.error("Falha ao baixar atualização");
+          return;
+        }
+        if (percent >= 100) {
+          setOtaDownloading(false);
+          setOtaModalOpen(false);
+          return;
+        }
+        setOtaProgress(percent);
+        return;
+      }
+
       const idx = currentApps.findIndex((a) => a.name === name);
       if (idx === -1) return;
       if (percent < 0) {
