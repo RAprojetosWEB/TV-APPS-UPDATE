@@ -334,15 +334,15 @@ function Index() {
               ) : states[i].status === "done" ? (
                 <div className="flex flex-col items-center px-8">
                   <div
-                    className="mb-8 flex h-32 w-32 items-center justify-center rounded-2xl"
+                    className="tv-icon-container mb-8 flex items-center justify-center rounded-2xl"
                     style={{
                       background:
                         "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))",
                     }}
                   >
-                    <Check size={64} strokeWidth={2.5} color="oklch(0.15 0.03 270)" />
+                    <Check className="w-1/2 h-1/2" strokeWidth={2.5} color="oklch(0.15 0.03 270)" />
                   </div>
-                  <h2 className="text-3xl font-bold">{app.name}</h2>
+                  <h2 className="tv-text font-bold">{app.name}</h2>
                   <p className="mt-3 text-center text-base text-white/70">
                     Download concluído!
                   </p>
