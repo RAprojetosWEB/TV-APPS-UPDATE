@@ -115,16 +115,13 @@ function Index() {
     // Simula um delay de rede
     await new Promise(resolve => setTimeout(resolve, manual ? 2000 : 500));
 
-    setStates(prev => prev.map((s, i) => {
+    const newStates = states.map((s, i) => {
       const app = APPS[i];
       const isInstalled = isNative 
         ? window.Android?.isAppInstalled?.(app.packageName)
-        : (i === 0); // Mock only the first app as installed in browser demo
+        : (i === 0);
       
-      // Mock de versão instalada para demonstração (sempre um pouco menor que a versão atual)
       const installedVersion = isNative && window.Android?.version ? window.Android.version() : (parseFloat(app.version) - 0.3).toFixed(1);
-      
-      // Consideramos que tem update se a versão do servidor for maior que a instalada
       const hasUpdate = !!(isInstalled && parseFloat(app.version) > parseFloat(installedVersion || "0"));
 
       return {
@@ -133,21 +130,19 @@ function Index() {
         installedVersion: installedVersion || "0",
         hasUpdate
       };
-    }));
+    });
 
+    setStates(newStates);
     setCheckingUpdates(false);
 
     if (manual) {
-      setStates(currentStates => {
-        const updatesFound = currentStates.some(s => s.hasUpdate);
-        if (!updatesFound) {
-          toast.success("O aplicativo já está atualizado", {
-            description: "Todos os seus apps estão na versão mais recente.",
-            duration: 3000,
-          });
-        }
-        return currentStates;
-      });
+      const updatesFound = newStates.some(s => s.hasUpdate);
+      if (!updatesFound) {
+        toast.success("O aplicativo já está atualizado", {
+          description: "Todos os seus apps estão na versão mais recente.",
+          duration: 3000,
+        });
+      }
     }
   };
 
