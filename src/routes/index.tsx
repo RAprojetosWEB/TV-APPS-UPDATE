@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Check, Download, Play, Tv, AlertCircle } from "lucide-react";
+import { Check, Download, Play, Tv, AlertCircle, Calendar, Clock, Cloud } from "lucide-react";
+import { NetworkIndicator } from "@/components/NetworkIndicator";
+import { useDateTime } from "@/hooks/useDateTime";
 
 // Ponte com o APK nativo (WebView host). Se existir, instalamos APK direto
 // via PackageInstaller nativo; senão, fazemos o download "tradicional".
