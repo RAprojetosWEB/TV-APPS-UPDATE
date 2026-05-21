@@ -402,7 +402,7 @@ function Index() {
                 }}
               >
                 <Download size={16} />
-                INSTALAR ESSE APLICATIVO
+                QUERO INSTALAR
               </div>
               </>
               )}
