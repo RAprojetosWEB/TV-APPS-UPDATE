@@ -1,6 +1,10 @@
 package com.tvapps.launcher
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
@@ -23,11 +27,16 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+import android.webkit.JavascriptInterface
+import android.webkit.WebView
+import android.webkit.WebViewClient
+
 class MainActivity : Activity() {
 
     private val scope: CoroutineScope = MainScope()
     private val cardJobs = mutableMapOf<Int, Job>()
     private val cardViews = mutableListOf<CardViews>()
+    private var webView: WebView? = null
 
     private data class CardViews(
         val container: FrameLayout,
@@ -55,7 +64,36 @@ class MainActivity : Activity() {
                 or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
             )
+        setupWebViewBridge()
         setContentView(buildRoot())
+    }
+
+    private fun setupWebViewBridge() {
+        // WebView invisível apenas para servir de bridge para o código React
+        webView = WebView(this).apply {
+            settings.javaScriptEnabled = true
+            addJavascriptInterface(object {
+                @JavascriptInterface
+                fun isNative(): Boolean = true
+
+                @JavascriptInterface
+                fun isAppInstalled(packageName: String): Boolean = this@MainActivity.isAppInstalled(packageName)
+
+                @JavascriptInterface
+                fun openApp(packageName: String) = this@MainActivity.openApp(packageName)
+
+                @JavascriptInterface
+                fun installApk(url: String, name: String) {
+                    val index = AppCatalog.apps.indexOfFirst { it.name == name }
+                    if (index != -1) {
+                        runOnUiThread { startDownload(index) }
+                    }
+                }
+            }, "Android")
+            
+            // Não precisamos carregar nada real aqui se estivermos usando a UI nativa,
+            // mas o código React no index.tsx espera a bridge.
+        }
     }
 
     private fun buildRoot(): View {
@@ -301,8 +339,57 @@ class MainActivity : Activity() {
         return gd
     }
 
+    private fun isAppInstalled(packageName: String): Boolean {
+        return try {
+            packageManager.getPackageInfo(packageName, 0)
+            true
+        } catch (e: PackageManager.NameNotFoundException) {
+            false
+        }
+    }
+
+    private fun openApp(packageName: String) {
+        val intent = packageManager.getLaunchIntentForPackage(packageName)
+        if (intent != null) {
+            startActivity(intent)
+        } else {
+            Toast.makeText(this, "Não foi possível abrir o aplicativo", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun showAlreadyInstalledDialog(app: CatalogApp) {
+        // Estilo customizado para o Dialog ficaria melhor com um layout XML, 
+        // mas como estamos fazendo via código, usaremos o AlertDialog padrão
+        // que segue o tema do sistema (Android TV geralmente é escuro).
+        val builder = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+        builder.setTitle("Este aplicativo já está instalado.")
+        builder.setMessage("Deseja abrir o aplicativo?")
+        
+        builder.setPositiveButton("Sim, abrir") { dialog, _ ->
+            openApp(app.packageName)
+            dialog.dismiss()
+        }
+        
+        builder.setNegativeButton("Não") { dialog, _ ->
+            dialog.dismiss()
+        }
+        
+        val dialog = builder.create()
+        dialog.show()
+        
+        // Foco inicial no botão "Sim" (Positive Button)
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).requestFocus()
+    }
+
     private fun startDownload(index: Int) {
         val app = AppCatalog.apps[index]
+        
+        // VERIFICAÇÃO SE O APP JÁ ESTÁ INSTALADO
+        if (isAppInstalled(app.packageName)) {
+            showAlreadyInstalledDialog(app)
+            return
+        }
+
         val card = cardViews[index]
         if (cardJobs[index]?.isActive == true) return
 
