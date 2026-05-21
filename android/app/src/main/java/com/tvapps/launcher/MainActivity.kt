@@ -536,7 +536,11 @@ class MainActivity : Activity() {
                     is DownloadProgress.Done -> withContext(Dispatchers.Main) {
                         card.progress.progress = 100
                         card.percent.text = "100%"
+                        
+                        // Diferencia se foi cache ou download real para o log/UI se quiser, 
+                        // mas o comportamento de abrir o instalador é o mesmo.
                         card.subtitle.text = "Abrindo instalador…"
+                        
                         ApkInstaller.install(this@MainActivity, p.file)
                         card.pill.postDelayed({
                             card.progress.visibility = View.GONE
@@ -560,6 +564,7 @@ class MainActivity : Activity() {
                 }
             }
         }
+
     }
 
     private fun dp(value: Int): Int {
