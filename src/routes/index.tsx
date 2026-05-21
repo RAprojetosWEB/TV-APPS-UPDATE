@@ -392,6 +392,16 @@ function Index() {
       }
     }
 
+    // Cache inteligente: verifica se o APK já foi baixado anteriormente
+    if (isNative && window.Android?.isApkDownloaded?.(app.packageName, app.version)) {
+      toast.info("APK já baixado anteriormente.", {
+        description: "Iniciando instalação...",
+        duration: 3000,
+      });
+      window.Android.installLocalApk?.(app.packageName);
+      return;
+    }
+
     if (states[i].status === "downloading") return;
     updateState(i, { status: "downloading", progress: 0 });
 
