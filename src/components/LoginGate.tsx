@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { LogIn } from "lucide-react";
+import { LogIn, RefreshCcw, AlertTriangle } from "lucide-react";
+import { useOtaUpdate } from "@/hooks/useOtaUpdate";
+import { OtaUpdateModal } from "./OtaUpdateModal";
 
 // SHA-256("1555"). Para trocar, gere um novo hash e substitua aqui.
 // Console: crypto.subtle.digest("SHA-256", new TextEncoder().encode("suasenha"))
