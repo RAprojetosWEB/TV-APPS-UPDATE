@@ -37,21 +37,21 @@ export const Route = createFileRoute("/")({
 const APPS = [
   {
     name: "UniTV",
-    description: "Streaming de filmes e séries",
+    description: "Mais de 400 canais, filmes e séries à vontade",
     url: "https://apyjsxxuuptelmiwnzwq.supabase.co/storage/v1/object/public/Alpicativos%20APKs/unitv.apk",
     logo: unitvLogo,
     packageName: "com.unitv.app",
   },
   {
     name: "Nexa TV",
-    description: "Player de mídia universal",
+    description: "Mais de 300 canais",
     url: "https://apyjsxxuuptelmiwnzwq.supabase.co/storage/v1/object/public/Alpicativos%20APKs/Nexa_TV.apk",
     logo: nexatvLogo,
     packageName: "com.nexa.tv",
   },
   {
     name: "ALPHAPLAY",
-    description: "Tudo em um só app",
+    description: "Mais de 300 canais, filmes e séries à vontade",
     url: "https://firebasestorage.googleapis.com/v0/b/update-41ccf.appspot.com/o/alphaplay.apk?alt=media&token=cdbe4055-ea90-4f2c-a540-1b458159ade6",
     logo: alphaplayLogo,
     packageName: "com.alphaplay.app",
