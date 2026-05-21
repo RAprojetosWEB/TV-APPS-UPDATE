@@ -57,7 +57,7 @@ export function useNetworkStatus() {
   return status;
 }
 
-export function NetworkIndicator() {
+export function NetworkIndicator({ compact = false }: { compact?: boolean } = {}) {
   const { online, type } = useNetworkStatus();
   const [showToast, setShowToast] = useState(false);
   const [lastOnline, setLastOnline] = useState(online);
@@ -112,16 +112,30 @@ export function NetworkIndicator() {
       )}
 
       {/* Main Indicator */}
-      <div className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-500 border ${
-        online 
-          ? "bg-white/5 border-white/10" 
-          : "bg-destructive/10 border-destructive/30 shadow-[0_0_15px_rgba(239,68,68,0.2)]"
-      }`}>
-        {getIcon()}
-        <span className={`text-lg font-medium tracking-tight ${online ? "text-white/80" : "text-destructive"}`}>
-          {getLabel()}
-        </span>
-      </div>
+      {compact ? (
+        <div
+          aria-label={getLabel()}
+          title={getLabel()}
+          className={`flex items-center justify-center w-[60px] h-[60px] rounded-2xl border-2 backdrop-blur-md transition-all duration-300 hover:scale-105 ${
+            online
+              ? "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.15)]"
+              : "bg-destructive/10 border-destructive/40 shadow-[0_0_15px_rgba(239,68,68,0.25)]"
+          }`}
+        >
+          {getIcon()}
+        </div>
+      ) : (
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-500 border ${
+          online 
+            ? "bg-white/5 border-white/10" 
+            : "bg-destructive/10 border-destructive/30 shadow-[0_0_15px_rgba(239,68,68,0.2)]"
+        }`}>
+          {getIcon()}
+          <span className={`text-lg font-medium tracking-tight ${online ? "text-white/80" : "text-destructive"}`}>
+            {getLabel()}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
