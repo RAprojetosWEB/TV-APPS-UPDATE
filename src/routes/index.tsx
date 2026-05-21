@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Check, Download, Play, AlertCircle, Calendar, Clock, Cloud } from "lucide-react";
+import { Check, Download, Play, AlertCircle, Calendar, Clock, Cloud, RefreshCcw, Search, Info } from "lucide-react";
 import { NetworkIndicator } from "@/components/NetworkIndicator";
 import { useDateTime } from "@/hooks/useDateTime";
+import { toast } from "sonner";
 import unitvLogo from "@/assets/unitv.png";
 import nexatvLogo from "@/assets/nexatv.png";
 import alphaplayLogo from "@/assets/alphaplay.webp";
@@ -41,6 +42,9 @@ const APPS = [
     url: "https://apyjsxxuuptelmiwnzwq.supabase.co/storage/v1/object/public/Alpicativos%20APKs/unitv.apk",
     logo: unitvLogo,
     packageName: "com.unitv.app",
+    version: "2.4",
+    updateDate: "20/05/2026",
+    size: "45MB",
   },
   {
     name: "Nexa TV",
@@ -48,6 +52,9 @@ const APPS = [
     url: "https://apyjsxxuuptelmiwnzwq.supabase.co/storage/v1/object/public/Alpicativos%20APKs/Nexa_TV.apk",
     logo: nexatvLogo,
     packageName: "com.nexa.tv",
+    version: "1.8",
+    updateDate: "15/05/2026",
+    size: "32MB",
   },
   {
     name: "ALPHAPLAY",
@@ -55,6 +62,9 @@ const APPS = [
     url: "https://firebasestorage.googleapis.com/v0/b/update-41ccf.appspot.com/o/alphaplay.apk?alt=media&token=cdbe4055-ea90-4f2c-a540-1b458159ade6",
     logo: alphaplayLogo,
     packageName: "com.alphaplay.app",
+    version: "3.2",
+    updateDate: "18/05/2026",
+    size: "58MB",
   },
 ];
 
@@ -87,22 +97,64 @@ function Index() {
       status: "idle" | "downloading" | "done" | "error";
       progress: number;
       isInstalled: boolean;
+      hasUpdate: boolean;
+      installedVersion?: string;
       blobUrl?: string;
     }>
-  >(() => APPS.map(() => ({ status: "idle", progress: 0, isInstalled: false })));
+  >(() => APPS.map(() => ({ status: "idle", progress: 0, isInstalled: false, hasUpdate: false })));
 
-  // Atualiza status de instalação periodicamente
+  const [checkingUpdates, setCheckingUpdates] = useState(false);
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  const [appToUpdate, setAppToUpdate] = useState<number | null>(null);
+
+  const checkUpdates = async (manual = false) => {
+    if (checkingUpdates) return;
+    setCheckingUpdates(true);
+    if (manual) playClick();
+
+    // Simula um delay de rede
+    await new Promise(resolve => setTimeout(resolve, manual ? 2000 : 500));
+
+    const newStates = states.map((s, i) => {
+      const app = APPS[i];
+      const isInstalled = isNative 
+        ? window.Android?.isAppInstalled?.(app.packageName)
+        : (i === 0);
+      
+      const installedVersion = isNative && window.Android?.version ? window.Android.version() : (parseFloat(app.version) - 0.3).toFixed(1);
+      const hasUpdate = !!(isInstalled && parseFloat(app.version) > parseFloat(installedVersion || "0"));
+
+      return {
+        ...s,
+        isInstalled: !!isInstalled,
+        installedVersion: installedVersion || "0",
+        hasUpdate
+      };
+    });
+
+    setStates(newStates);
+    setCheckingUpdates(false);
+
+    if (manual) {
+      const updatesFound = newStates.some(s => s.hasUpdate);
+      if (!updatesFound) {
+        toast.success("O aplicativo já está atualizado", {
+          description: "Todos os seus apps estão na versão mais recente.",
+          duration: 3000,
+        });
+      }
+    }
+  };
+
+  // Atualiza status de instalação e checa updates periodicamente
   useEffect(() => {
-    const checkInstalled = () => {
+    const checkAll = () => {
       if (isNative && window.Android?.isAppInstalled) {
-        setStates(prev => prev.map((s, i) => ({
-          ...s,
-          isInstalled: window.Android?.isAppInstalled?.(APPS[i].packageName) || false
-        })));
+        checkUpdates();
       }
     };
-    checkInstalled();
-    const interval = setInterval(checkInstalled, 5000);
+    checkAll();
+    const interval = setInterval(checkAll, 15000); // Check every 15s
     return () => clearInterval(interval);
   }, [isNative]);
   const [modalChoice, setModalChoice] = useState<"yes" | "no">("yes");
@@ -115,7 +167,7 @@ function Index() {
 
   const { time, date } = useDateTime();
   const doneIndex = states.findIndex((s) => s.status === "done");
-  const modalOpen = doneIndex !== -1 || installModalOpen;
+  const modalOpen = doneIndex !== -1 || installModalOpen || updateModalOpen;
 
   useEffect(() => {
     if (!modalOpen) refs.current[focused]?.focus();
@@ -203,12 +255,12 @@ function Index() {
     });
   };
 
-  const startDownload = async (i: number) => {
+  const startDownload = async (i: number, forceDownload = false) => {
     playClick();
     const app = APPS[i];
     
-    // Se já estiver instalado, abre direto ao clicar
-    if (isNative && window.Android?.isAppInstalled?.(app.packageName)) {
+    // Se já estiver instalado e NÃO for uma atualização forçada, abre direto
+    if (!forceDownload && isNative && window.Android?.isAppInstalled?.(app.packageName)) {
       window.Android.openApp(app.packageName);
       return;
     }
@@ -288,6 +340,9 @@ function Index() {
       if (installModalOpen) {
         setInstallModalOpen(false);
         setInstallModalAppIndex(null);
+      } else if (updateModalOpen) {
+        setUpdateModalOpen(false);
+        setAppToUpdate(null);
       } else {
         closeModal();
       }
@@ -357,6 +412,21 @@ function Index() {
         </div>
 
         <div className="flex items-center gap-[clamp(0.5rem,1.5vw,1.5rem)] flex-wrap">
+          <button
+            onClick={() => checkUpdates(true)}
+            disabled={checkingUpdates}
+            className={`flex items-center gap-3 px-6 py-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md transition-all active:scale-95 focus:outline-none focus:border-tv-accent ${checkingUpdates ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/10'}`}
+          >
+            {checkingUpdates ? (
+              <RefreshCcw size={20} className="text-tv-accent animate-spin" />
+            ) : (
+              <Search size={20} className="text-tv-accent" />
+            )}
+            <span className="text-lg font-bold text-white/90">
+              {checkingUpdates ? "Verificando..." : "Procurar atualização"}
+            </span>
+          </button>
+
           <div className="flex items-center gap-[clamp(1rem,2vw,2rem)] px-[clamp(1rem,2vw,2rem)] py-[clamp(0.5rem,1vh,1rem)] rounded-[clamp(1rem,2vw,1.5rem)] bg-white/5 border border-white/10 backdrop-blur-md">
             <div className="flex items-center gap-2 text-white/90">
               <Clock size={20} className="text-tv-accent" />
@@ -389,11 +459,25 @@ function Index() {
               }}
               tabIndex={0}
               onFocus={() => setFocused(i)}
-              onClick={() => startDownload(i)}
+              onClick={() => {
+                if (states[i].hasUpdate) {
+                  setAppToUpdate(i);
+                  setUpdateModalOpen(true);
+                  playClick();
+                } else {
+                  startDownload(i);
+                }
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  startDownload(i);
+                  if (states[i].hasUpdate) {
+                    setAppToUpdate(i);
+                    setUpdateModalOpen(true);
+                    playClick();
+                  } else {
+                    startDownload(i);
+                  }
                 }
               }}
               className="group relative flex aspect-[3/4.2] w-full max-w-[clamp(300px,25vw,420px)] max-h-[clamp(400px,80vh,600px)] flex-col items-center justify-center rounded-[clamp(1.5rem,3vw,3rem)] outline-none transition-all duration-300 mx-auto"
@@ -403,10 +487,20 @@ function Index() {
                 border: `clamp(2px, 0.4vw, 4px) solid ${isFocused ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
                 transform: isFocused ? "scale(1.05)" : "scale(1)",
                 boxShadow: isFocused
-                  ? "0 25px 80px -10px oklch(0.78 0.22 150 / 0.55), 0 0 0 clamp(4px, 0.6vw, 8px) oklch(0.78 0.22 150 / 0.15)"
-                  : "0 10px 30px -10px oklch(0 0 0 / 0.5)",
+                  ? states[i].hasUpdate 
+                    ? "0 25px 80px -10px oklch(0.7 0.25 45 / 0.6), 0 0 0 clamp(4px, 0.6vw, 8px) oklch(0.7 0.25 45 / 0.2)"
+                    : "0 25px 80px -10px oklch(0.78 0.22 150 / 0.55), 0 0 0 clamp(4px, 0.6vw, 8px) oklch(0.78 0.22 150 / 0.15)"
+                  : states[i].hasUpdate
+                    ? "0 15px 40px -10px oklch(0.7 0.25 45 / 0.4)"
+                    : "0 10px 30px -10px oklch(0 0 0 / 0.5)",
               }}
             >
+              {states[i].hasUpdate && (
+                <div className="absolute top-6 left-6 z-10 flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 shadow-[0_0_20px_rgba(249,115,22,0.4)] animate-pulse">
+                  <RefreshCcw size={16} className="text-white" />
+                  <span className="text-sm font-black text-white tracking-wide uppercase">Update</span>
+                </div>
+              )}
               {states[i].status === "downloading" ? (
                 <div className="flex w-full flex-col items-center px-[clamp(1rem,4vw,3rem)]">
                   <div
@@ -525,15 +619,34 @@ function Index() {
                 }}
               >
                 {states[i].isInstalled ? (
-                  <>
-                    <Play size={22} fill="currentColor" />
-                    ABRIR APP
-                  </>
+                  states[i].hasUpdate ? (
+                    <>
+                      <RefreshCcw size={22} className="animate-spin-slow" />
+                      ATUALIZAR
+                    </>
+                  ) : (
+                    <>
+                      <Play size={22} fill="currentColor" />
+                      ABRIR APP
+                    </>
+                  )
                 ) : (
                   <>
                     <Download size={22} />
-                    QUERO INSTALAR
+                    INSTALAR
                   </>
+                )}
+              </div>
+              
+              <div className="mt-6 flex flex-col items-center gap-1">
+                <div className="flex items-center gap-2 text-white/40 text-sm font-medium">
+                  <Info size={14} />
+                  <span>Versão {app.version} • {app.size}</span>
+                </div>
+                {states[i].isInstalled && (
+                  <span className="text-white/30 text-[10px] uppercase tracking-widest font-bold">
+                    Instalada: {states[i].installedVersion}
+                  </span>
                 )}
               </div>
               </>
@@ -553,7 +666,101 @@ function Index() {
           className="fixed inset-0 z-50 flex items-center justify-center"
           style={{ background: "oklch(0 0 0 / 0.75)", backdropFilter: "blur(8px)" }}
         >
-          {installModalOpen ? (
+          {updateModalOpen && appToUpdate !== null ? (
+            <div
+              className="flex w-[600px] flex-col items-center rounded-3xl p-10"
+              style={{
+                background:
+                  "linear-gradient(160deg, var(--tv-card), oklch(0.18 0.04 270))",
+                border: "3px solid var(--tv-accent)",
+                boxShadow:
+                  "0 30px 100px -10px oklch(0.7 0.25 45 / 0.45), 0 0 0 8px oklch(0.7 0.25 45 / 0.12)",
+              }}
+            >
+              <div
+                className="mb-6 flex h-24 w-24 items-center justify-center rounded-2xl animate-bounce"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #f97316, #ea580c)",
+                }}
+              >
+                <RefreshCcw size={56} strokeWidth={2.5} color="white" />
+              </div>
+              <h2 className="text-4xl font-black text-white text-center leading-tight">
+                Nova versão disponível!
+              </h2>
+              <p className="mt-4 text-center text-xl text-white/70">
+                Uma atualização importante para o <span className="text-tv-accent font-bold">{APPS[appToUpdate].name}</span> está pronta.
+              </p>
+              
+              <div className="mt-8 grid grid-cols-2 gap-4 w-full px-6">
+                <div className="bg-white/5 rounded-2xl p-4 border border-white/10 flex flex-col items-center">
+                  <span className="text-xs text-white/40 uppercase font-bold tracking-wider mb-1">Instalada</span>
+                  <span className="text-2xl font-black text-white/60">{states[appToUpdate].installedVersion}</span>
+                </div>
+                <div className="bg-orange-500/10 rounded-2xl p-4 border border-orange-500/30 flex flex-col items-center">
+                  <span className="text-xs text-orange-500/60 uppercase font-bold tracking-wider mb-1">Nova Versão</span>
+                  <span className="text-2xl font-black text-orange-500">{APPS[appToUpdate].version}</span>
+                </div>
+              </div>
+
+              <div className="mt-10 flex gap-5 w-full">
+                <button
+                  ref={installYesBtnRef}
+                  onFocus={() => setModalChoice("yes")}
+                  onClick={() => {
+                    setUpdateModalOpen(false);
+                    startDownload(appToUpdate, true);
+                  }}
+                  className="flex-1 rounded-2xl px-8 py-5 text-xl font-black outline-none transition-all"
+                  style={{
+                    background:
+                      modalChoice === "yes"
+                        ? "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))"
+                        : "oklch(0.28 0.04 270)",
+                    color:
+                      modalChoice === "yes" ? "oklch(0.15 0.03 270)" : "white",
+                    border: `3px solid ${modalChoice === "yes" ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
+                    transform: modalChoice === "yes" ? "scale(1.05)" : "scale(1)",
+                  }}
+                >
+                  Atualizar agora
+                </button>
+                <button
+                  ref={installNoBtnRef}
+                  onFocus={() => setModalChoice("no")}
+                  onClick={() => {
+                    setUpdateModalOpen(false);
+                    setAppToUpdate(null);
+                  }}
+                  className="flex-1 rounded-2xl px-8 py-5 text-xl font-bold outline-none transition-all"
+                  style={{
+                    background:
+                      modalChoice === "no"
+                        ? "linear-gradient(135deg, var(--tv-accent), var(--tv-accent-2))"
+                        : "oklch(0.28 0.04 270)",
+                    color:
+                      modalChoice === "no" ? "oklch(0.15 0.03 270)" : "white",
+                    border: `3px solid ${modalChoice === "no" ? "var(--tv-accent)" : "var(--tv-card-border)"}`,
+                    transform: modalChoice === "no" ? "scale(1.05)" : "scale(1)",
+                  }}
+                >
+                  Depois
+                </button>
+              </div>
+              <div className="mt-6 flex items-center gap-4 text-white/30 text-sm">
+                <div className="flex items-center gap-1">
+                  <Calendar size={14} />
+                  <span>{APPS[appToUpdate].updateDate}</span>
+                </div>
+                <div className="w-1 h-1 rounded-full bg-white/20" />
+                <div className="flex items-center gap-1">
+                  <Download size={14} />
+                  <span>{APPS[appToUpdate].size}</span>
+                </div>
+              </div>
+            </div>
+          ) : installModalOpen ? (
             <div
               className="flex w-[560px] flex-col items-center rounded-3xl p-10"
               style={{
