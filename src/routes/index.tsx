@@ -538,7 +538,7 @@ function Index() {
 
   return (
     <LoginGate>
-    <div className="relative min-h-screen w-screen overflow-x-hidden bg-background">
+    <div className="relative h-screen w-screen overflow-hidden bg-background">
       {/* Background decoration */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div 
@@ -553,9 +553,9 @@ function Index() {
 
       <main
         onKeyDown={handleKey}
-        className="relative flex min-h-screen flex-col text-foreground"
+        className="relative flex h-screen flex-col text-foreground overflow-hidden"
       >
-      <header className="px-[clamp(2rem,6vw,6rem)] pt-[clamp(2rem,6vh,6rem)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <header className="shrink-0 px-[clamp(1rem,4vw,4rem)] pt-[clamp(1rem,3vh,3rem)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="tv-title font-black tracking-tight leading-none">
             TV<span style={{ color: "var(--tv-accent)" }}>.</span>Apps
@@ -618,7 +618,7 @@ function Index() {
         </div>
       </header>
 
-      <section className="tv-card-grid flex-1 items-center">
+      <section className="tv-card-grid flex-1 min-h-0 items-stretch">
         {currentApps.map((app, i) => {
           const isFocused = focused === i;
           return (
