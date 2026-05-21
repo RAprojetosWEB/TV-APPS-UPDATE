@@ -353,21 +353,21 @@ function Index() {
           </p>
         </div>
 
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-6 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+        <div className="flex items-center gap-[clamp(0.5rem,1.5vw,1.5rem)] flex-wrap">
+          <div className="flex items-center gap-[clamp(1rem,2vw,2rem)] px-[clamp(1rem,2vw,2rem)] py-[clamp(0.5rem,1vh,1rem)] rounded-[clamp(1rem,2vw,1.5rem)] bg-white/5 border border-white/10 backdrop-blur-md">
             <div className="flex items-center gap-2 text-white/90">
               <Clock size={20} className="text-tv-accent" />
-              <span className="text-2xl font-bold tabular-nums">{time}</span>
+              <span className="text-[clamp(1.2rem,2.5vw,2rem)] font-bold tabular-nums">{time}</span>
             </div>
             <div className="h-6 w-px bg-white/10" />
             <div className="flex items-center gap-2 text-white/70">
               <Calendar size={18} className="text-tv-accent" />
-              <span className="text-xl font-medium capitalize">{date}</span>
+              <span className="text-[clamp(0.9rem,1.8vw,1.25rem)] font-medium capitalize">{date}</span>
             </div>
             <div className="h-6 w-px bg-white/10" />
             <div className="flex items-center gap-2 text-white/70">
               <Cloud size={20} className="text-tv-accent" />
-              <span className="text-xl font-medium">24°C</span>
+              <span className="text-[clamp(0.9rem,1.8vw,1.25rem)] font-medium">24°C</span>
             </div>
           </div>
           
