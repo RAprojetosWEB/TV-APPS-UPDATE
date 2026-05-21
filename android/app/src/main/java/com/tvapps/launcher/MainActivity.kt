@@ -279,9 +279,9 @@ class MainActivity : Activity() {
         // Cabeçalho: logo+subtitulo à esquerda, barra de status à direita
         root.addView(buildTopBar(scaleFactor))
 
-        val cardWidth = (380 * scaleFactor).toInt()
-        val cardHeight = (500 * scaleFactor).toInt()
-        val cardMargin = (24 * scaleFactor).toInt()
+        val cardWidth = (300 * scaleFactor).toInt()
+        val cardHeight = (420 * scaleFactor).toInt()
+        val cardMargin = (20 * scaleFactor).toInt()
 
         // Linha de cards centralizada com navegação infinita
         val row = object : LinearLayout(this) {
