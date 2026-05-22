@@ -433,13 +433,30 @@ class MainActivity : Activity() {
         }
         root.addView(footerNotice)
 
-        passwordInput.requestFocus()
-
         // Verificação automática de OTA ANTES do login
         checkOtaUpdateBlocking(updateOverlay, scaleFactor)
 
+        passwordInput.postDelayed({
+            if (updateOverlay.visibility != View.VISIBLE && !isTextInputFocused()) {
+                passwordInput.requestFocus()
+            }
+        }, 450)
+
         return root
     }
+
+    private fun hideSoftKeyboardAndClearFocus() {
+        val focused = currentFocus ?: window.decorView
+        try {
+            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+            imm?.hideSoftInputFromWindow(focused.windowToken, 0)
+        } catch (_: Exception) {
+        }
+        focused.clearFocus()
+        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
+    }
+
+    private fun isTextInputFocused(): Boolean = currentFocus is android.widget.EditText
 
     private fun checkOtaUpdateBlocking(overlay: LinearLayout, scale: Float) {
         scope.launch {
