@@ -70,6 +70,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
   const ota = useOtaUpdate({ autoCheck: true });
   const [otaDownloading, setOtaDownloading] = useState(false);
   const [otaProgress, setOtaProgress] = useState(0);
+  const [otaSpeedBps, setOtaSpeedBps] = useState(0);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -92,17 +93,17 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
     // (evita que o teclado virtual da TV apareça antes de sabermos se
     // há atualização pendente).
     if (ota.checking) return;
+    if (!ota.checked) return;
     if (ota.hasUpdate) {
       // Garante que o input perca o foco para fechar o teclado virtual
       if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement) {
         document.activeElement.blur();
       }
-      const t = setTimeout(() => updateBtnRef.current?.focus(), 50);
-      return () => clearTimeout(t);
+      return;
     }
     const t = setTimeout(() => inputRef.current?.focus(), 50);
     return () => clearTimeout(t);
-  }, [mounted, authed, ota.hasUpdate, ota.checking]);
+  }, [mounted, authed, ota.hasUpdate, ota.checking, ota.checked]);
 
   const startOtaUpdate = async () => {
     if (!ota.manifest || otaDownloading) return;
