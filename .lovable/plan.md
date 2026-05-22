@@ -1,49 +1,41 @@
-# Login Android com visual de card (igual à web)
+## Problema
 
-## Objetivo
-Reproduzir no APK Android o mesmo "card flutuante" da tela de login da versão
-web: caixa centralizada com fundo escuro translúcido, bordas arredondadas,
-borda sutil e glow verde ao redor.
+No `android/app/build.gradle.kts`, o bloco `buildTypes { release { signingConfig = signingConfigs.getByName("release") } }` está **antes** do bloco `signingConfigs { create("release") {...} }`. Gradle Kotlin DSL é avaliado de cima pra baixo, então no momento que ele lê a linha 44 o `release` ainda não foi criado → `SigningConfig with name 'release' not found`.
 
-## O que muda
+## Correção
 
-Arquivo: `android/app/src/main/java/com/tvapps/launcher/MainActivity.kt`,
-função `buildLoginScreen()`.
+Mover o bloco `signingConfigs { ... }` para **antes** do bloco `buildTypes { ... }` dentro de `android { ... }`. Sem nenhuma outra mudança (senhas, alias, keystore continuam iguais).
 
-Hoje o `container` (LinearLayout vertical com logo, título, senha, ENTRAR e
-ícones) é colocado direto sobre o fundo da tela, sem moldura. Vamos
-envolver esse container em um "card":
+Estrutura final:
 
-- Fundo preto translúcido (~40% de opacidade), igual ao `bg-black/40` da web.
-- Cantos arredondados generosos (~24dp).
-- Borda fina branca translúcida (~10% de opacidade).
-- Glow verde externo discreto (sombra/elevation tingida de verde).
-- Padding interno generoso (~40dp) em todos os lados.
-- Largura máxima parecida com a web (~420dp), centralizado na tela.
+```text
+android {
+    namespace = ...
+    compileSdk = 34
+    defaultConfig { ... }
 
-Os elementos internos (logo TV.Apps, "Bem-vindo", subtítulo, campo de senha,
-botão ENTRAR, ícones ⚙️ 📶) e o rodapé "Acesso restrito..." continuam como
-estão — só ganham a moldura ao redor.
+    signingConfigs {
+        create("release") {
+            storeFile = file("rastream.keystore")
+            storePassword = "android"
+            keyAlias = "androidkey"
+            keyPassword = "android"
+        }
+    }
 
-## Detalhes técnicos
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            proguardFiles(...)
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
 
-- Criar um `FrameLayout` (ou `LinearLayout`) novo, `cardWrapper`, com:
-  - `background` = `GradientDrawable` com `setColor(#66000000)`,
-    `cornerRadius = 24dp`, `setStroke(1dp, #1AFFFFFF)`.
-  - `elevation` + `outlineSpotShadowColor` verde (API 28+) para simular o
-    glow; fallback: segundo `GradientDrawable` por trás com blur leve via
-    `LayerDrawable` (mais simples e compatível).
-  - Largura: `min(420dp, screenWidth - 48dp)`.
-  - Padding interno: 40dp.
-- Mover o `container` atual para dentro desse `cardWrapper`.
-- Adicionar `cardWrapper` ao `root` no lugar onde hoje vai o `container`.
-- O `updateOverlay` (atualização obrigatória) e o `footerNotice` continuam
-  como filhos diretos do `root`, por cima/embaixo do card.
+    compileOptions { ... }
+    kotlinOptions { ... }
+    packaging { ... }
+    applicationVariants.all { ... }
+}
+```
 
-## Fora do escopo
-
-- Não mexer no conteúdo do card (textos, ícones, foco, navegação DPAD,
-  lógica de senha, fluxo OTA).
-- Não alterar a versão web (`src/components/LoginGate.tsx`).
-- Não alterar versionCode/Name nem build scripts.
-
+Depois: **File → Sync Project with Gradle Files** no Android Studio e rodar `Build → Build APK(s)` de novo.
