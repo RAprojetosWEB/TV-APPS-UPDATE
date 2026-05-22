@@ -60,6 +60,7 @@ export function logout() {
 export function LoginGate({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
   const [authed, setAuthed] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -78,6 +79,12 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
     setMounted(true);
     setAuthed(isAuthenticated());
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    const t = setTimeout(() => setShowSplash(false), 2200);
+    return () => clearTimeout(t);
+  }, [mounted]);
 
   useEffect(() => {
     if (mounted && !authed && !ota.hasUpdate) {
@@ -194,6 +201,38 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
   }
 
   if (authed) return <>{children}</>;
+
+  if (showSplash) {
+    return (
+      <div className="relative min-h-screen w-screen overflow-hidden bg-background text-foreground flex items-center justify-center animate-in fade-in duration-500">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div
+            className="absolute left-1/2 top-1/2 h-[80vmin] w-[80vmin] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[140px]"
+            style={{
+              background:
+                "radial-gradient(circle, oklch(0.78 0.18 155 / 0.35) 0%, transparent 70%)",
+            }}
+          />
+        </div>
+        <div className="relative z-10 flex flex-col items-center gap-6 text-center animate-in zoom-in-95 duration-700">
+          <h1
+            className="font-black tracking-tight text-white"
+            style={{
+              fontSize: "clamp(4rem, 14vw, 10rem)",
+              textShadow: "0 0 60px oklch(0.78 0.18 155 / 0.6)",
+            }}
+          >
+            TV<span style={{ color: "oklch(0.78 0.18 155)" }}>.</span>Apps
+          </h1>
+          <div className="flex items-center justify-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.3s]" />
+            <span className="h-2 w-2 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.15s]" />
+            <span className="h-2 w-2 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isTransitioning) {
     return (
