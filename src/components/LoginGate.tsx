@@ -280,6 +280,70 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
     );
   }
 
+  if (ota.hasUpdate) {
+    return (
+      <div className="relative min-h-screen w-screen overflow-hidden bg-background text-foreground flex items-center justify-center px-6 animate-in fade-in duration-500">
+        {/* Glow âmbar */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div
+            className="absolute left-1/2 top-1/2 h-[80vmin] w-[80vmin] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[140px]"
+            style={{
+              background:
+                "radial-gradient(circle, oklch(0.78 0.18 70 / 0.28) 0%, transparent 70%)",
+            }}
+          />
+        </div>
+
+        <div
+          className="relative z-10 w-full max-w-md rounded-3xl border border-white/10 bg-black/40 p-10 backdrop-blur-xl animate-in zoom-in-95 duration-500"
+          style={{
+            boxShadow:
+              "0 0 60px oklch(0.78 0.18 70 / 0.25), 0 0 0 1px oklch(0.78 0.18 70 / 0.2) inset",
+          }}
+        >
+          <div className="flex flex-col items-center text-center">
+            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-500/20 text-amber-500">
+              <AlertTriangle size={40} />
+            </div>
+            <h2 className="text-3xl font-bold">Atualização Obrigatória</h2>
+            <p className="mt-4 text-base text-white/70">
+              Uma nova versão do <span className="font-bold text-white">TV.Apps</span> está disponível e é necessária para continuar.
+            </p>
+
+            <div className="mt-8 w-full space-y-4">
+              {otaDownloading ? (
+                <div className="space-y-3">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full bg-amber-500 transition-all duration-300"
+                      style={{ width: `${otaProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-sm font-medium text-amber-500">
+                    Baixando atualização... {otaProgress}%
+                  </p>
+                </div>
+              ) : (
+                <button
+                  ref={updateBtnRef}
+                  onClick={startOtaUpdate}
+                  className="flex h-16 w-full items-center justify-center gap-3 rounded-2xl bg-amber-500 text-xl font-bold text-black transition-all hover:scale-[1.02] focus:ring-4 focus:ring-amber-500/50"
+                >
+                  <RefreshCcw className="size-6 animate-spin-slow" />
+                  ATUALIZAR AGORA
+                </button>
+              )}
+            </div>
+
+            <p className="mt-6 text-xs text-white/30 uppercase tracking-widest">
+              Versão {ota.manifest?.versionName ?? ota.manifest?.version} disponível
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative min-h-screen w-screen overflow-hidden bg-background text-foreground flex items-center justify-center px-6">
       {/* Glow verde */}
@@ -303,54 +367,12 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
       <div
         className="relative z-10 w-full max-w-md rounded-3xl border border-white/10 bg-black/40 p-10 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-500"
         style={{
-          boxShadow: ota.hasUpdate 
-            ? "0 0 60px oklch(0.6 0.2 20 / 0.25), 0 0 0 1px oklch(0.6 0.2 20 / 0.2) inset"
-            : "0 0 60px oklch(0.78 0.18 155 / 0.25), 0 0 0 1px oklch(0.78 0.18 155 / 0.2) inset",
+          boxShadow:
+            "0 0 60px oklch(0.78 0.18 155 / 0.25), 0 0 0 1px oklch(0.78 0.18 155 / 0.2) inset",
         }}
       >
-        {ota.hasUpdate ? (
-          <div className="flex flex-col items-center text-center">
-            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-500/20 text-amber-500">
-              <AlertTriangle size={40} />
-            </div>
-            <h2 className="text-3xl font-bold">Atualização Obrigatória</h2>
-            <p className="mt-4 text-base text-white/70">
-              Uma nova versão do <span className="font-bold text-white">TV.Apps</span> está disponível e é necessária para continuar.
-            </p>
-            
-            <div className="mt-8 w-full space-y-4">
-              {otaDownloading ? (
-                <div className="space-y-3">
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
-                    <div 
-                      className="h-full bg-amber-500 transition-all duration-300"
-                      style={{ width: `${otaProgress}%` }}
-                    />
-                  </div>
-                  <p className="text-sm font-medium text-amber-500">
-                    Baixando atualização... {otaProgress}%
-                  </p>
-                </div>
-              ) : (
-                <button
-                  ref={updateBtnRef}
-                  onClick={startOtaUpdate}
-                  className="flex h-16 w-full items-center justify-center gap-3 rounded-2xl bg-amber-500 text-xl font-bold text-black transition-all hover:scale-[1.02] focus:ring-4 focus:ring-amber-500/50"
-                >
-                  <RefreshCcw className="size-6 animate-spin-slow" />
-                  ATUALIZAR AGORA
-                </button>
-              )}
-            </div>
-            
-            <p className="mt-6 text-xs text-white/30 uppercase tracking-widest">
-              Versão {ota.manifest?.versionName ?? ota.manifest?.version} disponível
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* Logo */}
-            <div className="flex flex-col items-center text-center">
+        {/* Logo */}
+        <div className="flex flex-col items-center text-center">
               <h1 className="text-5xl font-black tracking-tight leading-none">
                 TV<span style={{ color: "var(--tv-accent, #4ade80)" }}>.</span>Apps
               </h1>
@@ -419,8 +441,6 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
             <p className="mt-6 text-center text-xs text-white/30">
               Use ↑ ↓ para navegar · Enter para confirmar
             </p>
-          </>
-        )}
       </div>
 
       <p className="absolute top-6 left-0 right-0 z-10 px-6 text-center text-white/50" style={{ fontSize: "2rem" }}>
