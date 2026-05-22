@@ -11,14 +11,15 @@ data class CatalogApp(
 
 object AppCatalog {
     val apps: List<CatalogApp> = listOf(
-        CatalogApp(
-            name = "UniTV",
-            description = "Mais de 400 canais, filmes e séries",
-            url = "https://apyjsxxuuptelmiwnzwq.supabase.co/storage/v1/object/public/Alpicativos%20APKs/unitv.apk",
-            icon = "▶",
-            packageName = "com.unitv.app",
-            iconRes = R.drawable.ic_unitv,
-        ),
+        // Temporariamente oculto para teste de OTA — descomentar para reativar.
+        // CatalogApp(
+        //     name = "UniTV",
+        //     description = "Mais de 400 canais, filmes e séries",
+        //     url = "https://apyjsxxuuptelmiwnzwq.supabase.co/storage/v1/object/public/Alpicativos%20APKs/unitv.apk",
+        //     icon = "▶",
+        //     packageName = "com.unitv.app",
+        //     iconRes = R.drawable.ic_unitv,
+        // ),
         CatalogApp(
             name = "Nexa TV",
             description = "Mais de 300 canais",
