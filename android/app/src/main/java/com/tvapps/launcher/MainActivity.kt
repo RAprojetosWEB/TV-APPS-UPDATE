@@ -1563,12 +1563,24 @@ class MainActivity : Activity() {
         builder.create().show()
     }
 
-    private fun startLauncherUpdate(url: String) {
+    private fun startLauncherUpdate(url: String, ui: OtaProgressViews? = null) {
+        hideSoftKeyboardAndClearFocus()
         scope.launch {
             ApkDownloader.download(this@MainActivity, url, "TV.Apps_Update").collect { p ->
                 val systemPill = otaStatusPill
                 when (p) {
                     is DownloadProgress.Progress -> withContext(Dispatchers.Main) {
+                        ui?.let { views ->
+                            views.button.isEnabled = false
+                            views.button.isFocusable = false
+                            views.button.text = "BAIXANDO ATUALIZAÇÃO"
+                            views.progress.visibility = View.VISIBLE
+                            views.percent.visibility = View.VISIBLE
+                            views.speed.visibility = View.VISIBLE
+                            views.progress.progress = p.percent
+                            views.percent.text = "${p.percent}%"
+                            views.speed.text = "Velocidade: ${formatSpeed(p.speedBytesPerSec)}"
+                        }
                         if (systemPill != null) {
                             val speed = formatSpeed(p.speedBytesPerSec)
                             setPillContent(
@@ -1579,11 +1591,24 @@ class MainActivity : Activity() {
                         }
                     }
                     is DownloadProgress.Done -> withContext(Dispatchers.Main) {
+                        ui?.let { views ->
+                            views.progress.progress = 100
+                            views.percent.text = "100%"
+                            views.speed.text = "Download concluído"
+                            views.button.text = "ABRINDO INSTALADOR…"
+                        }
                         systemPill?.text = "✓  Download concluído"
                         ApkInstaller.install(this@MainActivity, p.file)
                         systemPill?.postDelayed({ systemPill.text = "✓  Sistema atualizado" }, 5000)
                     }
                     is DownloadProgress.Error -> withContext(Dispatchers.Main) {
+                        ui?.let { views ->
+                            views.button.isEnabled = true
+                            views.button.isFocusable = true
+                            views.button.text = "TENTAR NOVAMENTE"
+                            views.speed.visibility = View.VISIBLE
+                            views.speed.text = "Erro no download"
+                        }
                         systemPill?.text = "⚠  Erro no download"
                         Toast.makeText(this@MainActivity, "Erro ao baixar atualização: ${p.message}", Toast.LENGTH_LONG).show()
                         systemPill?.postDelayed({ systemPill.text = if (systemPill.hasFocus()) "🔍  Procurar atualizações" else "🔍" }, 3000)
