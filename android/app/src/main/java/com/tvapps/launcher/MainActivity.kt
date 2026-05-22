@@ -198,6 +198,12 @@ class MainActivity : Activity() {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
+            // Força o overlay a renderizar acima do card de login (que tem elevation pelo glow).
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                elevation = dp(100).toFloat()
+            }
+            val pad = dp(48)
+            setPadding(pad, pad, pad, pad)
         }
 
         val container = LinearLayout(this).apply {
