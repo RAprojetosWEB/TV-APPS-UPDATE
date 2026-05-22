@@ -1026,6 +1026,7 @@ class MainActivity : Activity() {
                     is DownloadProgress.Progress -> withContext(Dispatchers.Main) {
                         card.progress.progress = p.percent
                         card.percent.text = "${p.percent}%"
+                        card.subtitle.text = buildProgressLine(p)
                     }
                     is DownloadProgress.Done -> withContext(Dispatchers.Main) {
                         card.progress.progress = 100
@@ -1482,7 +1483,12 @@ class MainActivity : Activity() {
                 when (p) {
                     is DownloadProgress.Progress -> withContext(Dispatchers.Main) {
                         if (systemPill != null) {
-                            setPillContent(systemPill, R.drawable.ic_download, "Baixando: ${p.percent}%")
+                            val speed = formatSpeed(p.speedBytesPerSec)
+                            setPillContent(
+                                systemPill,
+                                R.drawable.ic_download,
+                                "Baixando ${p.percent}% • $speed",
+                            )
                         }
                     }
                     is DownloadProgress.Done -> withContext(Dispatchers.Main) {
