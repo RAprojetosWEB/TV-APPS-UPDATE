@@ -33,6 +33,13 @@ async function sha256Hex(value: string): Promise<string> {
     .join("");
 }
 
+function formatSpeed(bps: number): string {
+  if (!bps || bps <= 0) return "—";
+  const mbps = bps / 1024 / 1024;
+  if (mbps >= 1) return `${mbps.toFixed(1)} MB/s`;
+  return `${(bps / 1024).toFixed(0)} KB/s`;
+}
+
 export function isAuthenticated(): boolean {
   const s = getStore();
   if (!s) return false;
@@ -350,7 +357,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
                   <div className="mt-4 flex items-center justify-between rounded-2xl bg-black/20 px-4 py-3 text-white/80">
                     <span className="text-xs font-semibold uppercase tracking-wider text-white/45">Velocidade</span>
                     <span className="text-lg font-black tabular-nums text-white">
-                      {otaSpeedBps > 0 ? `${(otaSpeedBps / 1024 / 1024 >= 1 ? `${(otaSpeedBps / 1024 / 1024).toFixed(1)} MB/s` : `${(otaSpeedBps / 1024).toFixed(0)} KB/s`)}` : "—"}
+                      {formatSpeed(otaSpeedBps)}
                     </span>
                   </div>
                 </div>
