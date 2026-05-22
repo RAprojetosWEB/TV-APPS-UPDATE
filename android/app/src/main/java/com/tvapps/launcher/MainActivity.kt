@@ -566,7 +566,11 @@ class MainActivity : Activity() {
                         }
 
                         setOnClickListener {
-                            showOtaConfirmDialog(remoteVersion, downloadUrl)
+                            if (downloadUrl.isEmpty()) {
+                                Toast.makeText(this@MainActivity, "URL de atualização inválida", Toast.LENGTH_SHORT).show()
+                            } else {
+                                startLauncherUpdate(downloadUrl)
+                            }
                         }
                     }
 
@@ -1399,7 +1403,11 @@ class MainActivity : Activity() {
                 setPillContent(systemPill, R.drawable.ic_download, "Atualização disponível ($remoteVersion)")
                 systemPill.setTextColor(Color.parseColor("#5EE6A8"))
                 if (manual) {
-                    showOtaConfirmDialog(remoteVersion, downloadUrl)
+                    if (downloadUrl.isEmpty()) {
+                        Toast.makeText(this@MainActivity, "URL de atualização inválida", Toast.LENGTH_SHORT).show()
+                    } else {
+                        startLauncherUpdate(downloadUrl)
+                    }
                 }
             } else {
                 setPillContent(systemPill, R.drawable.ic_rotate_ccw, if (systemPill.hasFocus()) "Procurar atualizações" else "")
