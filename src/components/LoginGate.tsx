@@ -332,16 +332,27 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
 
             <div className="mt-8 w-full space-y-4">
               {otaDownloading ? (
-                <div className="space-y-3">
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                <div className="rounded-3xl border border-amber-400/20 bg-white/5 p-5 shadow-[0_0_40px_rgba(245,158,11,0.16)_inset]">
+                  <div className="mb-3 flex items-end justify-between gap-4">
+                    <span className="text-xs font-bold uppercase tracking-[0.18em] text-white/45">
+                      Baixando atualização
+                    </span>
+                    <span className="text-4xl font-black tabular-nums text-amber-500">
+                      {otaProgress}%
+                    </span>
+                  </div>
+                  <div className="h-4 w-full overflow-hidden rounded-full border border-white/10 bg-white/10">
                     <div
-                      className="h-full bg-amber-500 transition-all duration-300"
+                      className="h-full rounded-full bg-gradient-to-r from-amber-500 to-yellow-300 shadow-[0_0_24px_rgba(245,158,11,0.75)] transition-all duration-300"
                       style={{ width: `${otaProgress}%` }}
                     />
                   </div>
-                  <p className="text-sm font-medium text-amber-500">
-                    Baixando atualização... {otaProgress}%
-                  </p>
+                  <div className="mt-4 flex items-center justify-between rounded-2xl bg-black/20 px-4 py-3 text-white/80">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-white/45">Velocidade</span>
+                    <span className="text-lg font-black tabular-nums text-white">
+                      {otaSpeedBps > 0 ? `${(otaSpeedBps / 1024 / 1024 >= 1 ? `${(otaSpeedBps / 1024 / 1024).toFixed(1)} MB/s` : `${(otaSpeedBps / 1024).toFixed(0)} KB/s`)}` : "—"}
+                    </span>
+                  </div>
                 </div>
               ) : (
                 <button
