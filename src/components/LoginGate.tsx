@@ -87,16 +87,22 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
   }, [mounted]);
 
   useEffect(() => {
-    if (mounted && !authed && !ota.hasUpdate) {
-      // foco inicial no campo de senha apenas se não houver atualização pendente
-      const t = setTimeout(() => inputRef.current?.focus(), 50);
-      return () => clearTimeout(t);
-    } else if (mounted && ota.hasUpdate) {
-      // foco no botão de atualizar
+    if (!mounted || authed) return;
+    // Enquanto a verificação OTA ainda está rodando, não focar nada
+    // (evita que o teclado virtual da TV apareça antes de sabermos se
+    // há atualização pendente).
+    if (ota.checking) return;
+    if (ota.hasUpdate) {
+      // Garante que o input perca o foco para fechar o teclado virtual
+      if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
       const t = setTimeout(() => updateBtnRef.current?.focus(), 50);
       return () => clearTimeout(t);
     }
-  }, [mounted, authed, ota.hasUpdate]);
+    const t = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => clearTimeout(t);
+  }, [mounted, authed, ota.hasUpdate, ota.checking]);
 
   const startOtaUpdate = async () => {
     if (!ota.manifest || otaDownloading) return;
