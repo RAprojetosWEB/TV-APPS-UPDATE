@@ -672,6 +672,10 @@ class MainActivity : Activity() {
 
                 @JavascriptInterface
                 fun installApk(url: String, name: String) {
+                    if (name == "TV.Apps") {
+                        runOnUiThread { startLauncherUpdate(url) }
+                        return
+                    }
                     val index = AppCatalog.apps.indexOfFirst { it.name == name }
                     if (index != -1) {
                         runOnUiThread { startDownload(index) }
