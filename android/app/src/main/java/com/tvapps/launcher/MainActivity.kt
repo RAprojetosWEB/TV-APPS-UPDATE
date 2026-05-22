@@ -433,14 +433,9 @@ class MainActivity : Activity() {
         }
         root.addView(footerNotice)
 
-        // Verificação automática de OTA ANTES do login
-        checkOtaUpdateBlocking(updateOverlay, scaleFactor)
-
-        passwordInput.postDelayed({
-            if (updateOverlay.visibility != View.VISIBLE && !isTextInputFocused()) {
-                passwordInput.requestFocus()
-            }
-        }, 450)
+        // Verificação automática de OTA ANTES do login. O campo de senha só ganha foco
+        // depois dessa checagem para não abrir teclado virtual quando houver atualização.
+        checkOtaUpdateBlocking(updateOverlay, passwordInput, scaleFactor)
 
         return root
     }
@@ -458,7 +453,7 @@ class MainActivity : Activity() {
 
     private fun isTextInputFocused(): Boolean = currentFocus is android.widget.EditText
 
-    private fun checkOtaUpdateBlocking(overlay: LinearLayout, scale: Float) {
+    private fun checkOtaUpdateBlocking(overlay: LinearLayout, passwordInput: android.widget.EditText, scale: Float) {
         scope.launch {
             val otaInfo = try {
                 withContext(Dispatchers.IO) {
@@ -641,6 +636,12 @@ class MainActivity : Activity() {
                     card.addView(btn)
                     overlay.addView(card)
                     overlay.requestFocus()
+                }
+            } else {
+                runOnUiThread {
+                    if (overlay.visibility != View.VISIBLE && !isTextInputFocused()) {
+                        passwordInput.requestFocus()
+                    }
                 }
             }
         }
