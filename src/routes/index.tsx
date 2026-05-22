@@ -109,6 +109,10 @@ function Index() {
       hasUpdate: boolean;
       installedVersion?: string;
       blobUrl?: string;
+      downloadedBytes?: number;
+      totalBytes?: number;
+      speedBps?: number;
+      etaSeconds?: number;
     }>
   >(() => APPS.map(() => ({ status: "idle", progress: 0, isInstalled: false, isDownloaded: false, hasUpdate: false })));
 
