@@ -11,7 +11,13 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 
 sealed class DownloadProgress {
-    data class Progress(val percent: Int) : DownloadProgress()
+    data class Progress(
+        val percent: Int,
+        val downloadedBytes: Long,
+        val totalBytes: Long,
+        val speedBytesPerSec: Long,
+        val etaSeconds: Long,
+    ) : DownloadProgress()
     data class Done(val file: File) : DownloadProgress()
     data class Error(val message: String) : DownloadProgress()
 }
@@ -34,7 +40,7 @@ object ApkDownloader {
                 return@flow
             }
 
-            emit(DownloadProgress.Progress(0))
+            emit(DownloadProgress.Progress(0, 0L, 0L, 0L, -1L))
             val request = Request.Builder().url(url).build()
             val response = client.newCall(request).execute()
             if (!response.isSuccessful) {
@@ -55,15 +61,44 @@ object ApkDownloader {
                     var read: Int
                     var downloaded = 0L
                     var lastPercent = -1
+                    val startNs = System.nanoTime()
+                    var windowStartNs = startNs
+                    var windowStartBytes = 0L
+                    var lastEmitNs = 0L
+                    var smoothedBps = 0L
                     while (true) {
                         read = input.read(buf)
                         if (read == -1) break
                         output.write(buf, 0, read)
                         downloaded += read
                         val percent = ((downloaded * 100) / total).toInt().coerceIn(0, 100)
-                        if (percent != lastPercent) {
+                        val nowNs = System.nanoTime()
+                        val windowMs = (nowNs - windowStartNs) / 1_000_000L
+                        val emitMs = (nowNs - lastEmitNs) / 1_000_000L
+                        // Recalcula velocidade a cada ~500ms
+                        if (windowMs >= 500L) {
+                            val deltaBytes = downloaded - windowStartBytes
+                            val instBps = (deltaBytes * 1000L) / windowMs.coerceAtLeast(1L)
+                            // EMA leve pra estabilizar
+                            smoothedBps = if (smoothedBps == 0L) instBps
+                                else (smoothedBps * 7 + instBps * 3) / 10
+                            windowStartNs = nowNs
+                            windowStartBytes = downloaded
+                        }
+                        if (percent != lastPercent || emitMs >= 250L) {
                             lastPercent = percent
-                            emit(DownloadProgress.Progress(percent))
+                            lastEmitNs = nowNs
+                            val remaining = (total - downloaded).coerceAtLeast(0L)
+                            val eta = if (smoothedBps > 0) remaining / smoothedBps else -1L
+                            emit(
+                                DownloadProgress.Progress(
+                                    percent = percent,
+                                    downloadedBytes = downloaded,
+                                    totalBytes = total,
+                                    speedBytesPerSec = smoothedBps,
+                                    etaSeconds = eta,
+                                )
+                            )
                         }
                     }
                 }

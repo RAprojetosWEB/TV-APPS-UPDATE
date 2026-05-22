@@ -32,6 +32,33 @@ declare global {
   }
 }
 
+function formatBytes(b: number): string {
+  if (!b || b <= 0) return "0 B";
+  const mb = b / 1024 / 1024;
+  if (mb >= 1) return `${mb.toFixed(1)} MB`;
+  const kb = b / 1024;
+  if (kb >= 1) return `${kb.toFixed(0)} KB`;
+  return `${b} B`;
+}
+
+function formatSpeed(bps: number): string {
+  if (!bps || bps <= 0) return "—";
+  const mbps = bps / 1024 / 1024;
+  if (mbps >= 1) return `${mbps.toFixed(1)} MB/s`;
+  return `${(bps / 1024).toFixed(0)} KB/s`;
+}
+
+function formatEta(s: number): string {
+  if (s == null || s < 0) return "—";
+  if (s < 60) return `${s}s restantes`;
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  if (m < 60) return `${m}m ${String(sec).padStart(2, "0")}s restantes`;
+  const h = Math.floor(m / 60);
+  const mm = m % 60;
+  return `${h}h ${String(mm).padStart(2, "0")}m restantes`;
+}
+
 export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
@@ -109,6 +136,10 @@ function Index() {
       hasUpdate: boolean;
       installedVersion?: string;
       blobUrl?: string;
+      downloadedBytes?: number;
+      totalBytes?: number;
+      speedBps?: number;
+      etaSeconds?: number;
     }>
   >(() => APPS.map(() => ({ status: "idle", progress: 0, isInstalled: false, isDownloaded: false, hasUpdate: false })));
 
@@ -378,6 +409,10 @@ function Index() {
       progress: number;
       isDownloaded?: boolean;
       blobUrl?: string;
+      downloadedBytes?: number;
+      totalBytes?: number;
+      speedBps?: number;
+      etaSeconds?: number;
     }>,
   ) => {
     setStates((prev) => {
@@ -425,15 +460,33 @@ function Index() {
       const reader = res.body.getReader();
       const chunks: BlobPart[] = [];
       let received = 0;
+      const startMs = Date.now();
+      let windowStart = startMs;
+      let windowBytes = 0;
+      let smoothedBps = 0;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         if (value) {
           chunks.push(value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength) as ArrayBuffer);
           received += value.length;
-          if (total > 0) {
-            updateState(i, { progress: Math.round((received / total) * 100) });
+          const now = Date.now();
+          if (now - windowStart >= 500) {
+            const instBps = ((received - windowBytes) * 1000) / (now - windowStart);
+            smoothedBps = smoothedBps === 0 ? instBps : smoothedBps * 0.7 + instBps * 0.3;
+            windowStart = now;
+            windowBytes = received;
           }
+          const eta = smoothedBps > 0 && total > 0
+            ? Math.max(0, Math.round((total - received) / smoothedBps))
+            : -1;
+          updateState(i, {
+            progress: total > 0 ? Math.round((received / total) * 100) : 0,
+            downloadedBytes: received,
+            totalBytes: total,
+            speedBps: Math.round(smoothedBps),
+            etaSeconds: eta,
+          });
         }
       }
       const blob = new Blob(chunks, { type: "application/vnd.android.package-archive" });
@@ -698,7 +751,11 @@ function Index() {
                     <Download className="w-1/2 h-1/2" strokeWidth={1.8} color="oklch(0.15 0.03 270)" />
                   </div>
                   <h2 className="tv-text font-bold">{app.name}</h2>
-                  <p className="mt-2 text-sm text-white/60">Baixando…</p>
+                  <p className="mt-2 text-sm text-white/60">
+                    {states[i].totalBytes && states[i].totalBytes! > 0
+                      ? `${formatBytes(states[i].downloadedBytes ?? 0)} / ${formatBytes(states[i].totalBytes!)}`
+                      : "Baixando…"}
+                  </p>
                   <div
                     className="mt-6 h-3 w-full overflow-hidden rounded-full"
                     style={{ background: "oklch(0.28 0.04 270)" }}
@@ -717,6 +774,11 @@ function Index() {
                     style={{ color: "var(--tv-accent)" }}
                   >
                     {states[i].progress}%
+                  </div>
+                  <div className="mt-2 flex items-center gap-3 text-xs text-white/70 tabular-nums">
+                    <span>{formatSpeed(states[i].speedBps ?? 0)}</span>
+                    <span className="text-white/30">•</span>
+                    <span>{formatEta(states[i].etaSeconds ?? -1)}</span>
                   </div>
                 </div>
               ) : states[i].status === "done" ? (

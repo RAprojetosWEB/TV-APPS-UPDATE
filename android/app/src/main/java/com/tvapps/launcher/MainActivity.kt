@@ -1026,6 +1026,7 @@ class MainActivity : Activity() {
                     is DownloadProgress.Progress -> withContext(Dispatchers.Main) {
                         card.progress.progress = p.percent
                         card.percent.text = "${p.percent}%"
+                        card.subtitle.text = buildProgressLine(p)
                     }
                     is DownloadProgress.Done -> withContext(Dispatchers.Main) {
                         card.progress.progress = 100
@@ -1068,6 +1069,44 @@ class MainActivity : Activity() {
     private fun dp(value: Int): Int {
         val d = resources.displayMetrics.density
         return (value * d).toInt()
+    }
+
+    // Formata bytes pra "12.4 MB", "850 KB", etc.
+    private fun formatBytes(b: Long): String {
+        if (b <= 0) return "0 B"
+        val mb = b / 1024.0 / 1024.0
+        if (mb >= 1.0) return String.format(Locale.getDefault(), "%.1f MB", mb)
+        val kb = b / 1024.0
+        if (kb >= 1.0) return String.format(Locale.getDefault(), "%.0f KB", kb)
+        return "$b B"
+    }
+
+    private fun formatSpeed(bps: Long): String {
+        if (bps <= 0) return "—"
+        val mbps = bps / 1024.0 / 1024.0
+        if (mbps >= 1.0) return String.format(Locale.getDefault(), "%.1f MB/s", mbps)
+        val kbps = bps / 1024.0
+        return String.format(Locale.getDefault(), "%.0f KB/s", kbps)
+    }
+
+    private fun formatEta(seconds: Long): String {
+        if (seconds < 0) return "—"
+        if (seconds < 60) return "${seconds}s restantes"
+        val m = seconds / 60
+        val s = seconds % 60
+        if (m < 60) return String.format(Locale.getDefault(), "%dm %02ds restantes", m, s)
+        val h = m / 60
+        val mm = m % 60
+        return String.format(Locale.getDefault(), "%dh %02dm restantes", h, mm)
+    }
+
+    private fun buildProgressLine(p: DownloadProgress.Progress): String {
+        val sizePart = if (p.totalBytes > 0)
+            "${formatBytes(p.downloadedBytes)} / ${formatBytes(p.totalBytes)}"
+        else formatBytes(p.downloadedBytes)
+        val speedPart = formatSpeed(p.speedBytesPerSec)
+        val etaPart = formatEta(p.etaSeconds)
+        return "$sizePart  •  $speedPart  •  $etaPart"
     }
 
     // ===================== TOP BAR =====================
@@ -1444,7 +1483,12 @@ class MainActivity : Activity() {
                 when (p) {
                     is DownloadProgress.Progress -> withContext(Dispatchers.Main) {
                         if (systemPill != null) {
-                            setPillContent(systemPill, R.drawable.ic_download, "Baixando: ${p.percent}%")
+                            val speed = formatSpeed(p.speedBytesPerSec)
+                            setPillContent(
+                                systemPill,
+                                R.drawable.ic_download,
+                                "Baixando ${p.percent}% • $speed",
+                            )
                         }
                     }
                     is DownloadProgress.Done -> withContext(Dispatchers.Main) {
