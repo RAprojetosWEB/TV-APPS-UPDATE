@@ -224,6 +224,12 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
           >
             TV<span style={{ color: "oklch(0.78 0.18 155)" }}>.</span>Apps
           </h1>
+          <p
+            className="font-light tracking-wide text-white/70"
+            style={{ fontSize: "clamp(1rem, 2.2vw, 1.75rem)" }}
+          >
+            A maneira mais fácil de baixar apps
+          </p>
           <div className="flex items-center justify-center gap-2">
             <span className="h-2 w-2 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.3s]" />
             <span className="h-2 w-2 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.15s]" />
