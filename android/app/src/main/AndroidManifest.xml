@@ -27,6 +27,9 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:banner="@drawable/banner"
+            android:icon="@mipmap/ic_launcher"
+            android:logo="@drawable/banner"
             android:screenOrientation="landscape"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode"
             android:theme="@style/Theme.TVApps">
