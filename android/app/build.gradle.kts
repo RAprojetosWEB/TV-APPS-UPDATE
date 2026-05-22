@@ -23,11 +23,11 @@ val computedVersionName: String = "$versionBase.$buildTimestamp"
 // --------------------------------------------------------------------------
 
 android {
-    namespace = "com.tvapps.launcher"
+    namespace = "com.rastream.platformtv"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.tvapps.launcher"
+        applicationId = "com.rastream.platformtv"
         minSdk = 24
         targetSdk = 34
         versionCode = computedVersionCode
@@ -41,6 +41,15 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
+    signingConfigs {
+        create("release") {
+            storeFile = file("rastream.keystore")
+            storePassword = "android"
+            keyAlias = "androidkey"
+            keyPassword = "android"
         }
     }
     compileOptions {
