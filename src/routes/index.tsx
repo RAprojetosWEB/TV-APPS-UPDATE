@@ -1176,6 +1176,7 @@ function Index() {
       installedVersion={ota.installedVersion}
       downloading={otaDownloading}
       progress={otaProgress}
+      speedBps={otaSpeedBps}
       onUpdate={startOtaUpdate}
       onLater={() => setOtaModalOpen(false)}
     />
