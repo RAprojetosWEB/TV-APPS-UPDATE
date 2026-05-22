@@ -665,7 +665,7 @@ function Index() {
                   startDownload(i);
                 }
               }}
-              className="group relative flex h-full w-full max-w-[clamp(280px,25vw,420px)] max-h-full min-h-0 flex-col items-center justify-center rounded-[clamp(1.5rem,3vw,3rem)] outline-none transition-all duration-300 mx-auto p-[clamp(1rem,2.5vh,2rem)] overflow-hidden"
+              className="group relative flex h-[90%] self-center w-full max-w-[clamp(280px,25vw,420px)] max-h-[90%] min-h-0 flex-col items-center justify-center rounded-[clamp(1.5rem,3vw,3rem)] outline-none transition-all duration-300 mx-auto p-[clamp(1rem,2.5vh,2rem)] overflow-hidden"
               style={{
                 background:
                   "linear-gradient(160deg, var(--tv-card), oklch(0.18 0.04 270))",
