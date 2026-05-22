@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   APP_VERSION,
@@ -41,9 +41,11 @@ export function useOtaUpdate(options: { autoCheck?: boolean } = { autoCheck: tru
   const [checking, setChecking] = useState(false);
   const [checked, setChecked] = useState(false);
   const [hasUpdate, setHasUpdate] = useState(false);
+  const checkingRef = useRef(false);
 
   const check = useCallback(async (manual = false) => {
-    if (checking) return;
+    if (checkingRef.current) return;
+    checkingRef.current = true;
     setChecking(true);
     setChecked(false);
     try {
@@ -80,9 +82,10 @@ export function useOtaUpdate(options: { autoCheck?: boolean } = { autoCheck: tru
       }
     } finally {
       setChecked(true);
+      checkingRef.current = false;
       setChecking(false);
     }
-  }, [checking]);
+  }, []);
 
   // Verificação automática do OTA reativada
   useEffect(() => {
