@@ -3,7 +3,7 @@
 // `window.Android.versionCode()`, alimentado pelo APK gerado.
 // O versionCode do APK é gerado automaticamente pelo Gradle (timestamp
 // yyMMddHHmm) — você não precisa editar essas constantes a cada build.
-export const APP_VERSION = "22.0";
+export const APP_VERSION = "2.1";
 export const APP_VERSION_CODE = 0;
 
 // URL pública do update.json no bucket tvapps-updates do Lovable Cloud.

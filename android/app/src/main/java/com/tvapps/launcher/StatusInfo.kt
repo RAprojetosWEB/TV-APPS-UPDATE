@@ -1,4 +1,4 @@
-package com.rastream.platformtv
+package com.tvapps.launcher
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

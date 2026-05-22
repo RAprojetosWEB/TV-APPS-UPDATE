@@ -1,4 +1,4 @@
-package com.rastream.platformtv
+package com.tvapps.launcher
 
 import android.content.Context
 import android.content.Intent

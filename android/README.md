@@ -21,7 +21,7 @@ do Android.
 
 ## Editar a lista de apps
 
-Abra `android/app/src/main/java/com/rastream/platformtv/AppCatalog.kt`,
+Abra `android/app/src/main/java/com/tvapps/launcher/AppCatalog.kt`,
 altere/adicione itens (nome, descrição, URL do APK) e recompile.
 
 ## Estrutura
