@@ -8,9 +8,17 @@ type Props = {
   installedVersion: string;
   downloading: boolean;
   progress: number;
+  speedBps?: number;
   onUpdate: () => void;
   onLater: () => void;
 };
+
+function formatSpeed(bps = 0): string {
+  if (bps <= 0) return "—";
+  const mbps = bps / 1024 / 1024;
+  if (mbps >= 1) return `${mbps.toFixed(1)} MB/s`;
+  return `${(bps / 1024).toFixed(0)} KB/s`;
+}
 
 export function OtaUpdateModal({
   open,
@@ -18,6 +26,7 @@ export function OtaUpdateModal({
   installedVersion,
   downloading,
   progress,
+  speedBps = 0,
   onUpdate,
   onLater,
 }: Props) {
@@ -29,15 +38,15 @@ export function OtaUpdateModal({
   useEffect(() => {
     if (open) {
       setChoice("yes");
-      setTimeout(() => yesRef.current?.focus(), 0);
+      if (!downloading) setTimeout(() => yesRef.current?.focus(), 0);
     }
-  }, [open]);
+  }, [open, downloading]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || downloading) return;
     if (choice === "yes") yesRef.current?.focus();
     else noRef.current?.focus();
-  }, [choice, open]);
+  }, [choice, open, downloading]);
 
   if (!open || !manifest) return null;
 
@@ -107,18 +116,27 @@ export function OtaUpdateModal({
         )}
 
         {downloading ? (
-          <div className="mt-8 w-full">
-            <div className="h-3 w-full overflow-hidden rounded-full" style={{ background: "oklch(0.28 0.04 270)" }}>
+          <div className="mt-8 w-full rounded-3xl border border-orange-400/20 bg-white/5 p-5 shadow-[0_0_40px_rgba(249,115,22,0.18)_inset]">
+            <div className="mb-3 flex items-end justify-between gap-4">
+              <span className="text-sm font-bold uppercase tracking-[0.18em] text-white/55">
+                Baixando atualização
+              </span>
+              <span className="text-4xl font-black tabular-nums text-orange-400">
+                {progress}%
+              </span>
+            </div>
+            <div className="h-4 w-full overflow-hidden rounded-full border border-white/10" style={{ background: "oklch(0.22 0.04 270)" }}>
               <div
-                className="h-full rounded-full transition-all"
+                className="h-full rounded-full transition-all duration-300 shadow-[0_0_24px_rgba(249,115,22,0.7)]"
                 style={{
                   width: `${progress}%`,
-                  background: "linear-gradient(90deg, #f97316, #ea580c)",
+                  background: "linear-gradient(90deg, #f97316, #fbbf24)",
                 }}
               />
             </div>
-            <div className="mt-3 text-center text-2xl font-black text-orange-400 tabular-nums">
-              Baixando… {progress}%
+            <div className="mt-4 flex items-center justify-between rounded-2xl bg-black/20 px-4 py-3 text-white/80">
+              <span className="text-sm font-semibold uppercase tracking-wider text-white/45">Velocidade</span>
+              <span className="text-xl font-black tabular-nums text-white">{formatSpeed(speedBps)}</span>
             </div>
           </div>
         ) : (

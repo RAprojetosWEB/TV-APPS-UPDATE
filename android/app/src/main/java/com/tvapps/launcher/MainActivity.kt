@@ -21,6 +21,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -88,12 +89,20 @@ class MainActivity : Activity() {
         val installedChip: TextView,
     )
 
+    private data class OtaProgressViews(
+        val button: TextView,
+        val progress: ProgressBar,
+        val percent: TextView,
+        val speed: TextView,
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.setFlags(
             WindowManager.LayoutParams.FLAG_FULLSCREEN,
             WindowManager.LayoutParams.FLAG_FULLSCREEN,
         )
+        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
         window.decorView.systemUiVisibility = (
             View.SYSTEM_UI_FLAG_FULLSCREEN
                 or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
@@ -182,6 +191,8 @@ class MainActivity : Activity() {
 
         val root = FrameLayout(this).apply {
             background = makeRootBackground()
+            isFocusable = true
+            isFocusableInTouchMode = true
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
@@ -423,16 +434,29 @@ class MainActivity : Activity() {
             }
         }
         root.addView(footerNotice)
+        root.requestFocus()
 
-        passwordInput.requestFocus()
-
-        // Verificação automática de OTA ANTES do login
-        checkOtaUpdateBlocking(updateOverlay, scaleFactor)
+        // Verificação automática de OTA ANTES do login. O campo de senha só ganha foco
+        // depois dessa checagem para não abrir teclado virtual quando houver atualização.
+        checkOtaUpdateBlocking(updateOverlay, passwordInput, scaleFactor)
 
         return root
     }
 
-    private fun checkOtaUpdateBlocking(overlay: LinearLayout, scale: Float) {
+    private fun hideSoftKeyboardAndClearFocus() {
+        val focused = currentFocus ?: window.decorView
+        try {
+            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+            imm?.hideSoftInputFromWindow(focused.windowToken, 0)
+        } catch (_: Exception) {
+        }
+        focused.clearFocus()
+        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
+    }
+
+    private fun isTextInputFocused(): Boolean = currentFocus is android.widget.EditText
+
+    private fun checkOtaUpdateBlocking(overlay: LinearLayout, passwordInput: android.widget.EditText, scale: Float) {
         scope.launch {
             val otaInfo = try {
                 withContext(Dispatchers.IO) {
@@ -462,7 +486,10 @@ class MainActivity : Activity() {
             if (otaInfo != null) {
                 val (_, remoteVersion, downloadUrl) = otaInfo
                 runOnUiThread {
+                    hideSoftKeyboardAndClearFocus()
                     overlay.visibility = View.VISIBLE
+                    overlay.isFocusable = true
+                    overlay.isFocusableInTouchMode = true
                     overlay.removeAllViews()
 
                     // Esconde o card de login e o rodapé enquanto a atualização é obrigatória,
@@ -534,6 +561,35 @@ class MainActivity : Activity() {
                         setPadding(0, 0, 0, dp((32 * scale).toInt()))
                     }
 
+                    val progress = ProgressBar(this@MainActivity, null, android.R.attr.progressBarStyleHorizontal).apply {
+                        max = 100
+                        progress = 0
+                        visibility = View.GONE
+                        progressDrawable = makeProgressDrawable(scale, amber)
+                        layoutParams = LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            dp((12 * scale).toInt()),
+                        ).apply { bottomMargin = dp((14 * scale).toInt()) }
+                    }
+
+                    val percent = TextView(this@MainActivity).apply {
+                        text = "0%"
+                        setTextColor(amber)
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 34f * scale)
+                        setTypeface(null, android.graphics.Typeface.BOLD)
+                        gravity = Gravity.CENTER
+                        visibility = View.GONE
+                    }
+
+                    val speed = TextView(this@MainActivity).apply {
+                        text = "Velocidade: —"
+                        setTextColor(Color.parseColor("#CCFFFFFF"))
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f * scale)
+                        gravity = Gravity.CENTER
+                        setPadding(0, dp((4 * scale).toInt()), 0, dp((18 * scale).toInt()))
+                        visibility = View.GONE
+                    }
+
                     // Botão âmbar (igual web)
                     val btnBg = GradientDrawable().apply {
                         setColor(amber)
@@ -569,7 +625,7 @@ class MainActivity : Activity() {
                             if (downloadUrl.isEmpty()) {
                                 Toast.makeText(this@MainActivity, "URL de atualização inválida", Toast.LENGTH_SHORT).show()
                             } else {
-                                startLauncherUpdate(downloadUrl)
+                                startLauncherUpdate(downloadUrl, OtaProgressViews(this, progress, percent, speed))
                             }
                         }
                     }
@@ -577,9 +633,18 @@ class MainActivity : Activity() {
                     card.addView(warnIcon)
                     card.addView(title)
                     card.addView(msg)
+                    card.addView(progress)
+                    card.addView(percent)
+                    card.addView(speed)
                     card.addView(btn)
                     overlay.addView(card)
-                    btn.requestFocus()
+                    overlay.requestFocus()
+                }
+            } else {
+                runOnUiThread {
+                    if (overlay.visibility != View.VISIBLE && !isTextInputFocused()) {
+                        passwordInput.requestFocus()
+                    }
                 }
             }
         }
@@ -611,6 +676,10 @@ class MainActivity : Activity() {
 
                 @JavascriptInterface
                 fun installApk(url: String, name: String) {
+                    if (name == "TV.Apps") {
+                        runOnUiThread { startLauncherUpdate(url) }
+                        return
+                    }
                     val index = AppCatalog.apps.indexOfFirst { it.name == name }
                     if (index != -1) {
                         runOnUiThread { startDownload(index) }
@@ -909,6 +978,28 @@ class MainActivity : Activity() {
             gd.setStroke(dp((2 * scale).toInt().coerceAtLeast(1)), Color.parseColor("#3F3360"))
         }
         return gd
+    }
+
+    private fun makeProgressDrawable(scale: Float, accent: Int): LayerDrawable {
+        val track = GradientDrawable().apply {
+            setColor(Color.parseColor("#33FFFFFF"))
+            cornerRadius = dp((100 * scale).toInt()).toFloat()
+        }
+        val fill = GradientDrawable(
+            GradientDrawable.Orientation.LEFT_RIGHT,
+            intArrayOf(accent, Color.parseColor("#FBBF24")),
+        ).apply {
+            cornerRadius = dp((100 * scale).toInt()).toFloat()
+        }
+        return LayerDrawable(
+            arrayOf(
+                track,
+                android.graphics.drawable.ClipDrawable(fill, Gravity.START, android.graphics.drawable.ClipDrawable.HORIZONTAL),
+            ),
+        ).apply {
+            setId(0, android.R.id.background)
+            setId(1, android.R.id.progress)
+        }
     }
 
     private fun isAppInstalled(packageName: String): Boolean {
@@ -1476,12 +1567,24 @@ class MainActivity : Activity() {
         builder.create().show()
     }
 
-    private fun startLauncherUpdate(url: String) {
+    private fun startLauncherUpdate(url: String, ui: OtaProgressViews? = null) {
+        hideSoftKeyboardAndClearFocus()
         scope.launch {
             ApkDownloader.download(this@MainActivity, url, "TV.Apps_Update").collect { p ->
                 val systemPill = otaStatusPill
                 when (p) {
                     is DownloadProgress.Progress -> withContext(Dispatchers.Main) {
+                        ui?.let { views ->
+                            views.button.isEnabled = false
+                            views.button.isFocusable = false
+                            views.button.text = "BAIXANDO ATUALIZAÇÃO"
+                            views.progress.visibility = View.VISIBLE
+                            views.percent.visibility = View.VISIBLE
+                            views.speed.visibility = View.VISIBLE
+                            views.progress.progress = p.percent
+                            views.percent.text = "${p.percent}%"
+                            views.speed.text = "Velocidade: ${formatSpeed(p.speedBytesPerSec)}"
+                        }
                         if (systemPill != null) {
                             val speed = formatSpeed(p.speedBytesPerSec)
                             setPillContent(
@@ -1492,11 +1595,24 @@ class MainActivity : Activity() {
                         }
                     }
                     is DownloadProgress.Done -> withContext(Dispatchers.Main) {
+                        ui?.let { views ->
+                            views.progress.progress = 100
+                            views.percent.text = "100%"
+                            views.speed.text = "Download concluído"
+                            views.button.text = "ABRINDO INSTALADOR…"
+                        }
                         systemPill?.text = "✓  Download concluído"
                         ApkInstaller.install(this@MainActivity, p.file)
                         systemPill?.postDelayed({ systemPill.text = "✓  Sistema atualizado" }, 5000)
                     }
                     is DownloadProgress.Error -> withContext(Dispatchers.Main) {
+                        ui?.let { views ->
+                            views.button.isEnabled = true
+                            views.button.isFocusable = true
+                            views.button.text = "TENTAR NOVAMENTE"
+                            views.speed.visibility = View.VISIBLE
+                            views.speed.text = "Erro no download"
+                        }
                         systemPill?.text = "⚠  Erro no download"
                         Toast.makeText(this@MainActivity, "Erro ao baixar atualização: ${p.message}", Toast.LENGTH_LONG).show()
                         systemPill?.postDelayed({ systemPill.text = if (systemPill.hasFocus()) "🔍  Procurar atualizações" else "🔍" }, 3000)

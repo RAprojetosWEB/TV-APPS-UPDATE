@@ -31,6 +31,7 @@
             android:icon="@mipmap/ic_launcher"
             android:logo="@drawable/banner"
             android:screenOrientation="landscape"
+            android:windowSoftInputMode="stateAlwaysHidden"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode"
             android:theme="@style/Theme.TVApps">
             <intent-filter>

@@ -33,6 +33,13 @@ async function sha256Hex(value: string): Promise<string> {
     .join("");
 }
 
+function formatSpeed(bps: number): string {
+  if (!bps || bps <= 0) return "—";
+  const mbps = bps / 1024 / 1024;
+  if (mbps >= 1) return `${mbps.toFixed(1)} MB/s`;
+  return `${(bps / 1024).toFixed(0)} KB/s`;
+}
+
 export function isAuthenticated(): boolean {
   const s = getStore();
   if (!s) return false;
@@ -70,6 +77,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
   const ota = useOtaUpdate({ autoCheck: true });
   const [otaDownloading, setOtaDownloading] = useState(false);
   const [otaProgress, setOtaProgress] = useState(0);
+  const [otaSpeedBps, setOtaSpeedBps] = useState(0);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -92,17 +100,17 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
     // (evita que o teclado virtual da TV apareça antes de sabermos se
     // há atualização pendente).
     if (ota.checking) return;
+    if (!ota.checked) return;
     if (ota.hasUpdate) {
       // Garante que o input perca o foco para fechar o teclado virtual
       if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement) {
         document.activeElement.blur();
       }
-      const t = setTimeout(() => updateBtnRef.current?.focus(), 50);
-      return () => clearTimeout(t);
+      return;
     }
     const t = setTimeout(() => inputRef.current?.focus(), 50);
     return () => clearTimeout(t);
-  }, [mounted, authed, ota.hasUpdate, ota.checking]);
+  }, [mounted, authed, ota.hasUpdate, ota.checking, ota.checked]);
 
   const startOtaUpdate = async () => {
     if (!ota.manifest || otaDownloading) return;
@@ -112,6 +120,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
     if (typeof window !== "undefined" && typeof window.Android?.installApk === "function") {
       setOtaDownloading(true);
       setOtaProgress(0);
+      setOtaSpeedBps(0);
       try {
         window.Android.installApk(url, "TV.Apps");
       } catch (err) {
@@ -123,6 +132,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
 
     setOtaDownloading(true);
     setOtaProgress(0);
+    setOtaSpeedBps(0);
     try {
       const res = await fetch(url);
       if (!res.ok || !res.body) throw new Error("HTTP " + res.status);
@@ -130,12 +140,23 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
       const reader = res.body.getReader();
       const chunks: BlobPart[] = [];
       let received = 0;
+      let windowStart = Date.now();
+      let windowBytes = 0;
+      let smoothedBps = 0;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         if (value) {
           chunks.push(value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength) as ArrayBuffer);
           received += value.length;
+          const now = Date.now();
+          if (now - windowStart >= 500) {
+            const instBps = ((received - windowBytes) * 1000) / (now - windowStart);
+            smoothedBps = smoothedBps === 0 ? instBps : smoothedBps * 0.7 + instBps * 0.3;
+            setOtaSpeedBps(Math.round(smoothedBps));
+            windowStart = now;
+            windowBytes = received;
+          }
           if (total > 0) setOtaProgress(Math.round((received / total) * 100));
         }
       }
@@ -318,16 +339,27 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
 
             <div className="mt-8 w-full space-y-4">
               {otaDownloading ? (
-                <div className="space-y-3">
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                <div className="rounded-3xl border border-amber-400/20 bg-white/5 p-5 shadow-[0_0_40px_rgba(245,158,11,0.16)_inset]">
+                  <div className="mb-3 flex items-end justify-between gap-4">
+                    <span className="text-xs font-bold uppercase tracking-[0.18em] text-white/45">
+                      Baixando atualização
+                    </span>
+                    <span className="text-4xl font-black tabular-nums text-amber-500">
+                      {otaProgress}%
+                    </span>
+                  </div>
+                  <div className="h-4 w-full overflow-hidden rounded-full border border-white/10 bg-white/10">
                     <div
-                      className="h-full bg-amber-500 transition-all duration-300"
+                      className="h-full rounded-full bg-gradient-to-r from-amber-500 to-yellow-300 shadow-[0_0_24px_rgba(245,158,11,0.75)] transition-all duration-300"
                       style={{ width: `${otaProgress}%` }}
                     />
                   </div>
-                  <p className="text-sm font-medium text-amber-500">
-                    Baixando atualização... {otaProgress}%
-                  </p>
+                  <div className="mt-4 flex items-center justify-between rounded-2xl bg-black/20 px-4 py-3 text-white/80">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-white/45">Velocidade</span>
+                    <span className="text-lg font-black tabular-nums text-white">
+                      {formatSpeed(otaSpeedBps)}
+                    </span>
+                  </div>
                 </div>
               ) : (
                 <button
