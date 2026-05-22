@@ -41,6 +41,15 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
+    signingConfigs {
+        create("release") {
+            storeFile = file("rastream.keystore")
+            storePassword = "android"
+            keyAlias = "androidkey"
+            keyPassword = "android"
         }
     }
     compileOptions {
