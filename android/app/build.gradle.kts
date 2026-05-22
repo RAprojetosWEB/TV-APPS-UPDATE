@@ -40,6 +40,7 @@ android {
             storePassword = "tvapps2026"
             keyAlias = "tvapps"
             keyPassword = "tvapps2026"
+            storeType = "PKCS12"
         }
     }
 
