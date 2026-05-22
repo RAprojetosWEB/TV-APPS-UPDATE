@@ -433,15 +433,33 @@ function Index() {
       const reader = res.body.getReader();
       const chunks: BlobPart[] = [];
       let received = 0;
+      const startMs = Date.now();
+      let windowStart = startMs;
+      let windowBytes = 0;
+      let smoothedBps = 0;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         if (value) {
           chunks.push(value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength) as ArrayBuffer);
           received += value.length;
-          if (total > 0) {
-            updateState(i, { progress: Math.round((received / total) * 100) });
+          const now = Date.now();
+          if (now - windowStart >= 500) {
+            const instBps = ((received - windowBytes) * 1000) / (now - windowStart);
+            smoothedBps = smoothedBps === 0 ? instBps : smoothedBps * 0.7 + instBps * 0.3;
+            windowStart = now;
+            windowBytes = received;
           }
+          const eta = smoothedBps > 0 && total > 0
+            ? Math.max(0, Math.round((total - received) / smoothedBps))
+            : -1;
+          updateState(i, {
+            progress: total > 0 ? Math.round((received / total) * 100) : 0,
+            downloadedBytes: received,
+            totalBytes: total,
+            speedBps: Math.round(smoothedBps),
+            etaSeconds: eta,
+          });
         }
       }
       const blob = new Blob(chunks, { type: "application/vnd.android.package-archive" });
