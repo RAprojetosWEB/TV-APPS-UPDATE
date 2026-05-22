@@ -1,41 +1,11 @@
-## Problema
+Alterar `android/version.properties`:
 
-No `android/app/build.gradle.kts`, o bloco `buildTypes { release { signingConfig = signingConfigs.getByName("release") } }` está **antes** do bloco `signingConfigs { create("release") {...} }`. Gradle Kotlin DSL é avaliado de cima pra baixo, então no momento que ele lê a linha 44 o `release` ainda não foi criado → `SigningConfig with name 'release' not found`.
-
-## Correção
-
-Mover o bloco `signingConfigs { ... }` para **antes** do bloco `buildTypes { ... }` dentro de `android { ... }`. Sem nenhuma outra mudança (senhas, alias, keystore continuam iguais).
-
-Estrutura final:
-
-```text
-android {
-    namespace = ...
-    compileSdk = 34
-    defaultConfig { ... }
-
-    signingConfigs {
-        create("release") {
-            storeFile = file("rastream.keystore")
-            storePassword = "android"
-            keyAlias = "androidkey"
-            keyPassword = "android"
-        }
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(...)
-            signingConfig = signingConfigs.getByName("release")
-        }
-    }
-
-    compileOptions { ... }
-    kotlinOptions { ... }
-    packaging { ... }
-    applicationVariants.all { ... }
-}
+```
+versionBase=22
 ```
 
-Depois: **File → Sync Project with Gradle Files** no Android Studio e rodar `Build → Build APK(s)` de novo.
+Resultado: próximos builds gerarão `versionName` no formato `22.AAAA.MM.DD.HHmm` (ex.: `22.2026.05.22.1430`). O `versionCode` continua sendo gerado por timestamp automaticamente.
+
+Opcional: atualizar também o fallback web em `src/lib/app-version.ts` (`APP_VERSION = "22.0"`) para que o preview no navegador mostre a nova versão — no TV Box o valor real já vem do APK.
+
+Após aplicar, rebuild no Android Studio (`Build → Build APK(s)`) para gerar o novo APK assinado.
