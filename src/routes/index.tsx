@@ -153,6 +153,7 @@ function Index() {
   const [otaModalOpen, setOtaModalOpen] = useState(false);
   const [otaDownloading, setOtaDownloading] = useState(false);
   const [otaProgress, setOtaProgress] = useState(0);
+  const [otaSpeedBps, setOtaSpeedBps] = useState(0);
 
   // Abre modal manualmente via botão (autoCheck desativado no Index)
   // No Index, a verificação automática não ocorre mais por regra de negócio.
@@ -166,6 +167,7 @@ function Index() {
     if (typeof window !== "undefined" && typeof window.Android?.installApk === "function") {
       setOtaDownloading(true);
       setOtaProgress(0);
+      setOtaSpeedBps(0);
       try {
         window.Android.installApk(url, "TV.Apps");
       } catch (err) {
@@ -178,6 +180,7 @@ function Index() {
     // Fallback navegador: baixa via fetch com progresso e abre o APK
     setOtaDownloading(true);
     setOtaProgress(0);
+    setOtaSpeedBps(0);
     try {
       const res = await fetch(url);
       if (!res.ok || !res.body) throw new Error("HTTP " + res.status);
@@ -185,12 +188,23 @@ function Index() {
       const reader = res.body.getReader();
       const chunks: BlobPart[] = [];
       let received = 0;
+      let windowStart = Date.now();
+      let windowBytes = 0;
+      let smoothedBps = 0;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         if (value) {
           chunks.push(value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength) as ArrayBuffer);
           received += value.length;
+          const now = Date.now();
+          if (now - windowStart >= 500) {
+            const instBps = ((received - windowBytes) * 1000) / (now - windowStart);
+            smoothedBps = smoothedBps === 0 ? instBps : smoothedBps * 0.7 + instBps * 0.3;
+            setOtaSpeedBps(Math.round(smoothedBps));
+            windowStart = now;
+            windowBytes = received;
+          }
           if (total > 0) setOtaProgress(Math.round((received / total) * 100));
         }
       }
