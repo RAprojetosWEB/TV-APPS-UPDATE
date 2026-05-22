@@ -112,8 +112,11 @@ class MainActivity : Activity() {
                 or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
             )
         setupWebViewBridge()
-        // No lugar do buildRoot() direto, vamos construir a UI do login
-        setContentView(buildLoginScreen())
+        // Mostra splash screen antes do login
+        setContentView(buildSplashScreen())
+        Handler(Looper.getMainLooper()).postDelayed({
+            setContentView(buildLoginScreen())
+        }, 1800)
 
         // Limpeza inicial do cache de APKs (apps já instalados + órfãos + limite)
         try {
@@ -123,6 +126,86 @@ class MainActivity : Activity() {
         }
 
         setupPackageReceiver()
+    }
+
+    private fun buildSplashScreen(): View {
+        val density = resources.displayMetrics.density
+        fun dp(v: Int) = (v * density).toInt()
+
+        val root = FrameLayout(this).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
+            background = GradientDrawable(
+                GradientDrawable.Orientation.TL_BR,
+                intArrayOf(
+                    Color.parseColor("#1a0d2e"),
+                    Color.parseColor("#2a1a4a"),
+                    Color.parseColor("#0f0820"),
+                ),
+            )
+        }
+
+        val column = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
+        }
+
+        // Banner / logo
+        val logo = ImageView(this).apply {
+            setImageResource(R.drawable.banner)
+            adjustViewBounds = true
+            layoutParams = LinearLayout.LayoutParams(dp(320), ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                bottomMargin = dp(24)
+            }
+        }
+
+        val title = TextView(this).apply {
+            text = "TV.App"
+            setTextColor(Color.parseColor("#f5f3ff"))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 34f)
+            typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD)
+            gravity = Gravity.CENTER
+            letterSpacing = 0.08f
+        }
+
+        val subtitle = TextView(this).apply {
+            text = "Carregando..."
+            setTextColor(Color.parseColor("#b8a8d1"))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(8) }
+        }
+
+        val progress = ProgressBar(this).apply {
+            isIndeterminate = true
+            indeterminateTintList = android.content.res.ColorStateList.valueOf(
+                Color.parseColor("#22c55e")
+            )
+            layoutParams = LinearLayout.LayoutParams(dp(40), dp(40)).apply {
+                topMargin = dp(28)
+            }
+        }
+
+        column.addView(logo)
+        column.addView(title)
+        column.addView(subtitle)
+        column.addView(progress)
+        root.addView(column)
+
+        // Fade-in suave
+        root.alpha = 0f
+        root.animate().alpha(1f).setDuration(400).start()
+
+        return root
     }
 
     private fun setupPackageReceiver() {
