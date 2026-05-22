@@ -8,9 +8,17 @@ type Props = {
   installedVersion: string;
   downloading: boolean;
   progress: number;
+  speedBps?: number;
   onUpdate: () => void;
   onLater: () => void;
 };
+
+function formatSpeed(bps = 0): string {
+  if (bps <= 0) return "—";
+  const mbps = bps / 1024 / 1024;
+  if (mbps >= 1) return `${mbps.toFixed(1)} MB/s`;
+  return `${(bps / 1024).toFixed(0)} KB/s`;
+}
 
 export function OtaUpdateModal({
   open,
@@ -18,6 +26,7 @@ export function OtaUpdateModal({
   installedVersion,
   downloading,
   progress,
+  speedBps = 0,
   onUpdate,
   onLater,
 }: Props) {
@@ -29,15 +38,15 @@ export function OtaUpdateModal({
   useEffect(() => {
     if (open) {
       setChoice("yes");
-      setTimeout(() => yesRef.current?.focus(), 0);
+      if (!downloading) setTimeout(() => yesRef.current?.focus(), 0);
     }
-  }, [open]);
+  }, [open, downloading]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || downloading) return;
     if (choice === "yes") yesRef.current?.focus();
     else noRef.current?.focus();
-  }, [choice, open]);
+  }, [choice, open, downloading]);
 
   if (!open || !manifest) return null;
 
