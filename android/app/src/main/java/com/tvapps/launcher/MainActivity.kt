@@ -488,7 +488,10 @@ class MainActivity : Activity() {
             if (otaInfo != null) {
                 val (_, remoteVersion, downloadUrl) = otaInfo
                 runOnUiThread {
+                    hideSoftKeyboardAndClearFocus()
                     overlay.visibility = View.VISIBLE
+                    overlay.isFocusable = true
+                    overlay.isFocusableInTouchMode = true
                     overlay.removeAllViews()
 
                     // Esconde o card de login e o rodapé enquanto a atualização é obrigatória,
@@ -560,6 +563,35 @@ class MainActivity : Activity() {
                         setPadding(0, 0, 0, dp((32 * scale).toInt()))
                     }
 
+                    val progress = ProgressBar(this@MainActivity, null, android.R.attr.progressBarStyleHorizontal).apply {
+                        max = 100
+                        progress = 0
+                        visibility = View.GONE
+                        progressDrawable = makeProgressDrawable(scale, amber)
+                        layoutParams = LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            dp((12 * scale).toInt()),
+                        ).apply { bottomMargin = dp((14 * scale).toInt()) }
+                    }
+
+                    val percent = TextView(this@MainActivity).apply {
+                        text = "0%"
+                        setTextColor(amber)
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 34f * scale)
+                        setTypeface(null, android.graphics.Typeface.BOLD)
+                        gravity = Gravity.CENTER
+                        visibility = View.GONE
+                    }
+
+                    val speed = TextView(this@MainActivity).apply {
+                        text = "Velocidade: —"
+                        setTextColor(Color.parseColor("#CCFFFFFF"))
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f * scale)
+                        gravity = Gravity.CENTER
+                        setPadding(0, dp((4 * scale).toInt()), 0, dp((18 * scale).toInt()))
+                        visibility = View.GONE
+                    }
+
                     // Botão âmbar (igual web)
                     val btnBg = GradientDrawable().apply {
                         setColor(amber)
@@ -595,7 +627,7 @@ class MainActivity : Activity() {
                             if (downloadUrl.isEmpty()) {
                                 Toast.makeText(this@MainActivity, "URL de atualização inválida", Toast.LENGTH_SHORT).show()
                             } else {
-                                startLauncherUpdate(downloadUrl)
+                                startLauncherUpdate(downloadUrl, OtaProgressViews(this, progress, percent, speed))
                             }
                         }
                     }
@@ -603,9 +635,12 @@ class MainActivity : Activity() {
                     card.addView(warnIcon)
                     card.addView(title)
                     card.addView(msg)
+                    card.addView(progress)
+                    card.addView(percent)
+                    card.addView(speed)
                     card.addView(btn)
                     overlay.addView(card)
-                    btn.requestFocus()
+                    overlay.requestFocus()
                 }
             }
         }
