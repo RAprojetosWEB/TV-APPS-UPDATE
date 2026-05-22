@@ -191,6 +191,8 @@ class MainActivity : Activity() {
 
         val root = FrameLayout(this).apply {
             background = makeRootBackground()
+            isFocusable = true
+            isFocusableInTouchMode = true
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
@@ -432,6 +434,7 @@ class MainActivity : Activity() {
             }
         }
         root.addView(footerNotice)
+        root.requestFocus()
 
         // Verificação automática de OTA ANTES do login. O campo de senha só ganha foco
         // depois dessa checagem para não abrir teclado virtual quando houver atualização.
