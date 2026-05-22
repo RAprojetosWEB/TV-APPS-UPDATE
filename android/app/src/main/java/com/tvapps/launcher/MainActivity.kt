@@ -881,7 +881,8 @@ class MainActivity : Activity() {
         icon?.setBounds(0, 0, size, size)
         icon?.setTint(pill.currentTextColor)
         pill.setCompoundDrawables(icon, null, null, null)
-        pill.compoundDrawablePadding = dp(8)
+        // Sem padding quando só ícone, evita deslocar o ícone para a esquerda
+        pill.compoundDrawablePadding = if (label.isEmpty()) 0 else dp(8)
         pill.text = label
     }
 
@@ -1056,6 +1057,7 @@ class MainActivity : Activity() {
             // Desativa a mudança de linha automática para permitir animação de largura
             maxLines = 1
             ellipsize = android.text.TextUtils.TruncateAt.END
+            gravity = android.view.Gravity.CENTER
 
             // Ícone de refresh (estilo lucide RotateCcw)
             val refresh = androidx.core.content.ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_rotate_ccw)
@@ -1063,7 +1065,8 @@ class MainActivity : Activity() {
             refresh?.setBounds(0, 0, rs, rs)
             refresh?.setTint(Color.parseColor("#E8A85C"))
             setCompoundDrawables(refresh, null, null, null)
-            compoundDrawablePadding = dp((6 * scale).toInt())
+            // Sem padding quando colapsado (só ícone), evita deslocar para a esquerda
+            compoundDrawablePadding = 0
 
             setOnClickListener { checkOtaUpdate(this, true) }
             setOnFocusChangeListener { v, hasFocus ->
@@ -1073,14 +1076,14 @@ class MainActivity : Activity() {
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#335EE6A8"))
                     bg.setStroke(dp(2), Color.parseColor("#5EE6A8"))
-                    
+                    tv.compoundDrawablePadding = dp((6 * scale).toInt())
                     // Expande com texto e animação
                     tv.text = "Procurar atualizações"
                     tv.animate().alpha(1f).setDuration(200).start()
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                    
+                    tv.compoundDrawablePadding = 0
                     // Retrai para apenas o ícone
                     tv.text = ""
                 }
@@ -1091,6 +1094,7 @@ class MainActivity : Activity() {
             isClickable = true
             maxLines = 1
             ellipsize = android.text.TextUtils.TruncateAt.END
+            gravity = android.view.Gravity.CENTER
 
             // Ícone de engrenagem (estilo lucide), igual ao da versão Web
             val gear = androidx.core.content.ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_settings)
@@ -1098,7 +1102,7 @@ class MainActivity : Activity() {
             gear?.setBounds(0, 0, gs, gs)
             gear?.setTint(Color.WHITE)
             setCompoundDrawables(gear, null, null, null)
-            compoundDrawablePadding = dp((6 * scale).toInt())
+            compoundDrawablePadding = 0
 
             setOnClickListener {
                 try {
@@ -1114,10 +1118,12 @@ class MainActivity : Activity() {
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#33FFFFFF"))
                     bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                    tv.compoundDrawablePadding = dp((6 * scale).toInt())
                     tv.text = "Configurações"
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    tv.compoundDrawablePadding = 0
                     tv.text = ""
                 }
             }
