@@ -32,6 +32,33 @@ declare global {
   }
 }
 
+function formatBytes(b: number): string {
+  if (!b || b <= 0) return "0 B";
+  const mb = b / 1024 / 1024;
+  if (mb >= 1) return `${mb.toFixed(1)} MB`;
+  const kb = b / 1024;
+  if (kb >= 1) return `${kb.toFixed(0)} KB`;
+  return `${b} B`;
+}
+
+function formatSpeed(bps: number): string {
+  if (!bps || bps <= 0) return "—";
+  const mbps = bps / 1024 / 1024;
+  if (mbps >= 1) return `${mbps.toFixed(1)} MB/s`;
+  return `${(bps / 1024).toFixed(0)} KB/s`;
+}
+
+function formatEta(s: number): string {
+  if (s == null || s < 0) return "—";
+  if (s < 60) return `${s}s restantes`;
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  if (m < 60) return `${m}m ${String(sec).padStart(2, "0")}s restantes`;
+  const h = Math.floor(m / 60);
+  const mm = m % 60;
+  return `${h}h ${String(mm).padStart(2, "0")}m restantes`;
+}
+
 export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
