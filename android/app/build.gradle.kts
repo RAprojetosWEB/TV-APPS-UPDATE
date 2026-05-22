@@ -23,11 +23,11 @@ val computedVersionName: String = "$versionBase.$buildTimestamp"
 // --------------------------------------------------------------------------
 
 android {
-    namespace = "com.tvapps.launcher"
+    namespace = "com.rastream.platformtv"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.tvapps.launcher"
+        applicationId = "com.rastream.platformtv"
         minSdk = 24
         targetSdk = 34
         versionCode = computedVersionCode
