@@ -476,11 +476,45 @@ class MainActivity : Activity() {
                         }
                     }
 
+                    // Card com glow âmbar (igual versão web)
+                    val amber = Color.parseColor("#F59E0B")
+                    val cardBg = GradientDrawable().apply {
+                        setColor(Color.parseColor("#66000000"))
+                        cornerRadius = dp((24 * scale).toInt()).toFloat()
+                        setStroke(dp(1), Color.parseColor("#33F59E0B"))
+                    }
+                    val card = LinearLayout(this@MainActivity).apply {
+                        orientation = LinearLayout.VERTICAL
+                        gravity = Gravity.CENTER
+                        background = cardBg
+                        val pad = dp((40 * scale).toInt())
+                        setPadding(pad, pad, pad, pad)
+                        layoutParams = LinearLayout.LayoutParams(
+                            dp((420 * scale).toInt()),
+                            ViewGroup.LayoutParams.WRAP_CONTENT
+                        )
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            elevation = dp(24).toFloat()
+                            outlineSpotShadowColor = amber
+                            outlineAmbientShadowColor = amber
+                        }
+                    }
+
+                    // Quadrado âmbar com ícone ⚠ dentro (igual web)
+                    val iconBoxBg = GradientDrawable().apply {
+                        setColor(Color.parseColor("#33F59E0B"))
+                        cornerRadius = dp((16 * scale).toInt()).toFloat()
+                    }
+                    val iconBoxSize = dp((80 * scale).toInt())
                     val warnIcon = TextView(this@MainActivity).apply {
                         text = "⚠"
-                        setTextColor(Color.parseColor("#E8A85C"))
-                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 64f * scale)
+                        setTextColor(amber)
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 40f * scale)
                         gravity = Gravity.CENTER
+                        background = iconBoxBg
+                        layoutParams = LinearLayout.LayoutParams(iconBoxSize, iconBoxSize).apply {
+                            bottomMargin = dp((24 * scale).toInt())
+                        }
                     }
 
                     val title = TextView(this@MainActivity).apply {
@@ -489,7 +523,7 @@ class MainActivity : Activity() {
                         setTextSize(TypedValue.COMPLEX_UNIT_SP, 28f * scale)
                         setTypeface(null, android.graphics.Typeface.BOLD)
                         gravity = Gravity.CENTER
-                        setPadding(0, dp((16 * scale).toInt()), 0, dp((8 * scale).toInt()))
+                        setPadding(0, 0, 0, dp((16 * scale).toInt()))
                     }
 
                     val msg = TextView(this@MainActivity).apply {
@@ -500,32 +534,47 @@ class MainActivity : Activity() {
                         setPadding(0, 0, 0, dp((32 * scale).toInt()))
                     }
 
+                    // Botão âmbar (igual web)
+                    val btnBg = GradientDrawable().apply {
+                        setColor(amber)
+                        cornerRadius = dp((16 * scale).toInt()).toFloat()
+                    }
+                    val btnBgFocus = GradientDrawable().apply {
+                        setColor(Color.parseColor("#FBBF24"))
+                        cornerRadius = dp((16 * scale).toInt()).toFloat()
+                        setStroke(dp(3), Color.WHITE)
+                    }
                     val btn = TextView(this@MainActivity).apply {
                         text = "ATUALIZAR AGORA"
                         setTextColor(Color.BLACK)
-                        background = makePillBg(true, scale)
+                        background = btnBg
                         setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f * scale)
                         setTypeface(null, android.graphics.Typeface.BOLD)
                         gravity = Gravity.CENTER
                         isFocusable = true
                         isClickable = true
-                        val px = dp((40 * scale).toInt())
-                        val py = dp((16 * scale).toInt())
+                        val px = dp((48 * scale).toInt())
+                        val py = dp((20 * scale).toInt())
                         setPadding(px, py, px, py)
                         layoutParams = LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.WRAP_CONTENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.WRAP_CONTENT
                         )
+
+                        setOnFocusChangeListener { v, hasFocus ->
+                            v.background = if (hasFocus) btnBgFocus else btnBg
+                        }
 
                         setOnClickListener {
                             showOtaConfirmDialog(remoteVersion, downloadUrl)
                         }
                     }
 
-                    overlay.addView(warnIcon)
-                    overlay.addView(title)
-                    overlay.addView(msg)
-                    overlay.addView(btn)
+                    card.addView(warnIcon)
+                    card.addView(title)
+                    card.addView(msg)
+                    card.addView(btn)
+                    overlay.addView(card)
                     btn.requestFocus()
                 }
             }
