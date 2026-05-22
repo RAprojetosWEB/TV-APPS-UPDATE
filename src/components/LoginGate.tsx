@@ -113,6 +113,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
     if (typeof window !== "undefined" && typeof window.Android?.installApk === "function") {
       setOtaDownloading(true);
       setOtaProgress(0);
+      setOtaSpeedBps(0);
       try {
         window.Android.installApk(url, "TV.Apps");
       } catch (err) {
@@ -124,6 +125,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
 
     setOtaDownloading(true);
     setOtaProgress(0);
+    setOtaSpeedBps(0);
     try {
       const res = await fetch(url);
       if (!res.ok || !res.body) throw new Error("HTTP " + res.status);
@@ -131,12 +133,23 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
       const reader = res.body.getReader();
       const chunks: BlobPart[] = [];
       let received = 0;
+      let windowStart = Date.now();
+      let windowBytes = 0;
+      let smoothedBps = 0;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         if (value) {
           chunks.push(value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength) as ArrayBuffer);
           received += value.length;
+          const now = Date.now();
+          if (now - windowStart >= 500) {
+            const instBps = ((received - windowBytes) * 1000) / (now - windowStart);
+            smoothedBps = smoothedBps === 0 ? instBps : smoothedBps * 0.7 + instBps * 0.3;
+            setOtaSpeedBps(Math.round(smoothedBps));
+            windowStart = now;
+            windowBytes = received;
+          }
           if (total > 0) setOtaProgress(Math.round((received / total) * 100));
         }
       }
