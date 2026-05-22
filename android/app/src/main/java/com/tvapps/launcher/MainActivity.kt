@@ -465,6 +465,17 @@ class MainActivity : Activity() {
                     overlay.visibility = View.VISIBLE
                     overlay.removeAllViews()
 
+                    // Esconde o card de login e o rodapé enquanto a atualização é obrigatória,
+                    // para não ficarem "vazando" por trás do overlay (o card de login tem
+                    // elevation por causa do glow verde e, sem isso, aparece sobreposto).
+                    val parent = overlay.parent as? FrameLayout
+                    parent?.let { p ->
+                        for (i in 0 until p.childCount) {
+                            val child = p.getChildAt(i)
+                            if (child !== overlay) child.visibility = View.GONE
+                        }
+                    }
+
                     val warnIcon = TextView(this@MainActivity).apply {
                         text = "⚠"
                         setTextColor(Color.parseColor("#E8A85C"))
@@ -501,7 +512,11 @@ class MainActivity : Activity() {
                         val px = dp((40 * scale).toInt())
                         val py = dp((16 * scale).toInt())
                         setPadding(px, py, px, py)
-                        
+                        layoutParams = LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.WRAP_CONTENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT
+                        )
+
                         setOnClickListener {
                             showOtaConfirmDialog(remoteVersion, downloadUrl)
                         }
