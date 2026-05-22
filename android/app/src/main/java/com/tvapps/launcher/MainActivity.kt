@@ -972,6 +972,28 @@ class MainActivity : Activity() {
         return gd
     }
 
+    private fun makeProgressDrawable(scale: Float, accent: Int): LayerDrawable {
+        val track = GradientDrawable().apply {
+            setColor(Color.parseColor("#33FFFFFF"))
+            cornerRadius = dp((100 * scale).toInt()).toFloat()
+        }
+        val fill = GradientDrawable(
+            GradientDrawable.Orientation.LEFT_RIGHT,
+            intArrayOf(accent, Color.parseColor("#FBBF24")),
+        ).apply {
+            cornerRadius = dp((100 * scale).toInt()).toFloat()
+        }
+        return LayerDrawable(
+            arrayOf(
+                track,
+                android.graphics.drawable.ClipDrawable(fill, Gravity.START, android.graphics.drawable.ClipDrawable.HORIZONTAL),
+            ),
+        ).apply {
+            setId(0, android.R.id.background)
+            setId(1, android.R.id.progress)
+        }
+    }
+
     private fun isAppInstalled(packageName: String): Boolean {
         return try {
             packageManager.getPackageInfo(packageName, 0)
