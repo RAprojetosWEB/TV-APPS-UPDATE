@@ -39,11 +39,13 @@ export function useOtaUpdate(options: { autoCheck?: boolean } = { autoCheck: tru
   const [manifest, setManifest] = useState<UpdateManifest | null>(null);
   const [installedVersion, setInstalledVersion] = useState<string>(APP_VERSION);
   const [checking, setChecking] = useState(false);
+  const [checked, setChecked] = useState(false);
   const [hasUpdate, setHasUpdate] = useState(false);
 
   const check = useCallback(async (manual = false) => {
     if (checking) return;
     setChecking(true);
+    setChecked(false);
     try {
       const url = `${UPDATE_JSON_URL}?t=${Date.now()}`;
       const res = await fetch(url, { cache: "no-store" });
@@ -77,6 +79,7 @@ export function useOtaUpdate(options: { autoCheck?: boolean } = { autoCheck: tru
         });
       }
     } finally {
+      setChecked(true);
       setChecking(false);
     }
   }, [checking]);
@@ -93,6 +96,7 @@ export function useOtaUpdate(options: { autoCheck?: boolean } = { autoCheck: tru
     manifest,
     installedVersion,
     checking,
+    checked,
     hasUpdate,
     checkNow: () => check(true),
     reset: () => setHasUpdate(false),
