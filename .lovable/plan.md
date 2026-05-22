@@ -1,32 +1,17 @@
 ## Objetivo
-Usar a imagem enviada (`ChatGPT_Image_May_22_2026_03_38_13_PM.png`) como banner oficial do app na Android TV, substituindo o `banner.xml` vetorial atual.
 
-## Passos
+Ao clicar em **ATUALIZAR AGORA** na tela de atualização, iniciar o download imediatamente, sem mostrar a caixa de diálogo cinza "Nova Atualização / Baixar Agora / Mais Tarde".
 
-1. **Copiar a imagem para os recursos Android**
-   - Copiar `user-uploads://ChatGPT_Image_...png` para `android/app/src/main/res/drawable/banner.png`, redimensionada para **320x180** (16:9), centralizada, alta qualidade, sem cortes.
-   - Também gerar versão maior `drawable-xhdpi/banner.png` (640x360) para TVs de alta densidade, garantindo nitidez.
+## Alteração
 
-2. **Remover o banner vetorial antigo**
-   - Deletar `android/app/src/main/res/drawable/banner.xml` (senão o Android dá erro de recurso duplicado `banner`).
+Em `android/app/src/main/java/com/tvapps/launcher/MainActivity.kt`:
 
-3. **Confirmar AndroidManifest**
-   - O `AndroidManifest.xml` já tem `android:banner="@drawable/banner"` na tag `<application>`. Vou também adicionar o mesmo atributo na `<activity>` MainActivity (recomendado pelo Android TV) para garantir que apareça em launchers que leem o banner da activity LEANBACK_LAUNCHER.
+1. **Linha 568-570** (clique do botão ATUALIZAR AGORA na tela bloqueante de OTA): trocar `showOtaConfirmDialog(remoteVersion, downloadUrl)` por chamada direta a `startLauncherUpdate(downloadUrl)`, mantendo a validação de URL vazia (mostrar Toast se inválida).
 
-4. **Verificar requisitos Android TV**
-   - Manter `<uses-feature android:name="android.software.leanback" android:required="false" />` e a category `LEANBACK_LAUNCHER` (já presentes).
-   - Garantir que o nome do app (`@string/app_name`) continue exibido junto do banner.
+2. **Linha 1402** (verificação manual de update via pill "Procurar atualizações"): também trocar `showOtaConfirmDialog(...)` por `startLauncherUpdate(downloadUrl)` para manter comportamento consistente — clicar = baixa direto.
 
-## Resultado esperado
-Após recompilar o APK e instalar na TV Box, a imagem TV.Apps enviada aparecerá como:
-- Banner do app na launcher da Android TV
-- Banner de destaque/recentes
-- Ícone-banner oficial do app
+3. A função `showOtaConfirmDialog` fica sem uso e pode ser removida, junto com o import `android.app.AlertDialog` se não houver mais usos (há outro uso em `showAlreadyInstalledDialog`, então o import permanece).
 
-## Detalhes técnicos
-- Ferramenta usada para redimensionar: `nix run nixpkgs#imagemagick` (resize 320x180 e 640x360, qualidade alta, sem distorção).
-- Arquivos alterados:
-  - `+ android/app/src/main/res/drawable/banner.png` (320x180)
-  - `+ android/app/src/main/res/drawable-xhdpi/banner.png` (640x360)
-  - `- android/app/src/main/res/drawable/banner.xml`
-  - `~ android/app/src/main/AndroidManifest.xml` (adicionar `android:banner` na activity)
+## Resultado
+
+Clicar em ATUALIZAR AGORA (ou na pill de procurar atualizações quando há update) começa o download na hora, com o progresso aparecendo na pill de status ("Baixando: X%"), e ao terminar abre o instalador do APK automaticamente.
