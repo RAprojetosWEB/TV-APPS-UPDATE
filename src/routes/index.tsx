@@ -382,6 +382,10 @@ function Index() {
       progress: number;
       isDownloaded?: boolean;
       blobUrl?: string;
+      downloadedBytes?: number;
+      totalBytes?: number;
+      speedBps?: number;
+      etaSeconds?: number;
     }>,
   ) => {
     setStates((prev) => {
