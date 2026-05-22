@@ -6,4 +6,5 @@
     <color name="accent_focus">#16a34a</color>
     <color name="text">#f5f3ff</color>
     <color name="text_muted">#b8a8d1</color>
+    <color name="ic_launcher_background">#0A120E</color>
 </resources>
