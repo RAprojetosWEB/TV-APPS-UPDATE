@@ -881,7 +881,8 @@ class MainActivity : Activity() {
         icon?.setBounds(0, 0, size, size)
         icon?.setTint(pill.currentTextColor)
         pill.setCompoundDrawables(icon, null, null, null)
-        pill.compoundDrawablePadding = dp(8)
+        // Sem padding quando só ícone, evita deslocar o ícone para a esquerda
+        pill.compoundDrawablePadding = if (label.isEmpty()) 0 else dp(8)
         pill.text = label
     }
 
