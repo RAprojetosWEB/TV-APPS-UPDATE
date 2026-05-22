@@ -1360,24 +1360,24 @@ class MainActivity : Activity() {
     }
 
     private fun startLauncherUpdate(url: String) {
-        val systemPill = otaStatusPill ?: return
-        val originalText = systemPill.text
-        
         scope.launch {
             ApkDownloader.download(this@MainActivity, url, "TV.Apps_Update").collect { p ->
+                val systemPill = otaStatusPill
                 when (p) {
                     is DownloadProgress.Progress -> withContext(Dispatchers.Main) {
-                        setPillContent(systemPill, R.drawable.ic_download, "Baixando: ${p.percent}%")
+                        if (systemPill != null) {
+                            setPillContent(systemPill, R.drawable.ic_download, "Baixando: ${p.percent}%")
+                        }
                     }
                     is DownloadProgress.Done -> withContext(Dispatchers.Main) {
-                        systemPill.text = "✓  Download concluído"
+                        systemPill?.text = "✓  Download concluído"
                         ApkInstaller.install(this@MainActivity, p.file)
-                        systemPill.postDelayed({ systemPill.text = "✓  Sistema atualizado" }, 5000)
+                        systemPill?.postDelayed({ systemPill.text = "✓  Sistema atualizado" }, 5000)
                     }
                     is DownloadProgress.Error -> withContext(Dispatchers.Main) {
-                        systemPill.text = "⚠  Erro no download"
+                        systemPill?.text = "⚠  Erro no download"
                         Toast.makeText(this@MainActivity, "Erro ao baixar atualização: ${p.message}", Toast.LENGTH_LONG).show()
-                        systemPill.postDelayed({ systemPill.text = if (systemPill.hasFocus()) "🔍  Procurar atualizações" else "🔍" }, 3000)
+                        systemPill?.postDelayed({ systemPill.text = if (systemPill.hasFocus()) "🔍  Procurar atualizações" else "🔍" }, 3000)
                     }
                 }
             }
