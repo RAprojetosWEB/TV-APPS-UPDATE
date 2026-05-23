@@ -869,7 +869,7 @@ class MainActivity : Activity() {
         root.addView(buildTopBar(scaleFactor))
 
         val cardWidth = (300 * scaleFactor).toInt()
-        val cardHeight = (420 * scaleFactor).toInt()
+        val cardHeight = (357 * scaleFactor).toInt()
         val cardMargin = (20 * scaleFactor).toInt()
 
         // Linha de cards centralizada com navegação infinita
