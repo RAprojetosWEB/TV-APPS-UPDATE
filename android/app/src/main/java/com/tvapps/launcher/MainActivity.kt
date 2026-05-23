@@ -1342,6 +1342,7 @@ class MainActivity : Activity() {
 
     private fun startDownload(index: Int) {
         val app = AppCatalog.apps[index]
+        if (app.isBlocked) return
         val card = cardViews[index]
         
         // Se já estiver instalado, abre direto
