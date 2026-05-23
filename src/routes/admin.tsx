@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
@@ -9,10 +9,29 @@ import {
   checkIsAdmin,
   getLoginPassword,
   updateLoginPassword,
+  createApp,
+  deleteApp,
+  duplicateApp,
+  reorderApps,
+  listLauncherVersions,
+  publishLauncherVersion,
+  setLatestLauncherVersion,
+  deleteLauncherVersion,
 } from "@/lib/admin.functions";
 import { toast } from "sonner";
-import { Lock, LogOut, Pencil, Save, X, Eye, EyeOff, KeyRound } from "lucide-react";
-import { Upload } from "lucide-react";
+import {
+  Lock, LogOut, Pencil, Save, X, Eye, EyeOff, KeyRound, Upload,
+  Plus, Trash2, Copy, GripVertical, Package, CheckCircle2, RotateCcw,
+} from "lucide-react";
+import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor,
+  useSensor, useSensors, type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove, SortableContext, sortableKeyboardCoordinates,
+  useSortable, verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -32,6 +51,17 @@ type AppRow = {
   is_active: boolean;
   is_blocked: boolean;
   block_reason: string | null;
+};
+
+type LauncherVersion = {
+  id: string;
+  version_name: string;
+  version_code: number;
+  apk_url: string | null;
+  apk_size_mb: number | null;
+  changelog: string | null;
+  is_latest: boolean | null;
+  created_at: string;
 };
 
 function AdminPage() {
