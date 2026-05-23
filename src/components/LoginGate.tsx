@@ -121,21 +121,11 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!mounted || authed) return;
-    // Enquanto a verificação OTA ainda está rodando, não focar nada
-    // (evita que o teclado virtual da TV apareça antes de sabermos se
-    // há atualização pendente).
-    if (ota.checking) return;
-    if (!ota.checked) return;
-    if (ota.hasUpdate) {
-      // Garante que o input perca o foco para fechar o teclado virtual
-      if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
-      }
-      return;
+    setSubmitSelected(false);
+    if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
     }
-    const t = setTimeout(() => inputRef.current?.focus(), 50);
-    return () => clearTimeout(t);
-  }, [mounted, authed, ota.hasUpdate, ota.checking, ota.checked]);
+  }, [mounted, authed, showSplash, ota.hasUpdate]);
 
   const startOtaUpdate = async () => {
     if (!ota.manifest || otaDownloading) return;
@@ -227,7 +217,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
       } else {
         setError("Senha incorreta");
         setPassword("");
-        setTimeout(() => inputRef.current?.focus(), 0);
+        setSubmitSelected(false);
       }
     } finally {
       setLoading(false);
