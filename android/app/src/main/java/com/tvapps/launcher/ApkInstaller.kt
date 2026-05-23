@@ -16,7 +16,7 @@ object ApkInstaller {
      * Uses FileProvider + ACTION_VIEW for maximum compatibility across
      * Android TV / TV Box vendors.
      */
-    fun install(context: Context, apk: File) {
+    fun install(context: Context, apk: File): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
             !context.packageManager.canRequestPackageInstalls()
         ) {
@@ -31,7 +31,7 @@ object ApkInstaller {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             context.startActivity(intent)
-            return
+            return false
         }
 
         val uri: Uri = FileProvider.getUriForFile(
@@ -46,5 +46,6 @@ object ApkInstaller {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(intent)
+        return true
     }
 }

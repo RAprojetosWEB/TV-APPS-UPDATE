@@ -38,6 +38,7 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.io.File
 
 import android.view.SoundEffectConstants
 import android.webkit.JavascriptInterface
@@ -74,6 +75,9 @@ class MainActivity : Activity() {
     }
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
     private var packageReceiver: PackageInstallReceiver? = null
+
+    // APK aguardando instalação após usuário conceder permissão "Instalar apps desconhecidos"
+    private var pendingInstallApk: File? = null
 
 
 
@@ -260,6 +264,16 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        // Se há um APK aguardando instalação e a permissão já foi concedida,
+        // dispara o instalador automaticamente ao voltar das Configurações.
+        pendingInstallApk?.let { apk ->
+            val canInstall = Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
+                packageManager.canRequestPackageInstalls()
+            if (canInstall && apk.exists()) {
+                pendingInstallApk = null
+                ApkInstaller.install(this, apk)
+            }
+        }
         // Revalida estado de instalação de cada card e trata limpeza de cache
         if (cardViews.isNotEmpty()) {
             AppCatalog.apps.forEachIndexed { index, app ->
@@ -1218,7 +1232,9 @@ class MainActivity : Activity() {
         // Se não está instalado mas já temos o APK baixado, abre o instalador direto
         val apkFile = ApkCache.fileFor(this, app.name)
         if (apkFile.exists() && apkFile.length() > 0) {
-            ApkInstaller.install(this, apkFile)
+            if (!ApkInstaller.install(this, apkFile)) {
+                pendingInstallApk = apkFile
+            }
             return
         }
 
@@ -1246,7 +1262,9 @@ class MainActivity : Activity() {
                         // Aprende o packageName real do APK baixado para detecção futura precisa
                         InstalledRegistry.learnFromApk(this@MainActivity, app.name, p.file)
                         
-                        ApkInstaller.install(this@MainActivity, p.file)
+                        if (!ApkInstaller.install(this@MainActivity, p.file)) {
+                            pendingInstallApk = p.file
+                        }
                         card.pill.postDelayed({
                             card.progress.visibility = View.GONE
                             card.percent.visibility = View.GONE
@@ -1728,7 +1746,23 @@ class MainActivity : Activity() {
                             views.button.text = "ABRINDO INSTALADOR…"
                         }
                         systemPill?.text = "✓  Download concluído"
-                        ApkInstaller.install(this@MainActivity, p.file)
+                        val opened = ApkInstaller.install(this@MainActivity, p.file)
+                        if (!opened) {
+                            // Permissão "Instalar apps desconhecidos" não concedida.
+                            // Guarda o APK para retomar no onResume e oferece retry manual.
+                            pendingInstallApk = p.file
+                            ui?.let { views ->
+                                views.button.isEnabled = true
+                                views.button.isFocusable = true
+                                views.button.text = "INSTALAR APLICATIVO"
+                                views.button.setOnClickListener {
+                                    if (!ApkInstaller.install(this@MainActivity, p.file)) {
+                                        pendingInstallApk = p.file
+                                    }
+                                }
+                            }
+                            systemPill?.text = "⚠  Autorize a instalação"
+                        }
                         systemPill?.postDelayed({ systemPill.text = "✓  Sistema atualizado" }, 5000)
                     }
                     is DownloadProgress.Error -> withContext(Dispatchers.Main) {
