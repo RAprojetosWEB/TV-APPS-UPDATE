@@ -274,6 +274,16 @@ function Index() {
 
   const currentApps = dynamicApps.length > 0 ? dynamicApps : APPS;
 
+  // Se o foco caiu em um card bloqueado (ex.: primeira posição agora está bloqueada),
+  // move para o primeiro não-bloqueado disponível.
+  useEffect(() => {
+    const current: any = currentApps[focused];
+    if (current?.isBlocked) {
+      const firstUnblocked = currentApps.findIndex((a: any) => !a.isBlocked);
+      if (firstUnblocked >= 0) setFocused(firstUnblocked);
+    }
+  }, [currentApps, focused]);
+
   const checkUpdates = async (manual = false) => {
     if (checkingUpdates) return;
     setCheckingUpdates(true);
