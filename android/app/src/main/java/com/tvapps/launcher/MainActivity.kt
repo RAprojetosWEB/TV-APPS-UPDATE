@@ -1746,7 +1746,23 @@ class MainActivity : Activity() {
                             views.button.text = "ABRINDO INSTALADOR…"
                         }
                         systemPill?.text = "✓  Download concluído"
-                        ApkInstaller.install(this@MainActivity, p.file)
+                        val opened = ApkInstaller.install(this@MainActivity, p.file)
+                        if (!opened) {
+                            // Permissão "Instalar apps desconhecidos" não concedida.
+                            // Guarda o APK para retomar no onResume e oferece retry manual.
+                            pendingInstallApk = p.file
+                            ui?.let { views ->
+                                views.button.isEnabled = true
+                                views.button.isFocusable = true
+                                views.button.text = "INSTALAR APLICATIVO"
+                                views.button.setOnClickListener {
+                                    if (!ApkInstaller.install(this@MainActivity, p.file)) {
+                                        pendingInstallApk = p.file
+                                    }
+                                }
+                            }
+                            systemPill?.text = "⚠  Autorize a instalação"
+                        }
                         systemPill?.postDelayed({ systemPill.text = "✓  Sistema atualizado" }, 5000)
                     }
                     is DownloadProgress.Error -> withContext(Dispatchers.Main) {
