@@ -414,6 +414,18 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER
             layoutParams = LinearLayout.LayoutParams(dp((300 * scaleFactor).toInt()), ViewGroup.LayoutParams.WRAP_CONTENT)
         }
+        passwordInput.isFocusable = true
+        passwordInput.isFocusableInTouchMode = true
+        passwordInput.setOnFocusChangeListener { v, hasFocus ->
+            v.background = makeCardBg(hasFocus, scaleFactor)
+            if (hasFocus) {
+                v.animate().scaleX(1.04f).scaleY(1.04f).setDuration(150).start()
+                v.elevation = dp(6).toFloat()
+            } else {
+                v.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
+                v.elevation = 0f
+            }
+        }
 
         val loginButton = TextView(this).apply {
             text = "ENTRAR"
@@ -435,9 +447,9 @@ class MainActivity : Activity() {
                 v.background = makePillBg(hasFocus, scaleFactor)
                 (v as TextView).setTextColor(if (hasFocus) Color.parseColor("#15102A") else Color.WHITE)
                 if (hasFocus) {
-                    v.animate().scaleX(1.15f).scaleY(1.15f).setDuration(180).start()
-                    v.elevation = dp(12).toFloat()
-                    (v as TextView).setShadowLayer(40f, 0f, 0f, Color.parseColor("#992dd4a8"))
+                    v.animate().scaleX(1.08f).scaleY(1.08f).setDuration(180).start()
+                    v.elevation = dp(8).toFloat()
+                    (v as TextView).setShadowLayer(24f, 0f, 0f, Color.parseColor("#992dd4a8"))
                 } else {
                     v.animate().scaleX(1f).scaleY(1f).setDuration(180).start()
                     v.elevation = 0f
