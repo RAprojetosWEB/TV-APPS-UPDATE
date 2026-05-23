@@ -62,6 +62,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [submitSelected, setSubmitSelected] = useState(false);
   
   // OTA (Verificação obrigatória antes do login)
   const ota = useOtaUpdate({ autoCheck: true });
@@ -72,6 +73,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const updateBtnRef = useRef<HTMLButtonElement>(null);
+  const canSubmit = password.trim().length > 0;
 
   useEffect(() => {
     setMounted(true);
@@ -175,7 +177,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
   };
 
   async function handleSubmit() {
-    if (loading || isTransitioning) return;
+    if (loading || isTransitioning || !canSubmit) return;
     setLoading(true);
     setError(null);
     try {
@@ -219,9 +221,16 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
     }
     if (k === "ArrowDown") {
       e.preventDefault();
-      buttonRef.current?.focus();
+      if (canSubmit) {
+        setSubmitSelected(true);
+        buttonRef.current?.focus();
+      } else {
+        setSubmitSelected(false);
+        inputRef.current?.focus();
+      }
     } else if (k === "ArrowUp") {
       e.preventDefault();
+      setSubmitSelected(false);
       inputRef.current?.focus();
     }
   }
