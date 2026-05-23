@@ -744,7 +744,9 @@ function Index() {
         </div>
       </header>
 
-      <section className="tv-card-grid flex-1 min-h-0 items-stretch">
+      <section
+        className={`${currentApps.length > 3 ? "tv-card-carousel" : "tv-card-grid"} flex-1 min-h-0 items-stretch`}
+      >
         {currentApps.map((app, i) => {
           const isFocused = focused === i;
           if ((app as any).isBlocked) {
