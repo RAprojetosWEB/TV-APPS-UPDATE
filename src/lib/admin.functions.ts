@@ -205,13 +205,13 @@ export const duplicateApp = createServerFn({ method: "POST" })
     const nextOrder = (maxRow?.display_order ?? -1) + 1;
     const { error } = await supabaseAdmin.from("apps").insert({
       name: `${src.name} (cópia)`,
-      package_name: `${src.package_name}.copy.${Date.now()}`,
+      package_name: src.package_name,
       description: src.description,
       icon_url: src.icon_url,
       logo_url: src.logo_url,
       apk_url: src.apk_url,
       display_order: nextOrder,
-      is_active: false,
+      is_active: true,
       is_blocked: false,
     });
     if (error) throw new Error(error.message);
