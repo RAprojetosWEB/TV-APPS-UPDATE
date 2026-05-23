@@ -1,26 +1,40 @@
-Vou corrigir a rolagem dos cards no launcher Android nativo, porque hoje a tela principal usa apenas um `LinearLayout` horizontal. Quando há mais de 4 cards, os cards extras ficam fora da tela, mas o container não é rolável.
+## Problema
 
-Plano:
+No painel admin, ao clicar em **Upload direto**, o popover abre mas os campos "Escolher arquivo" (APK e update.json) não respondem ao clique — não abre o seletor de arquivos nativo.
 
-1. Trocar a linha de cards por um container rolável horizontal
-   - Envolver o `LinearLayout` dos cards em um `HorizontalScrollView`.
-   - Manter o `LinearLayout` interno para preservar o layout atual dos cards.
-   - Desabilitar barra visual de scroll para manter aparência de TV.
+## Causa provável
 
-2. Fazer a rolagem acompanhar o foco do controle remoto
-   - Ao mover para direita/esquerda, quando o foco mudar de card, centralizar automaticamente o card focado dentro da tela.
-   - Isso garante que o 5º card em diante apareça ao navegar com o controle.
+O popover do `RawUploadButton` é renderizado como `<div absolute z-20>` *dentro* do cabeçalho da seção OTA. Quando o formulário **"Publicar nova versão"** está aberto ao mesmo tempo (que é o caso no print), os elementos do formulário (inputs, textarea, file input) ficam abaixo no DOM e em alguns navegadores acabam capturando o clique do `<input type="file">` do popover, porque o popover não está renderizado em portal — vive no mesmo stacking context da página e o native file-picker depende de um clique limpo no elemento.
 
-3. Preservar a navegação atual
-   - Manter a lógica que pula cards bloqueados.
-   - Manter a navegação circular esquerda/direita.
-   - Manter foco inicial no primeiro card disponível.
+Sintoma típico: visualmente o popover aparece por cima, mas a área dos `<input type="file">` é "atravessada" pelo formulário que está logo abaixo.
 
-4. Gerar nova versão OTA
-   - Incrementar `android/version.properties` novamente, pois a correção é no APK nativo.
+## Solução
 
-Arquivos previstos:
-- `android/app/src/main/java/com/tvapps/launcher/MainActivity.kt`
-- `android/version.properties`
+Trocar o popover ad-hoc por um **Dialog do shadcn** (`@/components/ui/dialog`), que é renderizado num **Portal** no topo do `<body>` com z-index alto e backdrop modal. Assim:
 
-Resultado esperado: com 5 ou mais cards, o usuário navega pelo controle remoto e a lista rola automaticamente para revelar os cards fora da tela.
+1. Não há disputa de z-index com o formulário "Publicar nova versão".
+2. Cliques no `<input type="file">` chegam limpos ao navegador → o picker abre.
+3. Como bônus, fica visualmente consistente com os outros modais do admin.
+
+### Alterações em `src/routes/admin.tsx`
+
+- Reescrever apenas o componente `RawUploadButton`:
+  - Botão "Upload direto" continua igual (estilo `border border-white/15 bg-white/5 …`).
+  - Em vez de `<div className="absolute …">` controlado por `open`, usar `<Dialog open={open} onOpenChange={setOpen}>` com `<DialogContent>` contendo:
+    - Título "Upload direto (sem form)"
+    - Descrição curta atual
+    - Dois `<input type="file">` (APK e update.json), com `<label>` claros — manter o styling escuro do tema mas com um botão custom "Escolher APK" / "Escolher update.json" usando `<label htmlFor>` + input escondido para garantir clique consistente
+    - Mostrar nome do arquivo selecionado ao lado
+    - Botões "Fechar" e "Enviar" no rodapé (`DialogFooter`)
+  - Comportamento: ao clicar "Enviar", chama `onUpload(apk, json)`, limpa estado e fecha o dialog (igual ao atual).
+- Nada muda no `handleRawUpload` nem nas server functions `uploadLauncherApk` / `uploadLauncherRaw`.
+
+### Observações
+
+- Sem mexer em código de backend / migrations / OTA.
+- Sem mexer no APK (não precisa recompilar nada Android).
+- Mudança puramente de UI no admin.
+
+## Resultado esperado
+
+Clicar em **Upload direto** abre um modal sobreposto e os botões "Escolher APK" / "Escolher update.json" abrem o seletor de arquivos normalmente, independentemente do formulário "Publicar nova versão" estar aberto ou não.
