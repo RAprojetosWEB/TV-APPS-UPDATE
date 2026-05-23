@@ -1107,6 +1107,95 @@ class MainActivity : Activity() {
         return CardViews(container, content, iconBadge, iconImage, title, subtitle, pill, progress, percent, installedChip)
     }
 
+    /**
+     * Card 100% neutro para apps bloqueados pelo painel admin.
+     * Sem logo, sem nome, sem foco — apenas cadeado + "Indisponível" + motivo opcional.
+     */
+    private fun buildBlockedCard(app: CatalogApp, width: Int, height: Int, margin: Int, scale: Float): CardViews {
+        val grayDark = Color.parseColor("#1f2233")
+        val grayBorder = Color.parseColor("#2a2e44")
+        val grayMid = Color.parseColor("#3a3f5a")
+        val grayText = Color.parseColor("#8a8fa8")
+        val grayLabel = Color.parseColor("#a8adc4")
+
+        val container = FrameLayout(this).apply {
+            isFocusable = false
+            isClickable = false
+            background = GradientDrawable().apply {
+                cornerRadius = dp((24 * scale).toInt()).toFloat()
+                setColor(grayDark)
+                setStroke(dp(2), grayBorder)
+            }
+            val lp = LinearLayout.LayoutParams(dp(width), dp(height))
+            lp.marginStart = dp(margin)
+            lp.marginEnd = dp(margin)
+            layoutParams = lp
+        }
+
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            val p = (28 * scale).toInt()
+            setPadding(dp(p), dp(p), dp(p), dp(p))
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
+        }
+
+        val iconBadge = FrameLayout(this).apply {
+            background = GradientDrawable().apply {
+                cornerRadius = dp((16 * scale).toInt()).toFloat()
+                setColor(grayMid)
+            }
+            val size = (100 * scale).toInt()
+            val lp = LinearLayout.LayoutParams(dp(size), dp(size))
+            lp.bottomMargin = dp((20 * scale).toInt())
+            layoutParams = lp
+        }
+        val iconImage = ImageView(this).apply {
+            // Usa ícone de cadeado padrão do Android.
+            setImageResource(android.R.drawable.ic_lock_lock)
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            val pad = dp((18 * scale).toInt())
+            setPadding(pad, pad, pad, pad)
+            setColorFilter(grayLabel)
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            ).apply { gravity = Gravity.CENTER }
+        }
+        iconBadge.addView(iconImage)
+
+        val title = TextView(this).apply {
+            text = "Indisponível"
+            setTextColor(grayLabel)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f * scale)
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            gravity = Gravity.CENTER
+        }
+        val subtitle = TextView(this).apply {
+            text = if (!app.blockReason.isNullOrBlank()) app.blockReason else "Em manutenção"
+            setTextColor(grayText)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f * scale)
+            gravity = Gravity.CENTER
+            setPadding(0, dp((8 * scale).toInt()), 0, 0)
+        }
+
+        content.addView(iconBadge)
+        content.addView(title)
+        content.addView(subtitle)
+        container.addView(content)
+
+        // Placeholders para preencher o data class CardViews — nunca exibidos.
+        val pill = TextView(this).apply { visibility = View.GONE }
+        val progress = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply { visibility = View.GONE }
+        val percent = TextView(this).apply { visibility = View.GONE }
+        val installedChip = TextView(this).apply { visibility = View.GONE }
+
+        return CardViews(container, content, iconBadge, iconImage, title, subtitle, pill, progress, percent, installedChip)
+    }
+
     private fun makeCardBg(focused: Boolean, scale: Float): GradientDrawable {
         val gd = GradientDrawable(
             GradientDrawable.Orientation.TOP_BOTTOM,
