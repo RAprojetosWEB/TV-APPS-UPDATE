@@ -123,6 +123,22 @@ class MainActivity : Activity() {
             setContentView(buildLoginScreen())
         }, 3500)
 
+        // Catálogo remoto: usa cache imediatamente, depois refresca em background.
+        // Quando o usuário clicar ENTRAR (após splash de 3.5s), os cards usarão
+        // a versão mais recente disponível.
+        RemoteCatalog.loadCached(this)?.let { cached ->
+            if (cached.isNotEmpty()) AppCatalog.apps = cached
+        }
+        Thread {
+            try {
+                val fresh = RemoteCatalog.fetchSync(this)
+                if (fresh != null && fresh.isNotEmpty()) {
+                    AppCatalog.apps = fresh
+                }
+            } catch (_: Exception) {
+            }
+        }.start()
+
         // Limpeza inicial do cache de APKs (apps já instalados + órfãos + limite)
         try {
             ApkCache.cleanupInstalled(this, AppCatalog.apps)
