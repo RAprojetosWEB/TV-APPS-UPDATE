@@ -17,8 +17,22 @@ import {
   publishLauncherVersion,
   setLatestLauncherVersion,
   deleteLauncherVersion,
+  uploadAppIcon,
+  uploadLauncherApk,
+  uploadLauncherRaw,
 } from "@/lib/admin.functions";
 import { toast } from "sonner";
+
+async function fileToBase64(file: File | Blob): Promise<string> {
+  const buf = await file.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  let bin = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    bin += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(bin);
+}
 import {
   Lock, LogOut, Pencil, Save, X, Eye, EyeOff, KeyRound, Upload,
   Plus, Trash2, Copy, GripVertical, Package, CheckCircle2, RotateCcw,
@@ -443,6 +457,7 @@ function AppCard({
   const [displayOrder, setDisplayOrder] = useState(app.display_order);
   const [isActive, setIsActive] = useState(app.is_active);
   const [uploading, setUploading] = useState(false);
+  const uploadIconFn = useServerFn(uploadAppIcon);
 
   async function handleIconUpload(file: File) {
     if (!file.type.startsWith("image/")) {
@@ -456,13 +471,11 @@ function AppCard({
     setUploading(true);
     try {
       const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-      const path = `${app.id}/${Date.now()}.${ext}`;
-      const { error } = await supabase.storage
-        .from("app-icons")
-        .upload(path, file, { upsert: false, contentType: file.type });
-      if (error) throw error;
-      const { data } = supabase.storage.from("app-icons").getPublicUrl(path);
-      setIconUrl(data.publicUrl);
+      const fileBase64 = await fileToBase64(file);
+      const { publicUrl } = await uploadIconFn({
+        data: { appId: app.id, fileBase64, ext, contentType: file.type },
+      });
+      setIconUrl(publicUrl);
       toast.success("Ícone enviado. Clique em Salvar para aplicar.");
     } catch (err) {
       toast.error("Falha no upload", { description: String(err) });
@@ -933,6 +946,8 @@ function OtaSectionInner() {
   const publishFn = useServerFn(publishLauncherVersion);
   const setLatestFn = useServerFn(setLatestLauncherVersion);
   const deleteFn = useServerFn(deleteLauncherVersion);
+  const uploadApkFn = useServerFn(uploadLauncherApk);
+  const uploadRawFn = useServerFn(uploadLauncherRaw);
 
   const [versions, setVersions] = useState<LauncherVersion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -943,15 +958,12 @@ function OtaSectionInner() {
     setRawUploading(true);
     try {
       const apkPath = `releases/${apk.name}`;
-      const upApk = await supabase.storage
-        .from("tvapps-updates")
-        .upload(apkPath, apk, { upsert: true, contentType: "application/vnd.android.package-archive" });
-      if (upApk.error) throw upApk.error;
-
-      const upJson = await supabase.storage
-        .from("tvapps-updates")
-        .upload("update.json", json, { upsert: true, contentType: "application/json" });
-      if (upJson.error) throw upJson.error;
+      const apkB64 = await fileToBase64(apk);
+      await uploadApkFn({ data: { path: apkPath, fileBase64: apkB64 } });
+      const jsonB64 = await fileToBase64(json);
+      await uploadRawFn({
+        data: { path: "update.json", contentBase64: jsonB64, contentType: "application/json" },
+      });
 
       toast.success("Upload concluído", {
         description: `APK e update.json enviados para o Storage.`,
@@ -1158,6 +1170,7 @@ function PublishVersionForm({
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const uploadApkFn = useServerFn(uploadLauncherApk);
 
   async function handleSubmit() {
     if (!versionName.trim() || !versionCode.trim() || !file) {
@@ -1177,13 +1190,8 @@ function PublishVersionForm({
     setProgress(0);
     try {
       const path = `releases/${codeNum}.apk`;
-      const { error } = await supabase.storage
-        .from("tvapps-updates")
-        .upload(path, file, {
-          upsert: true,
-          contentType: "application/vnd.android.package-archive",
-        });
-      if (error) throw error;
+      const fileBase64 = await fileToBase64(file);
+      await uploadApkFn({ data: { path, fileBase64 } });
       setProgress(100);
       await onPublish({
         versionName: versionName.trim(),
