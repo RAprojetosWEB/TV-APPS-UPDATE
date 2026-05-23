@@ -3,11 +3,11 @@ import { LogIn, RefreshCcw, AlertTriangle, Settings } from "lucide-react";
 import { NetworkIndicator } from "./NetworkIndicator";
 import { useOtaUpdate } from "@/hooks/useOtaUpdate";
 import { OtaUpdateModal } from "./OtaUpdateModal";
+import { verifyLoginPassword } from "@/lib/auth.functions";
 
-// SHA-256("1555"). Para trocar, gere um novo hash e substitua aqui.
-// Console: crypto.subtle.digest("SHA-256", new TextEncoder().encode("suasenha"))
-const PASSWORD_HASH =
-  "2ae7ffb0ec4d1bccf01b12233aaced6949cc5808a4a173315ee508abbbaaaa1c";
+// Senha de fallback usada se o servidor estiver inacessível (TV offline).
+// A senha real fica no Lovable Cloud → Tabelas → app_settings → login_password.
+const FALLBACK_PASSWORD = "1555";
 
 const STORAGE_KEY = "tvapps_auth_v1";
 const SESSION_TOKEN = "ok";
@@ -21,16 +21,6 @@ function getStore(): Storage | null {
   } catch {
     return null;
   }
-}
-
-async function sha256Hex(value: string): Promise<string> {
-  const buf = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(value),
-  );
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
 }
 
 function formatSpeed(bps: number): string {
