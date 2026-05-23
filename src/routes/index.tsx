@@ -346,7 +346,18 @@ function Index() {
   const modalOpen = doneIndex !== -1 || installModalOpen || updateModalOpen;
 
   useEffect(() => {
-    if (!modalOpen) refs.current[focused]?.focus();
+    if (modalOpen) return;
+    // Só restaura o foco no card quando NINGUÉM mais tem foco
+    // (ex.: após fechar um modal ou na montagem inicial).
+    // Caso contrário, roubaríamos o foco dos botões do header
+    // (Updates/Configurações) no Android TV.
+    if (typeof document === "undefined") return;
+    const active = document.activeElement as HTMLElement | null;
+    const isOnCard = !!active && refs.current.includes(active as HTMLButtonElement);
+    const isFocusLost = !active || active === document.body;
+    if (isFocusLost || isOnCard) {
+      refs.current[focused]?.focus();
+    }
   }, [focused, modalOpen]);
 
   // Força orientação landscape sempre que possível (PWA / fullscreen no Android)
