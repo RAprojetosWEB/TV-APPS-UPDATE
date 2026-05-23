@@ -6,6 +6,7 @@ import { useOtaUpdate } from "@/hooks/useOtaUpdate";
 import { OtaUpdateModal } from "@/components/OtaUpdateModal";
 import { NetworkIndicator } from "@/components/NetworkIndicator";
 import { LoginGate } from "@/components/LoginGate";
+import { BlockedCard } from "@/components/BlockedCard";
 import { useDateTime } from "@/hooks/useDateTime";
 import { toast } from "sonner";
 import unitvLogo from "@/assets/unitv.png";
@@ -237,38 +238,30 @@ function Index() {
 
   const fetchDynamicApps = async () => {
     try {
-      const { data: apps, error } = await supabase
-        .from('apps')
-        .select(`
-          *,
-          app_versions (*)
-        `)
-        .order('name');
-      
-      if (error) throw error;
-      
-      if (apps && apps.length > 0) {
-        const mappedApps = apps.map(app => {
-          const latestVersion = app.app_versions?.find((v: any) => v.is_latest) || app.app_versions?.[0];
-          return {
-            name: app.name,
-            description: app.description || "",
-            url: latestVersion?.apk_url || "",
-            logo: app.logo_url || (app.name === "UniTV" ? unitvLogo : app.name === "Nexa TV" ? nexatvLogo : alphaplayLogo),
-            packageName: app.package_name,
-            version: latestVersion?.version_name || "1.0",
-            updateDate: latestVersion ? new Date(latestVersion.created_at).toLocaleDateString('pt-BR') : "N/A",
-            size: latestVersion?.apk_size_mb ? `${latestVersion.apk_size_mb}MB` : "N/A",
-          };
-        });
-        const order = ["unitv", "nexa tv", "alphaplay"];
-        mappedApps.sort((a, b) => {
-          const idxA = order.indexOf(a.name.toLowerCase());
-          const idxB = order.indexOf(b.name.toLowerCase());
-          return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
-        });
-        setDynamicApps(mappedApps);
-      }
+      // Endpoint público que retorna apps + flags de bloqueio (sem auth).
+      // É a mesma fonte que o APK Android consome.
+      const res = await fetch("/api/public/catalog", { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const payload = await res.json();
+      const apps: any[] = payload?.apps ?? [];
+      if (apps.length === 0) return;
+
+      const fallbackLogo = (name: string) =>
+        name === "UniTV" ? unitvLogo : name === "Nexa TV" ? nexatvLogo : alphaplayLogo;
+
+      const mappedApps = apps.map((app) => ({
+        name: app.name,
+        description: app.description || "",
+        url: app.apk_url || "",
+        logo: app.icon_url || app.logo_url || fallbackLogo(app.name),
+        packageName: app.package_name,
+        version: "1.0",
+        updateDate: "N/A",
+        size: "N/A",
+        isBlocked: !!app.is_blocked,
+        blockReason: app.block_reason ?? null,
+      }));
+      setDynamicApps(mappedApps);
     } catch (err) {
       console.error("Erro ao carregar apps do banco:", err);
       setDynamicApps(APPS); // Fallback
@@ -280,6 +273,16 @@ function Index() {
   }, []);
 
   const currentApps = dynamicApps.length > 0 ? dynamicApps : APPS;
+
+  // Se o foco caiu em um card bloqueado (ex.: primeira posição agora está bloqueada),
+  // move para o primeiro não-bloqueado disponível.
+  useEffect(() => {
+    const current: any = currentApps[focused];
+    if (current?.isBlocked) {
+      const firstUnblocked = currentApps.findIndex((a: any) => !a.isBlocked);
+      if (firstUnblocked >= 0) setFocused(firstUnblocked);
+    }
+  }, [currentApps, focused]);
 
   const checkUpdates = async (manual = false) => {
     if (checkingUpdates) return;
@@ -419,14 +422,22 @@ function Index() {
     const target = e.target as HTMLElement | null;
     const isCard = refs.current.some((el) => el === target);
     if (!isCard) return;
+    // Lista de índices focáveis (pulamos cards bloqueados).
+    const focusable = currentApps
+      .map((a: any, idx: number) => (a.isBlocked ? -1 : idx))
+      .filter((i: number) => i >= 0);
+    if (focusable.length === 0) return;
+    const currentPos = focusable.indexOf(focused);
     if (e.key === "ArrowRight") {
       e.preventDefault();
-      const next = (focused + 1) % currentApps.length;
+      const nextPos = (currentPos + 1 + focusable.length) % focusable.length;
+      const next = focusable[nextPos];
       setFocused(next);
       playTick();
     } else if (e.key === "ArrowLeft") {
       e.preventDefault();
-      const next = (focused - 1 + currentApps.length) % currentApps.length;
+      const nextPos = (currentPos - 1 + focusable.length) % focusable.length;
+      const next = focusable[nextPos];
       setFocused(next);
       playTick();
     }
@@ -731,6 +742,11 @@ function Index() {
       <section className="tv-card-grid flex-1 min-h-0 items-stretch">
         {currentApps.map((app, i) => {
           const isFocused = focused === i;
+          if ((app as any).isBlocked) {
+            return (
+              <BlockedCard key={`blocked-${i}`} reason={(app as any).blockReason} />
+            );
+          }
           return (
             <button
               key={app.name}

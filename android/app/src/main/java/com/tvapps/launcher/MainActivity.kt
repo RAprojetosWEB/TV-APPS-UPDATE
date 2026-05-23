@@ -123,6 +123,22 @@ class MainActivity : Activity() {
             setContentView(buildLoginScreen())
         }, 3500)
 
+        // Catálogo remoto: usa cache imediatamente, depois refresca em background.
+        // Quando o usuário clicar ENTRAR (após splash de 3.5s), os cards usarão
+        // a versão mais recente disponível.
+        RemoteCatalog.loadCached(this)?.let { cached ->
+            if (cached.isNotEmpty()) AppCatalog.apps = cached
+        }
+        Thread {
+            try {
+                val fresh = RemoteCatalog.fetchSync(this)
+                if (fresh != null && fresh.isNotEmpty()) {
+                    AppCatalog.apps = fresh
+                }
+            } catch (_: Exception) {
+            }
+        }.start()
+
         // Limpeza inicial do cache de APKs (apps já instalados + órfãos + limite)
         try {
             ApkCache.cleanupInstalled(this, AppCatalog.apps)
@@ -871,11 +887,22 @@ class MainActivity : Activity() {
             override fun focusSearch(focused: View, direction: Int): View? {
                 val currentIdx = cardViews.indexOfFirst { it.container == focused }
                 if (currentIdx != -1) {
+                    // Pula cards bloqueados (que têm isFocusable=false).
+                    val total = cardViews.size
+                    fun nextFocusable(start: Int, step: Int): View? {
+                        var i = start
+                        for (n in 0 until total) {
+                            i = ((i + step) % total + total) % total
+                            val view = cardViews[i].container
+                            if (view.isFocusable && view != focused) return view
+                        }
+                        return null
+                    }
                     if (direction == View.FOCUS_RIGHT) {
-                        return cardViews[(currentIdx + 1) % cardViews.size].container
+                        return nextFocusable(currentIdx, 1) ?: super.focusSearch(focused, direction)
                     }
                     if (direction == View.FOCUS_LEFT) {
-                        return cardViews[(currentIdx - 1 + cardViews.size) % cardViews.size].container
+                        return nextFocusable(currentIdx, -1) ?: super.focusSearch(focused, direction)
                     }
                 }
                 return super.focusSearch(focused, direction)
@@ -916,9 +943,9 @@ class MainActivity : Activity() {
         }
         root.addView(footer)
 
-        cardViews.getOrNull(0)?.container?.post {
-            cardViews[0].container.requestFocus()
-        }
+        // Foca o primeiro card não-bloqueado.
+        val firstFocusable = cardViews.firstOrNull { it.container.isFocusable }
+        firstFocusable?.container?.post { firstFocusable.container.requestFocus() }
         return root
     }
 
@@ -934,6 +961,9 @@ class MainActivity : Activity() {
     }
 
     private fun buildCard(index: Int, app: CatalogApp, width: Int, height: Int, margin: Int, scale: Float): CardViews {
+        if (app.isBlocked) {
+            return buildBlockedCard(app, width, height, margin, scale)
+        }
         // Container externo (FrameLayout) recebe o foco e o background com borda
         val container = FrameLayout(this).apply {
             isFocusable = true
@@ -1088,6 +1118,95 @@ class MainActivity : Activity() {
         return CardViews(container, content, iconBadge, iconImage, title, subtitle, pill, progress, percent, installedChip)
     }
 
+    /**
+     * Card 100% neutro para apps bloqueados pelo painel admin.
+     * Sem logo, sem nome, sem foco — apenas cadeado + "Indisponível" + motivo opcional.
+     */
+    private fun buildBlockedCard(app: CatalogApp, width: Int, height: Int, margin: Int, scale: Float): CardViews {
+        val grayDark = Color.parseColor("#1f2233")
+        val grayBorder = Color.parseColor("#2a2e44")
+        val grayMid = Color.parseColor("#3a3f5a")
+        val grayText = Color.parseColor("#8a8fa8")
+        val grayLabel = Color.parseColor("#a8adc4")
+
+        val container = FrameLayout(this).apply {
+            isFocusable = false
+            isClickable = false
+            background = GradientDrawable().apply {
+                cornerRadius = dp((24 * scale).toInt()).toFloat()
+                setColor(grayDark)
+                setStroke(dp(2), grayBorder)
+            }
+            val lp = LinearLayout.LayoutParams(dp(width), dp(height))
+            lp.marginStart = dp(margin)
+            lp.marginEnd = dp(margin)
+            layoutParams = lp
+        }
+
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            val p = (28 * scale).toInt()
+            setPadding(dp(p), dp(p), dp(p), dp(p))
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
+        }
+
+        val iconBadge = FrameLayout(this).apply {
+            background = GradientDrawable().apply {
+                cornerRadius = dp((16 * scale).toInt()).toFloat()
+                setColor(grayMid)
+            }
+            val size = (100 * scale).toInt()
+            val lp = LinearLayout.LayoutParams(dp(size), dp(size))
+            lp.bottomMargin = dp((20 * scale).toInt())
+            layoutParams = lp
+        }
+        val iconImage = ImageView(this).apply {
+            // Usa ícone de cadeado padrão do Android.
+            setImageResource(android.R.drawable.ic_lock_lock)
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            val pad = dp((18 * scale).toInt())
+            setPadding(pad, pad, pad, pad)
+            setColorFilter(grayLabel)
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            ).apply { gravity = Gravity.CENTER }
+        }
+        iconBadge.addView(iconImage)
+
+        val title = TextView(this).apply {
+            text = "Indisponível"
+            setTextColor(grayLabel)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f * scale)
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            gravity = Gravity.CENTER
+        }
+        val subtitle = TextView(this).apply {
+            text = if (!app.blockReason.isNullOrBlank()) app.blockReason else "Em manutenção"
+            setTextColor(grayText)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f * scale)
+            gravity = Gravity.CENTER
+            setPadding(0, dp((8 * scale).toInt()), 0, 0)
+        }
+
+        content.addView(iconBadge)
+        content.addView(title)
+        content.addView(subtitle)
+        container.addView(content)
+
+        // Placeholders para preencher o data class CardViews — nunca exibidos.
+        val pill = TextView(this).apply { visibility = View.GONE }
+        val progress = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply { visibility = View.GONE }
+        val percent = TextView(this).apply { visibility = View.GONE }
+        val installedChip = TextView(this).apply { visibility = View.GONE }
+
+        return CardViews(container, content, iconBadge, iconImage, title, subtitle, pill, progress, percent, installedChip)
+    }
+
     private fun makeCardBg(focused: Boolean, scale: Float): GradientDrawable {
         val gd = GradientDrawable(
             GradientDrawable.Orientation.TOP_BOTTOM,
@@ -1163,6 +1282,7 @@ class MainActivity : Activity() {
      * Estados: "Abrir aplicativo", "Instalar aplicativo", "Baixar aplicativo"
      */
     private fun refreshInstalledState(card: CardViews, app: CatalogApp) {
+        if (app.isBlocked) return
         if (card.progress.visibility == View.VISIBLE) return // download em andamento
         
         val installed = InstalledRegistry.isInstalled(this, app)
@@ -1233,6 +1353,7 @@ class MainActivity : Activity() {
 
     private fun startDownload(index: Int) {
         val app = AppCatalog.apps[index]
+        if (app.isBlocked) return
         val card = cardViews[index]
         
         // Se já estiver instalado, abre direto
