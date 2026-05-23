@@ -560,14 +560,14 @@ class MainActivity : Activity() {
         val footerNotice = TextView(this).apply {
             text = "Acesso restrito a clientes. Peça o acesso no WhatsApp 14 99868-1696"
             setTextColor(Color.parseColor("#66FFFFFF"))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 36f * scaleFactor)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f * scaleFactor)
             gravity = Gravity.CENTER
             layoutParams = FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             ).apply {
                 gravity = Gravity.TOP
-                topMargin = dp((24 * scaleFactor).toInt())
+                topMargin = dp((16 * scaleFactor).toInt())
             }
         }
         root.addView(footerNotice)
