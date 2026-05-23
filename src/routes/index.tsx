@@ -412,14 +412,22 @@ function Index() {
     const target = e.target as HTMLElement | null;
     const isCard = refs.current.some((el) => el === target);
     if (!isCard) return;
+    // Lista de índices focáveis (pulamos cards bloqueados).
+    const focusable = currentApps
+      .map((a: any, idx: number) => (a.isBlocked ? -1 : idx))
+      .filter((i: number) => i >= 0);
+    if (focusable.length === 0) return;
+    const currentPos = focusable.indexOf(focused);
     if (e.key === "ArrowRight") {
       e.preventDefault();
-      const next = (focused + 1) % currentApps.length;
+      const nextPos = (currentPos + 1 + focusable.length) % focusable.length;
+      const next = focusable[nextPos];
       setFocused(next);
       playTick();
     } else if (e.key === "ArrowLeft") {
       e.preventDefault();
-      const next = (focused - 1 + currentApps.length) % currentApps.length;
+      const nextPos = (currentPos - 1 + focusable.length) % focusable.length;
+      const next = focusable[nextPos];
       setFocused(next);
       playTick();
     }
