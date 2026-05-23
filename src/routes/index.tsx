@@ -370,10 +370,12 @@ function Index() {
         const centerDelta =
           cardRect.left + cardRect.width / 2 -
           (carouselRect.left + carouselRect.width / 2);
-        carousel.scrollTo({
-          left: Math.max(0, carousel.scrollLeft + centerDelta),
-          behavior: "smooth",
-        });
+        const nextLeft = Math.max(0, carousel.scrollLeft + centerDelta);
+        try {
+          carousel.scrollTo({ left: nextLeft, behavior: "smooth" });
+        } catch {
+          carousel.scrollLeft = nextLeft;
+        }
       }
     }
   }, [focused, modalOpen, currentApps.length]);
