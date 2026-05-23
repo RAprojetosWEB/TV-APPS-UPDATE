@@ -75,6 +75,15 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
+    // Na versão web (sem bridge Android nativa), pula a tela de login.
+    // Apenas o APK Android continua exigindo senha.
+    const isNativeAndroid =
+      typeof window !== "undefined" &&
+      typeof window.Android?.installApk === "function";
+    if (!isNativeAndroid) {
+      setAuthed(true);
+      return;
+    }
     setAuthed(isAuthenticated());
   }, []);
 

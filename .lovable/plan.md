@@ -1,29 +1,16 @@
-## Bug
+## Plano
 
-No Android, quando o botão **"Procurar atualizações"** está com foco (expandido com texto) e o usuário aperta a seta para a **direita** para ir em **"Configurações"** (engrenagem), o foco **pula** a engrenagem e cai direto num card de app embaixo. O vídeo confirma: em poucos frames a pílula colapsa e o foco aparece num card, sem nunca passar pela engrenagem.
+Na versão web (navegador comum), pular completamente a tela de senha. No APK Android (WebView nativa), continuar exigindo a senha como hoje.
 
-## Causa
+### Como detectar
+O app já distingue Android nativo pela presença de `window.Android.installApk` (mesma checagem usada em `src/routes/index.tsx`). Vou usar a mesma checagem no `LoginGate`.
 
-A barra superior usa `LayoutTransition` com animação `CHANGING` (250ms). Quando a pílula "Procurar atualizações" cresce/encolhe com texto, a engrenagem ainda está sendo animada para uma nova posição. Nesse meio-tempo, o algoritmo de **focus search** do Android usa retângulos desatualizados e às vezes não encontra a engrenagem à direita — então cai para o card mais próximo abaixo.
+### Mudança
+Em `src/components/LoginGate.tsx`, no `useEffect` inicial:
+- Se `typeof window.Android?.installApk !== "function"` → considerar autenticado automaticamente (`setAuthed(true)`), pulando splash, OTA gate e tela de senha.
+- Se for Android nativo → fluxo atual permanece intacto (splash + verificação OTA + senha).
 
-## Correção
+Nada mais muda: `app_settings`, `verifyLoginPassword`, splash e OTA continuam funcionando no APK.
 
-Tornar a navegação por D-pad **determinística**, sem depender da posição animada. Em `buildTopBar` (MainActivity.kt, ~linhas 1400-1490):
-
-1. Gerar IDs estáveis para as duas pílulas focáveis:
-   ```kotlin
-   system.id = View.generateViewId()
-   settings.id = View.generateViewId()
-   ```
-2. Amarrar a navegação esquerda/direita explicitamente:
-   ```kotlin
-   system.nextFocusRightId = settings.id
-   settings.nextFocusLeftId = system.id
-   ```
-3. Para a seta para baixo de ambas, apontar para o primeiro card (assim "baixo" sempre cai num card e nunca volta para outra pílula): definido em `buildRoot` depois que os cards são criados — `system.nextFocusDownId = cardViews[0].container.id` e idem para `settings`.
-
-Resultado: pressionar **direita** em "Procurar atualizações" sempre leva para "Configurações", independente da animação. Pressionar **baixo** em qualquer pílula sempre leva para o primeiro card.
-
-## Arquivo
-
-Apenas `android/app/src/main/java/com/tvapps/launcher/MainActivity.kt` — ~8 linhas adicionadas em duas funções (`buildTopBar` e `buildRoot`). Nenhuma mudança visual, nenhuma mudança no preview web.
+### Observação
+"Versão web" aqui inclui o preview do Lovable e o site publicado em qualquer navegador (desktop, celular, smart TV browser). Só o APK Android (com a bridge `window.Android`) mantém o login.
