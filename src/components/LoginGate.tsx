@@ -14,19 +14,19 @@ const SESSION_TOKEN = "ok";
 
 function LoadingDots({
   dotClassName = "h-2 w-2",
-  containerClassName = "h-8 gap-2 py-2",
+  containerClassName = "h-10 gap-2 px-1 py-3",
 }: {
   dotClassName?: string;
   containerClassName?: string;
 }) {
   return (
     <div
-      className={`flex items-center justify-center overflow-visible ${containerClassName}`}
+      className={`tv-loading-dots flex items-center justify-center ${containerClassName}`}
       aria-hidden="true"
     >
-      <span className={`splash-dot block flex-none rounded-full bg-[var(--tv-accent)] ${dotClassName} [animation-delay:-0.32s]`} />
-      <span className={`splash-dot block flex-none rounded-full bg-[var(--tv-accent)] ${dotClassName} [animation-delay:-0.16s]`} />
-      <span className={`splash-dot block flex-none rounded-full bg-[var(--tv-accent)] ${dotClassName}`} />
+      <span className={`tv-loading-dot block flex-none rounded-full bg-[var(--tv-accent)] ${dotClassName} [animation-delay:-0.32s]`} />
+      <span className={`tv-loading-dot block flex-none rounded-full bg-[var(--tv-accent)] ${dotClassName} [animation-delay:-0.16s]`} />
+      <span className={`tv-loading-dot block flex-none rounded-full bg-[var(--tv-accent)] ${dotClassName}`} />
     </div>
   );
 }
@@ -121,21 +121,11 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!mounted || authed) return;
-    // Enquanto a verificação OTA ainda está rodando, não focar nada
-    // (evita que o teclado virtual da TV apareça antes de sabermos se
-    // há atualização pendente).
-    if (ota.checking) return;
-    if (!ota.checked) return;
-    if (ota.hasUpdate) {
-      // Garante que o input perca o foco para fechar o teclado virtual
-      if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
-      }
-      return;
+    setSubmitSelected(false);
+    if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
     }
-    const t = setTimeout(() => inputRef.current?.focus(), 50);
-    return () => clearTimeout(t);
-  }, [mounted, authed, ota.hasUpdate, ota.checking, ota.checked]);
+  }, [mounted, authed, showSplash, ota.hasUpdate]);
 
   const startOtaUpdate = async () => {
     if (!ota.manifest || otaDownloading) return;
@@ -227,7 +217,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
       } else {
         setError("Senha incorreta");
         setPassword("");
-        setTimeout(() => inputRef.current?.focus(), 0);
+        setSubmitSelected(false);
       }
     } finally {
       setLoading(false);
@@ -270,8 +260,8 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
 
   if (showSplash) {
     return (
-      <div className="relative min-h-screen w-screen overflow-hidden bg-background text-foreground flex items-center justify-center animate-in fade-in duration-500">
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="relative min-h-screen w-screen overflow-visible bg-background text-foreground flex items-center justify-center animate-in fade-in duration-500">
+        <div className="pointer-events-none absolute inset-0 overflow-visible">
           <div
             className="absolute left-1/2 top-1/2 h-[80vmin] w-[80vmin] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[140px]"
             style={{
@@ -304,9 +294,9 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
 
   if (isTransitioning) {
     return (
-      <div className="relative min-h-screen w-screen overflow-hidden bg-background text-foreground flex items-center justify-center animate-in fade-in duration-700">
+      <div className="relative min-h-screen w-screen overflow-visible bg-background text-foreground flex items-center justify-center animate-in fade-in duration-700">
         {/* Glow verde */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 overflow-visible">
           <div
             className="absolute left-1/2 top-1/2 h-[80vmin] w-[80vmin] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[140px]"
             style={{
@@ -340,9 +330,9 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
 
   if (ota.hasUpdate) {
     return (
-      <div className="relative min-h-screen w-screen overflow-hidden bg-background text-foreground flex items-center justify-center px-6 animate-in fade-in duration-500">
+      <div className="relative min-h-screen w-screen overflow-visible bg-background text-foreground flex items-center justify-center px-6 animate-in fade-in duration-500">
         {/* Glow âmbar */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 overflow-visible">
           <div
             className="absolute left-1/2 top-1/2 h-[80vmin] w-[80vmin] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[140px]"
             style={{
@@ -414,9 +404,9 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="relative min-h-screen w-screen overflow-hidden bg-background text-foreground flex items-center justify-center px-6">
+    <div className="relative min-h-screen w-screen overflow-visible bg-background text-foreground flex items-center justify-center px-6">
       {/* Glow verde */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 overflow-visible">
         <div
           className="absolute left-1/2 top-1/2 h-[80vmin] w-[80vmin] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[140px]"
           style={{
@@ -456,7 +446,12 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
                 ref={inputRef}
                 type="password"
                 inputMode="numeric"
-                autoComplete="off"
+                autoComplete="new-password"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                data-lpignore="true"
+                data-form-type="other"
                 value={password}
                 onChange={(e) => {
                   const nextPassword = e.target.value;
@@ -464,6 +459,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
                   if (nextPassword.trim().length === 0) setSubmitSelected(false);
                   if (error) setError(null);
                 }}
+                onFocus={() => setSubmitSelected(false)}
                 onKeyDown={handleKey}
                 placeholder="••••••"
                 aria-label="Senha"
