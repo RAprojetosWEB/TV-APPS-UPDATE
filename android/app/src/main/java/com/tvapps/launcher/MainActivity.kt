@@ -887,11 +887,22 @@ class MainActivity : Activity() {
             override fun focusSearch(focused: View, direction: Int): View? {
                 val currentIdx = cardViews.indexOfFirst { it.container == focused }
                 if (currentIdx != -1) {
+                    // Pula cards bloqueados (que têm isFocusable=false).
+                    val total = cardViews.size
+                    fun nextFocusable(start: Int, step: Int): View? {
+                        var i = start
+                        for (n in 0 until total) {
+                            i = ((i + step) % total + total) % total
+                            val view = cardViews[i].container
+                            if (view.isFocusable && view != focused) return view
+                        }
+                        return null
+                    }
                     if (direction == View.FOCUS_RIGHT) {
-                        return cardViews[(currentIdx + 1) % cardViews.size].container
+                        return nextFocusable(currentIdx, 1) ?: super.focusSearch(focused, direction)
                     }
                     if (direction == View.FOCUS_LEFT) {
-                        return cardViews[(currentIdx - 1 + cardViews.size) % cardViews.size].container
+                        return nextFocusable(currentIdx, -1) ?: super.focusSearch(focused, direction)
                     }
                 }
                 return super.focusSearch(focused, direction)
