@@ -170,8 +170,15 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      const hash = await sha256Hex(password);
-      if (hash === PASSWORD_HASH) {
+      let ok = false;
+      try {
+        const res = await verifyLoginPassword({ data: { password } });
+        ok = res.ok;
+      } catch (err) {
+        console.error("verifyLoginPassword failed, using fallback", err);
+        ok = password === FALLBACK_PASSWORD;
+      }
+      if (ok) {
         try {
           getStore()?.setItem(STORAGE_KEY, SESSION_TOKEN);
         } catch {
