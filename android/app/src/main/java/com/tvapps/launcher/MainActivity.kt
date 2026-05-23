@@ -212,45 +212,8 @@ class MainActivity : Activity() {
             ).apply { topMargin = dp(24) }
         }
 
-        // 3 bolinhas pulando
-        val dotsRow = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(28) }
-        }
-        fun makeDot(delayMs: Long): View {
-            val dot = View(this).apply {
-                background = GradientDrawable().apply {
-                    shape = GradientDrawable.OVAL
-                    setColor(green)
-                }
-                layoutParams = LinearLayout.LayoutParams(dp(8), dp(8)).apply {
-                    marginStart = dp(4)
-                    marginEnd = dp(4)
-                }
-            }
-            dot.post {
-                val anim = android.animation.ObjectAnimator.ofFloat(
-                    dot, "translationY", 0f, -dp(10).toFloat(), 0f
-                )
-                anim.duration = 700
-                anim.repeatCount = android.animation.ObjectAnimator.INFINITE
-                anim.startDelay = delayMs
-                anim.interpolator = android.view.animation.AccelerateDecelerateInterpolator()
-                anim.start()
-            }
-            return dot
-        }
-        dotsRow.addView(makeDot(0))
-        dotsRow.addView(makeDot(150))
-        dotsRow.addView(makeDot(300))
-
         column.addView(title)
         column.addView(subtitle)
-        column.addView(dotsRow)
         root.addView(column)
 
         // Fade-in + zoom-in (animate-in fade-in / zoom-in-95)
