@@ -169,6 +169,30 @@
     min-height: 0;
   }
 
+  .tv-card-carousel {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: clamp(1.5rem, 4vw, 3.5rem);
+    width: 100%;
+    margin: 0 auto;
+    padding: clamp(1rem, 3vh, 3rem) clamp(1rem, 4vw, 3rem);
+    min-height: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: clamp(1rem, 4vw, 3rem);
+    scrollbar-width: none;
+  }
+  .tv-card-carousel::-webkit-scrollbar {
+    display: none;
+  }
+  .tv-card-carousel > * {
+    flex: 0 0 calc((100% - 2 * clamp(1.5rem, 4vw, 3.5rem)) / 3);
+    max-width: none !important;
+    scroll-snap-align: center;
+  }
+
   .tv-title {
     font-size: clamp(2rem, 5vw, 4.5rem);
     max-height: 1.2em;
