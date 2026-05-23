@@ -238,38 +238,30 @@ function Index() {
 
   const fetchDynamicApps = async () => {
     try {
-      const { data: apps, error } = await supabase
-        .from('apps')
-        .select(`
-          *,
-          app_versions (*)
-        `)
-        .order('name');
-      
-      if (error) throw error;
-      
-      if (apps && apps.length > 0) {
-        const mappedApps = apps.map(app => {
-          const latestVersion = app.app_versions?.find((v: any) => v.is_latest) || app.app_versions?.[0];
-          return {
-            name: app.name,
-            description: app.description || "",
-            url: latestVersion?.apk_url || "",
-            logo: app.logo_url || (app.name === "UniTV" ? unitvLogo : app.name === "Nexa TV" ? nexatvLogo : alphaplayLogo),
-            packageName: app.package_name,
-            version: latestVersion?.version_name || "1.0",
-            updateDate: latestVersion ? new Date(latestVersion.created_at).toLocaleDateString('pt-BR') : "N/A",
-            size: latestVersion?.apk_size_mb ? `${latestVersion.apk_size_mb}MB` : "N/A",
-          };
-        });
-        const order = ["unitv", "nexa tv", "alphaplay"];
-        mappedApps.sort((a, b) => {
-          const idxA = order.indexOf(a.name.toLowerCase());
-          const idxB = order.indexOf(b.name.toLowerCase());
-          return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
-        });
-        setDynamicApps(mappedApps);
-      }
+      // Endpoint público que retorna apps + flags de bloqueio (sem auth).
+      // É a mesma fonte que o APK Android consome.
+      const res = await fetch("/api/public/catalog", { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const payload = await res.json();
+      const apps: any[] = payload?.apps ?? [];
+      if (apps.length === 0) return;
+
+      const fallbackLogo = (name: string) =>
+        name === "UniTV" ? unitvLogo : name === "Nexa TV" ? nexatvLogo : alphaplayLogo;
+
+      const mappedApps = apps.map((app) => ({
+        name: app.name,
+        description: app.description || "",
+        url: app.apk_url || "",
+        logo: app.icon_url || app.logo_url || fallbackLogo(app.name),
+        packageName: app.package_name,
+        version: "1.0",
+        updateDate: "N/A",
+        size: "N/A",
+        isBlocked: !!app.is_blocked,
+        blockReason: app.block_reason ?? null,
+      }));
+      setDynamicApps(mappedApps);
     } catch (err) {
       console.error("Erro ao carregar apps do banco:", err);
       setDynamicApps(APPS); // Fallback
