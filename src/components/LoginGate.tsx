@@ -429,7 +429,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
               </h1>
               <h2 className="mt-8 text-3xl font-bold">Bem-vindo</h2>
               <p className="mt-2 text-base text-white/60">
-                Digite a senha para continuar
+                Digite a senha e clique em Entrar para continuar
               </p>
             </div>
 
