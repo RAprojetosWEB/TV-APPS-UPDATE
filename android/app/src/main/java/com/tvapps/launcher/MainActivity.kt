@@ -132,20 +132,38 @@ class MainActivity : Activity() {
         val density = resources.displayMetrics.density
         fun dp(v: Int) = (v * density).toInt()
 
+        // Cor de fundo idêntica à web (--background: oklch(0.16 0.03 270))
+        val bgColor = Color.parseColor("#0d0820")
+        // Verde idêntico ao da web (oklch(0.78 0.18 155))
+        val green = Color.parseColor("#2dd4a8")
+
         val root = FrameLayout(this).apply {
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT,
             )
-            background = GradientDrawable(
-                GradientDrawable.Orientation.TL_BR,
-                intArrayOf(
-                    Color.parseColor("#1a0d2e"),
-                    Color.parseColor("#2a1a4a"),
-                    Color.parseColor("#0f0820"),
-                ),
-            )
+            setBackgroundColor(bgColor)
         }
+
+        // Glow radial verde central (equivalente ao radial-gradient com blur)
+        val glow = View(this).apply {
+            val size = (resources.displayMetrics.widthPixels.coerceAtLeast(
+                resources.displayMetrics.heightPixels
+            ) * 0.9f).toInt()
+            val drawable = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                gradientType = GradientDrawable.RADIAL_GRADIENT
+                gradientRadius = size / 2f
+                colors = intArrayOf(
+                    Color.parseColor("#5928c47a"), // ~35% alpha do verde
+                    Color.parseColor("#1928c47a"),
+                    Color.TRANSPARENT,
+                )
+            }
+            background = drawable
+            layoutParams = FrameLayout.LayoutParams(size, size, Gravity.CENTER)
+        }
+        root.addView(glow)
 
         val column = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -156,54 +174,90 @@ class MainActivity : Activity() {
             )
         }
 
-        // Banner / logo
-        val logo = ImageView(this).apply {
-            setImageResource(R.drawable.banner)
-            adjustViewBounds = true
-            layoutParams = LinearLayout.LayoutParams(dp(320), ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-                bottomMargin = dp(24)
-            }
-        }
-
+        // Título gigante: TV.Apps com "." verde
         val title = TextView(this).apply {
-            text = "TV.App"
-            setTextColor(Color.parseColor("#f5f3ff"))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 34f)
-            typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD)
+            text = android.text.SpannableString("TV.Apps").apply {
+                setSpan(
+                    android.text.style.ForegroundColorSpan(green),
+                    2, 3,
+                    android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE,
+                )
+            }
+            setTextColor(Color.WHITE)
+            // clamp(4rem, 14vw, 10rem) ~ 14% da largura da tela, limitado
+            val px = (resources.displayMetrics.widthPixels * 0.14f)
+                .coerceIn(64f * density, 140f * density)
+            setTextSize(TypedValue.COMPLEX_UNIT_PX, px)
+            typeface = android.graphics.Typeface.create(
+                android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD
+            )
             gravity = Gravity.CENTER
-            letterSpacing = 0.08f
+            includeFontPadding = false
+            // text-shadow: 0 0 60px verde
+            setShadowLayer(60f, 0f, 0f, Color.parseColor("#992dd4a8"))
         }
 
         val subtitle = TextView(this).apply {
-            text = "Carregando..."
-            setTextColor(Color.parseColor("#b8a8d1"))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+            text = "A maneira mais fácil de baixar apps"
+            setTextColor(Color.parseColor("#b3ffffff"))
+            val px = (resources.displayMetrics.widthPixels * 0.022f)
+                .coerceIn(16f * density, 28f * density)
+            setTextSize(TypedValue.COMPLEX_UNIT_PX, px)
+            gravity = Gravity.CENTER
+            letterSpacing = 0.04f
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(24) }
+        }
+
+        // 3 bolinhas pulando
+        val dotsRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(8) }
+            ).apply { topMargin = dp(28) }
         }
-
-        val progress = ProgressBar(this).apply {
-            isIndeterminate = true
-            indeterminateTintList = android.content.res.ColorStateList.valueOf(
-                Color.parseColor("#22c55e")
-            )
-            layoutParams = LinearLayout.LayoutParams(dp(40), dp(40)).apply {
-                topMargin = dp(28)
+        fun makeDot(delayMs: Long): View {
+            val dot = View(this).apply {
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(green)
+                }
+                layoutParams = LinearLayout.LayoutParams(dp(8), dp(8)).apply {
+                    marginStart = dp(4)
+                    marginEnd = dp(4)
+                }
             }
+            dot.post {
+                val anim = android.animation.ObjectAnimator.ofFloat(
+                    dot, "translationY", 0f, -dp(10).toFloat(), 0f
+                )
+                anim.duration = 700
+                anim.repeatCount = android.animation.ObjectAnimator.INFINITE
+                anim.startDelay = delayMs
+                anim.interpolator = android.view.animation.AccelerateDecelerateInterpolator()
+                anim.start()
+            }
+            return dot
         }
+        dotsRow.addView(makeDot(0))
+        dotsRow.addView(makeDot(150))
+        dotsRow.addView(makeDot(300))
 
-        column.addView(logo)
         column.addView(title)
         column.addView(subtitle)
-        column.addView(progress)
+        column.addView(dotsRow)
         root.addView(column)
 
-        // Fade-in suave
+        // Fade-in + zoom-in (animate-in fade-in / zoom-in-95)
         root.alpha = 0f
-        root.animate().alpha(1f).setDuration(400).start()
+        root.animate().alpha(1f).setDuration(500).start()
+        column.scaleX = 0.95f
+        column.scaleY = 0.95f
+        column.animate().scaleX(1f).scaleY(1f).setDuration(700).start()
 
         return root
     }
