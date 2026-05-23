@@ -470,13 +470,11 @@ function AppCard({
     setUploading(true);
     try {
       const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-      const path = `${app.id}/${Date.now()}.${ext}`;
-      const { error } = await supabase.storage
-        .from("app-icons")
-        .upload(path, file, { upsert: false, contentType: file.type });
-      if (error) throw error;
-      const { data } = supabase.storage.from("app-icons").getPublicUrl(path);
-      setIconUrl(data.publicUrl);
+      const fileBase64 = await fileToBase64(file);
+      const { publicUrl } = await uploadIconFn({
+        data: { appId: app.id, fileBase64, ext, contentType: file.type },
+      });
+      setIconUrl(publicUrl);
       toast.success("Ícone enviado. Clique em Salvar para aplicar.");
     } catch (err) {
       toast.error("Falha no upload", { description: String(err) });
