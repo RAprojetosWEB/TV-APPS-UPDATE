@@ -272,10 +272,10 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
           >
             A maneira mais fácil de baixar apps
           </p>
-          <div className="flex items-center justify-center gap-2 py-4">
-            <span className="inline-block h-2 w-2 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.3s]" />
-            <span className="inline-block h-2 w-2 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.15s]" />
-            <span className="inline-block h-2 w-2 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce" />
+          <div className="flex h-10 items-center justify-center gap-2 overflow-visible py-2">
+            <span className="inline-block h-2 w-2 flex-none rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.3s]" />
+            <span className="inline-block h-2 w-2 flex-none rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.15s]" />
+            <span className="inline-block h-2 w-2 flex-none rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce" />
           </div>
         </div>
       </div>
@@ -466,8 +466,10 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
                 type="button"
                 onClick={() => void handleSubmit()}
                 onKeyDown={handleKey}
-                disabled={loading || password.length === 0}
-                className="group relative flex h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 border-white/10 bg-white/5 text-lg font-bold tracking-wide text-white/70 transition-all duration-150 hover:bg-white/10 hover:text-white focus:outline-none focus:scale-[1.03] focus:border-[oklch(0.78_0.18_155)] focus:bg-[oklch(0.78_0.18_155)] focus:text-black focus:ring-2 focus:ring-white/50 focus:shadow-[0_0_50px_oklch(0.78_0.18_155/0.8)] disabled:opacity-50 disabled:cursor-not-allowed"
+                onFocus={() => setSubmitSelected(canSubmit)}
+                onBlur={() => setSubmitSelected(false)}
+                disabled={loading || !canSubmit}
+                className={`group relative flex h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 text-lg font-bold tracking-wide transition-all duration-150 focus:outline-none disabled:cursor-not-allowed ${submitSelected && canSubmit ? "scale-[1.03] border-[oklch(0.78_0.18_155)] bg-[oklch(0.78_0.18_155)] text-black ring-2 ring-white/50 shadow-[0_0_50px_oklch(0.78_0.18_155/0.8)]" : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white disabled:opacity-50"}`}
               >
                 <LogIn className="size-5" />
                 ENTRAR
