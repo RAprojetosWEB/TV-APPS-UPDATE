@@ -360,6 +360,11 @@ function Index() {
     const isFocusLost = !active || active === document.body;
     if (isFocusLost || isOnCard) {
       refs.current[focused]?.focus();
+      refs.current[focused]?.scrollIntoView({
+        inline: "center",
+        block: "nearest",
+        behavior: "smooth",
+      });
     }
   }, [focused, modalOpen]);
 
