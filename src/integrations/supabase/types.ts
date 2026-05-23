@@ -36,33 +36,36 @@ export type Database = {
         Row: {
           apk_size_mb: number | null
           apk_url: string
-          app_id: string
+          app_id: string | null
           changelog: string | null
           created_at: string
           id: string
           is_latest: boolean | null
+          target: string
           version_code: number
           version_name: string
         }
         Insert: {
           apk_size_mb?: number | null
           apk_url: string
-          app_id: string
+          app_id?: string | null
           changelog?: string | null
           created_at?: string
           id?: string
           is_latest?: boolean | null
+          target?: string
           version_code: number
           version_name: string
         }
         Update: {
           apk_size_mb?: number | null
           apk_url?: string
-          app_id?: string
+          app_id?: string | null
           changelog?: string | null
           created_at?: string
           id?: string
           is_latest?: boolean | null
+          target?: string
           version_code?: number
           version_name?: string
         }
