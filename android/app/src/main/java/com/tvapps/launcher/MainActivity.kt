@@ -395,7 +395,7 @@ class MainActivity : Activity() {
         }
 
         val subtitle = TextView(this).apply {
-            text = "Digite a senha para continuar"
+            text = "Digite a senha e clique em Entrar para continuar"
             setTextColor(Color.parseColor("#99FFFFFF"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f * scaleFactor)
             setPadding(0, 0, 0, dp((32 * scaleFactor).toInt()))
