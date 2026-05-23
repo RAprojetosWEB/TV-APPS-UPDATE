@@ -950,6 +950,9 @@ class MainActivity : Activity() {
     }
 
     private fun buildCard(index: Int, app: CatalogApp, width: Int, height: Int, margin: Int, scale: Float): CardViews {
+        if (app.isBlocked) {
+            return buildBlockedCard(app, width, height, margin, scale)
+        }
         // Container externo (FrameLayout) recebe o foco e o background com borda
         val container = FrameLayout(this).apply {
             isFocusable = true
