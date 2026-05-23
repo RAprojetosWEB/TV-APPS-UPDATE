@@ -1,0 +1,1 @@
+ALTER TABLE public.apps DROP CONSTRAINT IF EXISTS apps_package_name_key;
