@@ -946,6 +946,8 @@ function OtaSectionInner() {
   const publishFn = useServerFn(publishLauncherVersion);
   const setLatestFn = useServerFn(setLatestLauncherVersion);
   const deleteFn = useServerFn(deleteLauncherVersion);
+  const uploadApkFn = useServerFn(uploadLauncherApk);
+  const uploadRawFn = useServerFn(uploadLauncherRaw);
 
   const [versions, setVersions] = useState<LauncherVersion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -956,15 +958,12 @@ function OtaSectionInner() {
     setRawUploading(true);
     try {
       const apkPath = `releases/${apk.name}`;
-      const upApk = await supabase.storage
-        .from("tvapps-updates")
-        .upload(apkPath, apk, { upsert: true, contentType: "application/vnd.android.package-archive" });
-      if (upApk.error) throw upApk.error;
-
-      const upJson = await supabase.storage
-        .from("tvapps-updates")
-        .upload("update.json", json, { upsert: true, contentType: "application/json" });
-      if (upJson.error) throw upJson.error;
+      const apkB64 = await fileToBase64(apk);
+      await uploadApkFn({ data: { path: apkPath, fileBase64: apkB64 } });
+      const jsonB64 = await fileToBase64(json);
+      await uploadRawFn({
+        data: { path: "update.json", contentBase64: jsonB64, contentType: "application/json" },
+      });
 
       toast.success("Upload concluído", {
         description: `APK e update.json enviados para o Storage.`,
