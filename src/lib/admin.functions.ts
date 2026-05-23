@@ -95,3 +95,43 @@ export const updateApp = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { success: true };
   });
+
+export const getLoginPassword = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { data, error } = await supabaseAdmin
+      .from("app_settings")
+      .select("login_password")
+      .eq("id", "main")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return { password: data?.login_password ?? "1555" };
+  });
+
+export const updateLoginPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ password: z.string().min(4).max(50) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { data: existing } = await supabaseAdmin
+      .from("app_settings")
+      .select("id")
+      .eq("id", "main")
+      .maybeSingle();
+    if (existing) {
+      const { error } = await supabaseAdmin
+        .from("app_settings")
+        .update({ login_password: data.password, updated_at: new Date().toISOString() })
+        .eq("id", "main");
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabaseAdmin
+        .from("app_settings")
+        .insert({ id: "main", login_password: data.password });
+      if (error) throw new Error(error.message);
+    }
+    return { success: true };
+  });
