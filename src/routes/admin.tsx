@@ -1170,6 +1170,7 @@ function PublishVersionForm({
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const uploadApkFn = useServerFn(uploadLauncherApk);
 
   async function handleSubmit() {
     if (!versionName.trim() || !versionCode.trim() || !file) {
@@ -1189,13 +1190,8 @@ function PublishVersionForm({
     setProgress(0);
     try {
       const path = `releases/${codeNum}.apk`;
-      const { error } = await supabase.storage
-        .from("tvapps-updates")
-        .upload(path, file, {
-          upsert: true,
-          contentType: "application/vnd.android.package-archive",
-        });
-      if (error) throw error;
+      const fileBase64 = await fileToBase64(file);
+      await uploadApkFn({ data: { path, fileBase64 } });
       setProgress(100);
       await onPublish({
         versionName: versionName.trim(),
