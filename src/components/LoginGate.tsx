@@ -12,6 +12,25 @@ const FALLBACK_PASSWORD = "1555";
 const STORAGE_KEY = "tvapps_auth_v1";
 const SESSION_TOKEN = "ok";
 
+function LoadingDots({
+  dotClassName = "h-2 w-2",
+  containerClassName = "h-8 gap-2 py-2",
+}: {
+  dotClassName?: string;
+  containerClassName?: string;
+}) {
+  return (
+    <div
+      className={`flex items-center justify-center overflow-visible ${containerClassName}`}
+      aria-hidden="true"
+    >
+      <span className={`splash-dot block flex-none rounded-full bg-[var(--tv-accent)] ${dotClassName} [animation-delay:-0.32s]`} />
+      <span className={`splash-dot block flex-none rounded-full bg-[var(--tv-accent)] ${dotClassName} [animation-delay:-0.16s]`} />
+      <span className={`splash-dot block flex-none rounded-full bg-[var(--tv-accent)] ${dotClassName}`} />
+    </div>
+  );
+}
+
 // Usa sessionStorage para que toda vez que o app for fechado/reaberto
 // a senha precise ser digitada novamente.
 function getStore(): Storage | null {
@@ -76,7 +95,12 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
   const canSubmit = password.trim().length > 0;
 
   useEffect(() => {
+    if (!canSubmit) setSubmitSelected(false);
+  }, [canSubmit]);
+
+  useEffect(() => {
     setMounted(true);
+    setSubmitSelected(false);
     // Na versão web (sem bridge Android nativa), pula a tela de login.
     // Apenas o APK Android continua exigindo senha.
     const isNativeAndroid =
@@ -272,11 +296,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
           >
             A maneira mais fácil de baixar apps
           </p>
-          <div className="flex h-8 items-start justify-center gap-2 overflow-visible py-1">
-            <span className="splash-dot inline-block h-2 w-2 flex-none rounded-full bg-[var(--tv-accent)] [animation-delay:-0.3s]" />
-            <span className="splash-dot inline-block h-2 w-2 flex-none rounded-full bg-[var(--tv-accent)] [animation-delay:-0.15s]" />
-            <span className="splash-dot inline-block h-2 w-2 flex-none rounded-full bg-[var(--tv-accent)]" />
-          </div>
+          <LoadingDots />
         </div>
       </div>
     );
@@ -311,11 +331,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
             <h2 className="text-3xl font-bold tracking-tight text-white/90">
               Carregando conteúdo...
             </h2>
-            <div className="flex items-center justify-center gap-2">
-              <span className="inline-block h-1 w-1 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.3s]" />
-              <span className="inline-block h-1 w-1 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.15s]" />
-              <span className="inline-block h-1 w-1 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce" />
-            </div>
+            <LoadingDots dotClassName="h-1.5 w-1.5" containerClassName="h-6 gap-2 py-2" />
           </div>
         </div>
       </div>
@@ -440,7 +456,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
                 ref={inputRef}
                 type="password"
                 inputMode="numeric"
-                autoComplete="current-password"
+                autoComplete="off"
                 value={password}
                 onChange={(e) => {
                   const nextPassword = e.target.value;
@@ -468,7 +484,6 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
                 type="button"
                 onClick={() => void handleSubmit()}
                 onKeyDown={handleKey}
-                onFocus={() => setSubmitSelected(canSubmit)}
                 onBlur={() => setSubmitSelected(false)}
                 disabled={loading || !canSubmit}
                 className={`group relative flex h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 text-lg font-bold tracking-wide transition-all duration-150 focus:outline-none disabled:cursor-not-allowed ${submitSelected && canSubmit ? "scale-[1.03] border-[oklch(0.78_0.18_155)] bg-[oklch(0.78_0.18_155)] text-black ring-2 ring-white/50 shadow-[0_0_50px_oklch(0.78_0.18_155/0.8)]" : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white disabled:opacity-50"}`}
