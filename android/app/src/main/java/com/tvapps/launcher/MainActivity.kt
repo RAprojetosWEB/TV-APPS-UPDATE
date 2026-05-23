@@ -1232,7 +1232,9 @@ class MainActivity : Activity() {
         // Se não está instalado mas já temos o APK baixado, abre o instalador direto
         val apkFile = ApkCache.fileFor(this, app.name)
         if (apkFile.exists() && apkFile.length() > 0) {
-            ApkInstaller.install(this, apkFile)
+            if (!ApkInstaller.install(this, apkFile)) {
+                pendingInstallApk = apkFile
+            }
             return
         }
 
@@ -1260,7 +1262,9 @@ class MainActivity : Activity() {
                         // Aprende o packageName real do APK baixado para detecção futura precisa
                         InstalledRegistry.learnFromApk(this@MainActivity, app.name, p.file)
                         
-                        ApkInstaller.install(this@MainActivity, p.file)
+                        if (!ApkInstaller.install(this@MainActivity, p.file)) {
+                            pendingInstallApk = p.file
+                        }
                         card.pill.postDelayed({
                             card.progress.visibility = View.GONE
                             card.percent.visibility = View.GONE
