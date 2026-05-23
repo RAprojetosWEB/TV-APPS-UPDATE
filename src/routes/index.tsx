@@ -765,11 +765,6 @@ function Index() {
                     <Download className="w-1/2 h-1/2" strokeWidth={1.8} color="oklch(0.15 0.03 270)" />
                   </div>
                   <h2 className="tv-text font-bold">{app.name}</h2>
-                  <p className="mt-2 text-sm text-white/60">
-                    {states[i].totalBytes && states[i].totalBytes! > 0
-                      ? `${formatBytes(states[i].downloadedBytes ?? 0)} / ${formatBytes(states[i].totalBytes!)}`
-                      : "Baixando…"}
-                  </p>
                   <div
                     className="mt-6 h-3 w-full overflow-hidden rounded-full"
                     style={{ background: "oklch(0.28 0.04 270)" }}
@@ -788,11 +783,6 @@ function Index() {
                     style={{ color: "var(--tv-accent)" }}
                   >
                     {states[i].progress}%
-                  </div>
-                  <div className="mt-2 flex items-center gap-3 text-xs text-white/70 tabular-nums">
-                    <span>{formatSpeed(states[i].speedBps ?? 0)}</span>
-                    <span className="text-white/30">•</span>
-                    <span>{formatEta(states[i].etaSeconds ?? -1)}</span>
                   </div>
                 </div>
               ) : states[i].status === "done" ? (
