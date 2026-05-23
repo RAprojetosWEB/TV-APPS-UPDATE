@@ -264,6 +264,16 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        // Se há um APK aguardando instalação e a permissão já foi concedida,
+        // dispara o instalador automaticamente ao voltar das Configurações.
+        pendingInstallApk?.let { apk ->
+            val canInstall = Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
+                packageManager.canRequestPackageInstalls()
+            if (canInstall && apk.exists()) {
+                pendingInstallApk = null
+                ApkInstaller.install(this, apk)
+            }
+        }
         // Revalida estado de instalação de cada card e trata limpeza de cache
         if (cardViews.isNotEmpty()) {
             AppCatalog.apps.forEachIndexed { index, app ->
