@@ -732,6 +732,11 @@ function Index() {
       <section className="tv-card-grid flex-1 min-h-0 items-stretch">
         {currentApps.map((app, i) => {
           const isFocused = focused === i;
+          if ((app as any).isBlocked) {
+            return (
+              <BlockedCard key={`blocked-${i}`} reason={(app as any).blockReason} />
+            );
+          }
           return (
             <button
               key={app.name}
