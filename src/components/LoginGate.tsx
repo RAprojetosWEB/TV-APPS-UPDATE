@@ -14,19 +14,19 @@ const SESSION_TOKEN = "ok";
 
 function LoadingDots({
   dotClassName = "h-2 w-2",
-  containerClassName = "h-8 gap-2 py-2",
+  containerClassName = "h-10 gap-2 px-1 py-3",
 }: {
   dotClassName?: string;
   containerClassName?: string;
 }) {
   return (
     <div
-      className={`flex items-center justify-center overflow-visible ${containerClassName}`}
+      className={`tv-loading-dots flex items-center justify-center ${containerClassName}`}
       aria-hidden="true"
     >
-      <span className={`splash-dot block flex-none rounded-full bg-[var(--tv-accent)] ${dotClassName} [animation-delay:-0.32s]`} />
-      <span className={`splash-dot block flex-none rounded-full bg-[var(--tv-accent)] ${dotClassName} [animation-delay:-0.16s]`} />
-      <span className={`splash-dot block flex-none rounded-full bg-[var(--tv-accent)] ${dotClassName}`} />
+      <span className={`tv-loading-dot block flex-none rounded-full bg-[var(--tv-accent)] ${dotClassName} [animation-delay:-0.32s]`} />
+      <span className={`tv-loading-dot block flex-none rounded-full bg-[var(--tv-accent)] ${dotClassName} [animation-delay:-0.16s]`} />
+      <span className={`tv-loading-dot block flex-none rounded-full bg-[var(--tv-accent)] ${dotClassName}`} />
     </div>
   );
 }
