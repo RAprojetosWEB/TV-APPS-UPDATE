@@ -12,6 +12,7 @@ import {
 } from "@/lib/admin.functions";
 import { toast } from "sonner";
 import { Lock, LogOut, Pencil, Save, X, Eye, EyeOff, KeyRound } from "lucide-react";
+import { Upload } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -307,6 +308,34 @@ function AppCard({
   const [iconUrl, setIconUrl] = useState(app.icon_url ?? "");
   const [displayOrder, setDisplayOrder] = useState(app.display_order);
   const [isActive, setIsActive] = useState(app.is_active);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleIconUpload(file: File) {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Arquivo inválido", { description: "Envie uma imagem PNG/JPG." });
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Imagem muito grande", { description: "Máximo 2 MB." });
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+      const path = `${app.id}/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("app-icons")
+        .upload(path, file, { upsert: false, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from("app-icons").getPublicUrl(path);
+      setIconUrl(data.publicUrl);
+      toast.success("Ícone enviado. Clique em Salvar para aplicar.");
+    } catch (err) {
+      toast.error("Falha no upload", { description: String(err) });
+    } finally {
+      setUploading(false);
+    }
+  }
 
   return (
     <div
@@ -424,12 +453,36 @@ function AppCard({
             />
           </Field>
           <Field label="URL do ícone (PNG 512×512)">
-            <input
-              value={iconUrl}
-              onChange={(e) => setIconUrl(e.target.value)}
-              className="input"
-              placeholder="https://..."
-            />
+            <div className="flex gap-2 items-start">
+              {iconUrl && (
+                <img
+                  src={iconUrl}
+                  alt="preview"
+                  className="h-10 w-10 rounded-lg object-cover bg-white/5 shrink-0"
+                />
+              )}
+              <input
+                value={iconUrl}
+                onChange={(e) => setIconUrl(e.target.value)}
+                className="input"
+                placeholder="https://... ou envie um arquivo"
+              />
+              <label className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 h-10 text-sm text-white/70 hover:bg-white/5 cursor-pointer shrink-0">
+                <Upload size={14} />
+                {uploading ? "..." : "Upload"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploading}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleIconUpload(f);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+            </div>
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Ordem">
