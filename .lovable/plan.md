@@ -1,18 +1,27 @@
 ## Problema
 
-As bolinhas animadas aparecem na **splash nativa do Android**, renderizada em `android/app/src/main/java/com/tvapps/launcher/MainActivity.kt` (linhas 215-253), e não no componente React `LoginGate.tsx` que eu vinha editando. Por isso as alterações anteriores não tiveram efeito visual no app Android.
+Ao clicar em "Atualizar agora", o app chama `ApkInstaller.install()`. Se a permissão "Instalar apps desconhecidos" não está concedida, o método mostra um toast, abre a tela de Configurações e **retorna sem instalar**. Quando o usuário concede a permissão e volta para o app:
 
-## Correção
+- O botão fica travado em "ABRINDO INSTALADOR…"
+- Nada acontece, porque ninguém reexecuta a instalação
+- O usuário precisaria clicar de novo, mas o botão está desabilitado
 
-Em `MainActivity.kt`, na função que monta a splash:
+## Solução
 
-1. Remover o bloco `val dotsRow = LinearLayout(...)` (linhas 215-223).
-2. Remover a função local `fun makeDot(delayMs: Long): View { ... }` (linhas 224-246).
-3. Remover as três chamadas `dotsRow.addView(makeDot(...))` (linhas 247-249).
-4. Remover `column.addView(dotsRow)` (linha 253).
+Guardar o APK pendente quando a permissão é negada e reexecutar a instalação automaticamente no `onResume()` assim que a permissão estiver disponível.
 
-Mantém o título e o subtítulo "A maneira mais fácil de baixar apps" intactos. Nenhuma outra alteração.
+### Mudanças
 
-## Observação
+**1. `ApkInstaller.kt`** — fazer `install()` retornar `Boolean` (true = instalador aberto, false = foi para a tela de permissão). Assim o chamador sabe se precisa rastrear retry.
 
-Como é código nativo Android, o efeito só será visível após rebuild/reinstall do APK — não aparece no preview web.
+**2. `MainActivity.kt`**
+- Adicionar campo `private var pendingInstallApk: File? = null`
+- No `startLauncherUpdate` (linha ~1723, branch `DownloadProgress.Done`): chamar `ApkInstaller.install(...)`. 
+  - Se retornar `false` (foi para Configurações): salvar `pendingInstallApk = p.file`, mudar texto do botão para "TOQUE PARA INSTALAR" e reabilitar (`isEnabled = true`, `isFocusable = true`), com `setOnClickListener` que reexecuta `ApkInstaller.install` com o arquivo salvo.
+  - Se `true`: manter comportamento atual.
+- O mesmo tratamento nas outras 2 chamadas a `ApkInstaller.install` (linhas 1221 e 1249) — quando voltar sem permissão, mostrar feedback no card e armazenar o APK pendente.
+- No `onResume()` (linha 261): se `pendingInstallApk != null` e `packageManager.canRequestPackageInstalls()` for `true`, chamar `ApkInstaller.install(this, pendingInstallApk!!)` e limpar o campo. Isso dispara o instalador automaticamente assim que o usuário voltar das Configurações com a permissão concedida — exatamente o comportamento pedido ("ao fechar a tela de permissão … já ir direto para o instalador").
+
+### Observação
+
+É código Kotlin nativo — só terá efeito após rebuild/reinstalação do APK no Android. Não aparece no preview web.
