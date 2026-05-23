@@ -943,9 +943,9 @@ class MainActivity : Activity() {
         }
         root.addView(footer)
 
-        cardViews.getOrNull(0)?.container?.post {
-            cardViews[0].container.requestFocus()
-        }
+        // Foca o primeiro card não-bloqueado.
+        val firstFocusable = cardViews.firstOrNull { it.container.isFocusable }
+        firstFocusable?.container?.post { firstFocusable.container.requestFocus() }
         return root
     }
 
