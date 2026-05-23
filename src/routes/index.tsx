@@ -10,7 +10,7 @@ import { useDateTime } from "@/hooks/useDateTime";
 import { toast } from "sonner";
 import unitvLogo from "@/assets/unitv.png";
 import nexatvLogo from "@/assets/nexatv.png";
-import alphaplayLogo from "@/assets/alphaplay.webp";
+import alphaplayLogo from "@/assets/alphaplay.png";
 
 // Ponte com o APK nativo (WebView host). Se existir, instalamos APK direto
 // via PackageInstaller nativo; senão, fazemos o download "tradicional".
