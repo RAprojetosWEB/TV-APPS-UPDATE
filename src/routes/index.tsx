@@ -6,6 +6,7 @@ import { useOtaUpdate } from "@/hooks/useOtaUpdate";
 import { OtaUpdateModal } from "@/components/OtaUpdateModal";
 import { NetworkIndicator } from "@/components/NetworkIndicator";
 import { LoginGate } from "@/components/LoginGate";
+import { BlockedCard } from "@/components/BlockedCard";
 import { useDateTime } from "@/hooks/useDateTime";
 import { toast } from "sonner";
 import unitvLogo from "@/assets/unitv.png";
