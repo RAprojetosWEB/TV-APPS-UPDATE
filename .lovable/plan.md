@@ -1,9 +1,24 @@
-Plano para corrigir o ícone cortado:
+## O que muda
 
-1. Gerar novamente os ícones `ic_launcher` e `ic_launcher_round` em todos os tamanhos Android, usando a imagem enviada como base, mas com margem interna/safe area para evitar corte em launchers comuns.
+Na tela de login do Android, deixar **bem mais óbvio** quando o botão "ENTRAR" está selecionado (foco via controle remoto).
 
-2. Restaurar suporte moderno de ícone adaptativo para Android 8+, criando os recursos `mipmap-anydpi-v26/ic_launcher.xml` e `ic_launcher_round.xml` com foreground/background adequados, em vez de depender só de PNG quadrado.
+## Comportamento hoje
+Quando o foco vai pro botão "ENTRAR", o fundo muda levemente (via `makePillBg(true)`) e o texto fica escuro. Mas o botão **não cresce** — fica do mesmo tamanho — então é difícil perceber que ele foi selecionado.
 
-3. Manter o banner Leanback separado (`@drawable/banner`) para Android TV, sem mexer no layout do app nem nas funções de download.
+## Como vai ficar
 
-4. Verificar as dimensões finais dos assets gerados para confirmar que cada densidade ficou correta e que o logo não encosta nas bordas.
+No `setOnFocusChangeListener` do `loginButton` (MainActivity.kt, linhas 456-459):
+
+- **Quando ganha foco:**
+  - Cresce ~15% (`scaleX/Y = 1.15`) com animação suave de 180ms
+  - Fundo verde vibrante (`#2dd4a8` — o mesmo verde da marca)
+  - Texto escuro (`#15102A`)
+  - Sombra/glow verde ao redor (`elevation` + `setShadowLayer` no texto)
+- **Quando perde foco:**
+  - Volta ao tamanho normal (`scaleX/Y = 1.0`)
+  - Fundo translúcido original
+  - Texto branco
+  - Sem sombra
+
+## Arquivo alterado
+Apenas `android/app/src/main/java/com/tvapps/launcher/MainActivity.kt` (bloco do `loginButton`, ~10 linhas). Nada muda no site/preview web.
