@@ -263,10 +263,10 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
           >
             A maneira mais fácil de baixar apps
           </p>
-          <div className="flex items-center justify-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.3s]" />
-            <span className="h-2 w-2 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.15s]" />
-            <span className="h-2 w-2 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce" />
+          <div className="flex items-center justify-center gap-2 py-4">
+            <span className="inline-block h-2 w-2 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.3s]" />
+            <span className="inline-block h-2 w-2 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.15s]" />
+            <span className="inline-block h-2 w-2 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce" />
           </div>
         </div>
       </div>
@@ -303,9 +303,9 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
               Carregando conteúdo...
             </h2>
             <div className="flex items-center justify-center gap-2">
-              <span className="h-1 w-1 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.3s]" />
-              <span className="h-1 w-1 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.15s]" />
-              <span className="h-1 w-1 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce" />
+              <span className="inline-block h-1 w-1 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.3s]" />
+              <span className="inline-block h-1 w-1 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.15s]" />
+              <span className="inline-block h-1 w-1 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce" />
             </div>
           </div>
         </div>
