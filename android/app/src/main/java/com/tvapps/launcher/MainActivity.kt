@@ -76,6 +76,9 @@ class MainActivity : Activity() {
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
     private var packageReceiver: PackageInstallReceiver? = null
 
+    // APK aguardando instalação após usuário conceder permissão "Instalar apps desconhecidos"
+    private var pendingInstallApk: File? = null
+
 
 
     private data class CardViews(
