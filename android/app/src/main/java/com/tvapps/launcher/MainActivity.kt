@@ -456,6 +456,15 @@ class MainActivity : Activity() {
             setOnFocusChangeListener { v, hasFocus ->
                 v.background = makePillBg(hasFocus, scaleFactor)
                 (v as TextView).setTextColor(if (hasFocus) Color.parseColor("#15102A") else Color.WHITE)
+                if (hasFocus) {
+                    v.animate().scaleX(1.15f).scaleY(1.15f).setDuration(180).start()
+                    v.elevation = dp(12).toFloat()
+                    (v as TextView).setShadowLayer(40f, 0f, 0f, Color.parseColor("#992dd4a8"))
+                } else {
+                    v.animate().scaleX(1f).scaleY(1f).setDuration(180).start()
+                    v.elevation = 0f
+                    (v as TextView).setShadowLayer(0f, 0f, 0f, Color.TRANSPARENT)
+                }
             }
 
             setOnClickListener {
