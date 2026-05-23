@@ -443,7 +443,9 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => {
-                  setPassword(e.target.value);
+                  const nextPassword = e.target.value;
+                  setPassword(nextPassword);
+                  if (nextPassword.trim().length === 0) setSubmitSelected(false);
                   if (error) setError(null);
                 }}
                 onKeyDown={handleKey}
