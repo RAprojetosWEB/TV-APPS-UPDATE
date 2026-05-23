@@ -458,7 +458,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
                 onClick={() => void handleSubmit()}
                 onKeyDown={handleKey}
                 disabled={loading || password.length === 0}
-                className="group relative flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[oklch(0.78_0.18_155)] text-lg font-bold tracking-wide text-black transition-all duration-150 hover:brightness-110 focus:outline-none focus:scale-[1.03] focus:ring-2 focus:ring-white/50 focus:shadow-[0_0_50px_oklch(0.78_0.18_155/0.8)] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group relative flex h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 border-white/10 bg-white/5 text-lg font-bold tracking-wide text-white/70 transition-all duration-150 hover:bg-white/10 hover:text-white focus:outline-none focus:scale-[1.03] focus:border-[oklch(0.78_0.18_155)] focus:bg-[oklch(0.78_0.18_155)] focus:text-black focus:ring-2 focus:ring-white/50 focus:shadow-[0_0_50px_oklch(0.78_0.18_155/0.8)] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <LogIn className="size-5" />
                 ENTRAR
