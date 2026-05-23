@@ -260,8 +260,8 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
 
   if (showSplash) {
     return (
-      <div className="relative min-h-screen w-screen overflow-hidden bg-background text-foreground flex items-center justify-center animate-in fade-in duration-500">
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="relative min-h-screen w-screen overflow-visible bg-background text-foreground flex items-center justify-center animate-in fade-in duration-500">
+        <div className="pointer-events-none absolute inset-0 overflow-visible">
           <div
             className="absolute left-1/2 top-1/2 h-[80vmin] w-[80vmin] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[140px]"
             style={{
@@ -294,9 +294,9 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
 
   if (isTransitioning) {
     return (
-      <div className="relative min-h-screen w-screen overflow-hidden bg-background text-foreground flex items-center justify-center animate-in fade-in duration-700">
+      <div className="relative min-h-screen w-screen overflow-visible bg-background text-foreground flex items-center justify-center animate-in fade-in duration-700">
         {/* Glow verde */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 overflow-visible">
           <div
             className="absolute left-1/2 top-1/2 h-[80vmin] w-[80vmin] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[140px]"
             style={{
@@ -330,9 +330,9 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
 
   if (ota.hasUpdate) {
     return (
-      <div className="relative min-h-screen w-screen overflow-hidden bg-background text-foreground flex items-center justify-center px-6 animate-in fade-in duration-500">
+      <div className="relative min-h-screen w-screen overflow-visible bg-background text-foreground flex items-center justify-center px-6 animate-in fade-in duration-500">
         {/* Glow âmbar */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 overflow-visible">
           <div
             className="absolute left-1/2 top-1/2 h-[80vmin] w-[80vmin] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[140px]"
             style={{
@@ -404,9 +404,9 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="relative min-h-screen w-screen overflow-clip bg-background text-foreground flex items-center justify-center px-6">
+    <div className="relative min-h-screen w-screen overflow-visible bg-background text-foreground flex items-center justify-center px-6">
       {/* Glow verde */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 overflow-visible">
         <div
           className="absolute left-1/2 top-1/2 h-[80vmin] w-[80vmin] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[140px]"
           style={{
