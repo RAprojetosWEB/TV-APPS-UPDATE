@@ -997,7 +997,6 @@ class MainActivity : Activity() {
             layoutParams = lp
         }
         val iconImage = ImageView(this).apply {
-            setImageResource(app.iconRes)
             scaleType = ImageView.ScaleType.FIT_CENTER
             val pad = dp((10 * scale).toInt())
             setPadding(pad, pad, pad, pad)
@@ -1005,6 +1004,12 @@ class MainActivity : Activity() {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT,
             ).apply { gravity = Gravity.CENTER }
+        }
+        val remoteIcon = app.iconUrl
+        if (!remoteIcon.isNullOrBlank()) {
+            RemoteIconLoader.loadInto(this, iconImage, remoteIcon, app.iconRes)
+        } else {
+            iconImage.setImageResource(app.iconRes)
         }
         iconBadge.addView(iconImage)
 
