@@ -395,7 +395,7 @@ class MainActivity : Activity() {
             inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
             background = makeCardBg(false, scaleFactor)
             val px = dp((24 * scaleFactor).toInt())
-            val py = dp((16 * scaleFactor).toInt())
+            val py = dp((13 * scaleFactor).toInt())
             setPadding(px, py, px, py)
             gravity = Gravity.CENTER
             layoutParams = LinearLayout.LayoutParams(dp((300 * scaleFactor).toInt()), ViewGroup.LayoutParams.WRAP_CONTENT)
@@ -411,7 +411,7 @@ class MainActivity : Activity() {
             isFocusable = true
             isClickable = true
             val px = dp((48 * scaleFactor).toInt())
-            val py = dp((18 * scaleFactor).toInt())
+            val py = dp((14 * scaleFactor).toInt())
             setPadding(px, py, px, py)
             val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
             lp.topMargin = dp((24 * scaleFactor).toInt())
