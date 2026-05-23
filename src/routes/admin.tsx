@@ -7,9 +7,11 @@ import {
   toggleAppBlock,
   updateApp,
   checkIsAdmin,
+  getLoginPassword,
+  updateLoginPassword,
 } from "@/lib/admin.functions";
 import { toast } from "sonner";
-import { Lock, LogOut, Pencil, Save, X } from "lucide-react";
+import { Lock, LogOut, Pencil, Save, X, Eye, EyeOff, KeyRound } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -44,6 +46,13 @@ function AdminPage() {
   const toggleFn = useServerFn(toggleAppBlock);
   const updateFn = useServerFn(updateApp);
   const checkFn = useServerFn(checkIsAdmin);
+  const getPwdFn = useServerFn(getLoginPassword);
+  const setPwdFn = useServerFn(updateLoginPassword);
+
+  const [pwd, setPwd] = useState("");
+  const [pwdLoaded, setPwdLoaded] = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
+  const [savingPwd, setSavingPwd] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,6 +74,15 @@ function AdminPage() {
         }
         setChecking(false);
         await refresh();
+        try {
+          const { password } = await getPwdFn();
+          if (!cancelled) {
+            setPwd(password);
+            setPwdLoaded(true);
+          }
+        } catch (err) {
+          console.error("getLoginPassword", err);
+        }
       } catch (err) {
         console.error(err);
         navigate({ to: "/login" });
@@ -125,6 +143,22 @@ function AdminPage() {
     navigate({ to: "/login" });
   }
 
+  async function handleSavePwd() {
+    if (pwd.length < 4) {
+      toast.error("Senha muito curta", { description: "Mínimo 4 caracteres." });
+      return;
+    }
+    setSavingPwd(true);
+    try {
+      await setPwdFn({ data: { password: pwd } });
+      toast.success("Senha atualizada");
+    } catch (err) {
+      toast.error("Erro ao salvar", { description: String(err) });
+    } finally {
+      setSavingPwd(false);
+    }
+  }
+
   if (checking) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-white/60">
@@ -155,6 +189,46 @@ function AdminPage() {
           Ligue/desligue cada app. Apps bloqueados aparecem como card neutro
           (cadeado) na TV, sem nome ou logo.
         </p>
+
+        <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <KeyRound size={18} className="text-[oklch(0.78_0.18_155)]" />
+            <div>
+              <h2 className="font-bold">Senha de login do app TV</h2>
+              <p className="text-xs text-white/50">
+                Senha exigida ao abrir o launcher na TV Box.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <input
+                type={showPwd ? "text" : "password"}
+                value={pwd}
+                onChange={(e) => setPwd(e.target.value)}
+                disabled={!pwdLoaded}
+                placeholder={pwdLoaded ? "" : "Carregando..."}
+                maxLength={50}
+                className="w-full h-10 rounded-lg border border-white/10 bg-black/30 px-3 pr-10 text-white outline-none focus:border-[oklch(0.78_0.18_155)] disabled:opacity-50"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPwd((v) => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
+                aria-label={showPwd ? "Ocultar" : "Mostrar"}
+              >
+                {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            <button
+              onClick={handleSavePwd}
+              disabled={!pwdLoaded || savingPwd}
+              className="inline-flex items-center gap-2 rounded-lg bg-[oklch(0.78_0.18_155)] px-4 py-2 text-sm font-bold text-black hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Save size={16} /> {savingPwd ? "..." : "Salvar"}
+            </button>
+          </div>
+        </div>
 
         {loading ? (
           <div className="text-white/40 py-12 text-center">Carregando...</div>
