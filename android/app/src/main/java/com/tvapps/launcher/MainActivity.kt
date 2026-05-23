@@ -912,7 +912,8 @@ class MainActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
             layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
             )
             clipChildren = false
             clipToPadding = false
@@ -927,7 +928,42 @@ class MainActivity : Activity() {
             // Atualiza estado inicial do botão + chip "INSTALADO"
             refreshInstalledState(card, app)
         }
-        root.addView(row)
+
+        // HorizontalScrollView para permitir rolagem quando há mais cards
+        // do que cabem na tela (5+ cards). O foco do controle remoto centraliza
+        // o card focado automaticamente.
+        val scroller = HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            isFillViewport = true
+            overScrollMode = View.OVER_SCROLL_NEVER
+            clipChildren = false
+            clipToPadding = false
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f,
+            )
+            addView(row)
+        }
+        root.addView(scroller)
+
+        // Centraliza o card focado dentro do scroller ao navegar com D-pad.
+        cardViews.forEach { card ->
+            val view = card.container
+            val previous = view.onFocusChangeListener
+            view.setOnFocusChangeListener { v, hasFocus ->
+                previous?.onFocusChange(v, hasFocus)
+                if (hasFocus) {
+                    v.post {
+                        val scrollerWidth = scroller.width
+                        if (scrollerWidth <= 0) return@post
+                        val cardCenter = v.left + v.width / 2
+                        val target = (cardCenter - scrollerWidth / 2)
+                            .coerceAtLeast(0)
+                            .coerceAtMost((row.width - scrollerWidth).coerceAtLeast(0))
+                        scroller.smoothScrollTo(target, 0)
+                    }
+                }
+            }
+        }
 
         // Garante que "baixo" a partir das pílulas da topbar caia sempre no primeiro card
         cardViews.firstOrNull()?.container?.let { firstCard ->
