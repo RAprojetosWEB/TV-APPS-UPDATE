@@ -403,6 +403,11 @@ function Index() {
 
   const handleKey = (e: React.KeyboardEvent) => {
     if (modalOpen) return;
+    // Só captura setas quando o foco está em um dos cards.
+    // Caso contrário (botões do header), deixa a navegação natural agir.
+    const target = e.target as HTMLElement | null;
+    const isCard = refs.current.some((el) => el === target);
+    if (!isCard) return;
     if (e.key === "ArrowRight") {
       e.preventDefault();
       const next = (focused + 1) % currentApps.length;
