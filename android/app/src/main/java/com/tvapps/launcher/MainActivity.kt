@@ -1498,6 +1498,14 @@ class MainActivity : Activity() {
         weatherView = weather
         wifiView = wifi
         otaStatusPill = system
+        settingsPill = settings
+
+        // Navegação D-pad determinística entre as pílulas focáveis,
+        // independente da animação de LayoutTransition.
+        system.id = View.generateViewId()
+        settings.id = View.generateViewId()
+        system.nextFocusRightId = settings.id
+        settings.nextFocusLeftId = system.id
 
         row.addView(left)
         row.addView(right)
