@@ -279,7 +279,6 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
           >
             A maneira mais fácil de baixar apps
           </p>
-          <LoadingDots />
         </div>
       </div>
     );
