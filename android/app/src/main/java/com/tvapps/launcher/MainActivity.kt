@@ -1246,7 +1246,7 @@ class MainActivity : Activity() {
         card.percent.text = "0%"
         card.percent.setTextColor(Color.parseColor("#5EE6A8"))
         card.pill.visibility = View.GONE
-        card.subtitle.text = "Baixando…"
+        card.subtitle.visibility = View.GONE
 
         cardJobs[index] = scope.launch {
             ApkDownloader.download(this@MainActivity, app.url, app.name).collect { p ->
@@ -1254,16 +1254,11 @@ class MainActivity : Activity() {
                     is DownloadProgress.Progress -> withContext(Dispatchers.Main) {
                         card.progress.progress = p.percent
                         card.percent.text = "${p.percent}%"
-                        card.subtitle.text = buildProgressLine(p)
                     }
                     is DownloadProgress.Done -> withContext(Dispatchers.Main) {
                         card.progress.progress = 100
                         card.percent.text = "100%"
-                        
-                        // Diferencia se foi cache ou download real para o log/UI se quiser, 
-                        // mas o comportamento de abrir o instalador é o mesmo.
-                        card.subtitle.text = "Abrindo instalador…"
-                        
+
                         // Aprende o packageName real do APK baixado para detecção futura precisa
                         InstalledRegistry.learnFromApk(this@MainActivity, app.name, p.file)
                         
@@ -1272,6 +1267,7 @@ class MainActivity : Activity() {
                             card.progress.visibility = View.GONE
                             card.percent.visibility = View.GONE
                             card.pill.visibility = View.VISIBLE
+                            card.subtitle.visibility = View.VISIBLE
                             card.subtitle.text = AppCatalog.apps[index].description
                             // Revalida instalação real, cache e atualiza chip/botão
                             refreshInstalledState(card, app)
@@ -1281,6 +1277,7 @@ class MainActivity : Activity() {
                         card.progress.visibility = View.GONE
                         card.percent.visibility = View.GONE
                         card.pill.visibility = View.VISIBLE
+                        card.subtitle.visibility = View.VISIBLE
                         card.subtitle.text = "Falha no download"
                         Toast.makeText(
                             this@MainActivity,
