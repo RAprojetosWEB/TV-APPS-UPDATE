@@ -635,8 +635,11 @@ class MainActivity : Activity() {
                 runOnUiThread {
                     hideSoftKeyboardAndClearFocus()
                     overlay.visibility = View.VISIBLE
-                    overlay.isFocusable = true
-                    overlay.isFocusableInTouchMode = true
+                    // O overlay NÃO deve ser focável — senão ele rouba o foco
+                    // do botão "ATUALIZAR AGORA" e o D-pad não consegue chegar nele.
+                    overlay.isFocusable = false
+                    overlay.isFocusableInTouchMode = false
+                    overlay.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
                     overlay.removeAllViews()
 
                     // Esconde o card de login e o rodapé enquanto a atualização é obrigatória,
@@ -785,7 +788,8 @@ class MainActivity : Activity() {
                     card.addView(speed)
                     card.addView(btn)
                     overlay.addView(card)
-                    overlay.requestFocus()
+                    // Foca diretamente no botão para que o controle remoto já o ative.
+                    btn.post { btn.requestFocus() }
                 }
             } else {
                 runOnUiThread {
