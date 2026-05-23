@@ -1271,6 +1271,7 @@ class MainActivity : Activity() {
      * Estados: "Abrir aplicativo", "Instalar aplicativo", "Baixar aplicativo"
      */
     private fun refreshInstalledState(card: CardViews, app: CatalogApp) {
+        if (app.isBlocked) return
         if (card.progress.visibility == View.VISIBLE) return // download em andamento
         
         val installed = InstalledRegistry.isInstalled(this, app)
