@@ -58,6 +58,7 @@ class MainActivity : Activity() {
     private var weatherView: TextView? = null
     private var wifiView: TextView? = null
     private var otaStatusPill: TextView? = null
+    private var settingsPill: TextView? = null
     private val statusHandler = Handler(Looper.getMainLooper())
     private val clockTicker = object : Runnable {
         override fun run() {
@@ -907,6 +908,13 @@ class MainActivity : Activity() {
         }
         root.addView(row)
 
+        // Garante que "baixo" a partir das pílulas da topbar caia sempre no primeiro card
+        cardViews.firstOrNull()?.container?.let { firstCard ->
+            if (firstCard.id == View.NO_ID) firstCard.id = View.generateViewId()
+            otaStatusPill?.nextFocusDownId = firstCard.id
+            settingsPill?.nextFocusDownId = firstCard.id
+        }
+
         val footer = TextView(this).apply {
             text = "Selecione um aplicativo e pressione OK para instalar ou abrir"
             setTextColor(Color.parseColor("#66FFFFFF"))
@@ -1497,6 +1505,14 @@ class MainActivity : Activity() {
         weatherView = weather
         wifiView = wifi
         otaStatusPill = system
+        settingsPill = settings
+
+        // Navegação D-pad determinística entre as pílulas focáveis,
+        // independente da animação de LayoutTransition.
+        system.id = View.generateViewId()
+        settings.id = View.generateViewId()
+        system.nextFocusRightId = settings.id
+        settings.nextFocusLeftId = system.id
 
         row.addView(left)
         row.addView(right)

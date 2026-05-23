@@ -1,24 +1,29 @@
-## O que muda
+## Bug
 
-Na tela de login do Android, deixar **bem mais óbvio** quando o botão "ENTRAR" está selecionado (foco via controle remoto).
+No Android, quando o botão **"Procurar atualizações"** está com foco (expandido com texto) e o usuário aperta a seta para a **direita** para ir em **"Configurações"** (engrenagem), o foco **pula** a engrenagem e cai direto num card de app embaixo. O vídeo confirma: em poucos frames a pílula colapsa e o foco aparece num card, sem nunca passar pela engrenagem.
 
-## Comportamento hoje
-Quando o foco vai pro botão "ENTRAR", o fundo muda levemente (via `makePillBg(true)`) e o texto fica escuro. Mas o botão **não cresce** — fica do mesmo tamanho — então é difícil perceber que ele foi selecionado.
+## Causa
 
-## Como vai ficar
+A barra superior usa `LayoutTransition` com animação `CHANGING` (250ms). Quando a pílula "Procurar atualizações" cresce/encolhe com texto, a engrenagem ainda está sendo animada para uma nova posição. Nesse meio-tempo, o algoritmo de **focus search** do Android usa retângulos desatualizados e às vezes não encontra a engrenagem à direita — então cai para o card mais próximo abaixo.
 
-No `setOnFocusChangeListener` do `loginButton` (MainActivity.kt, linhas 456-459):
+## Correção
 
-- **Quando ganha foco:**
-  - Cresce ~15% (`scaleX/Y = 1.15`) com animação suave de 180ms
-  - Fundo verde vibrante (`#2dd4a8` — o mesmo verde da marca)
-  - Texto escuro (`#15102A`)
-  - Sombra/glow verde ao redor (`elevation` + `setShadowLayer` no texto)
-- **Quando perde foco:**
-  - Volta ao tamanho normal (`scaleX/Y = 1.0`)
-  - Fundo translúcido original
-  - Texto branco
-  - Sem sombra
+Tornar a navegação por D-pad **determinística**, sem depender da posição animada. Em `buildTopBar` (MainActivity.kt, ~linhas 1400-1490):
 
-## Arquivo alterado
-Apenas `android/app/src/main/java/com/tvapps/launcher/MainActivity.kt` (bloco do `loginButton`, ~10 linhas). Nada muda no site/preview web.
+1. Gerar IDs estáveis para as duas pílulas focáveis:
+   ```kotlin
+   system.id = View.generateViewId()
+   settings.id = View.generateViewId()
+   ```
+2. Amarrar a navegação esquerda/direita explicitamente:
+   ```kotlin
+   system.nextFocusRightId = settings.id
+   settings.nextFocusLeftId = system.id
+   ```
+3. Para a seta para baixo de ambas, apontar para o primeiro card (assim "baixo" sempre cai num card e nunca volta para outra pílula): definido em `buildRoot` depois que os cards são criados — `system.nextFocusDownId = cardViews[0].container.id` e idem para `settings`.
+
+Resultado: pressionar **direita** em "Procurar atualizações" sempre leva para "Configurações", independente da animação. Pressionar **baixo** em qualquer pílula sempre leva para o primeiro card.
+
+## Arquivo
+
+Apenas `android/app/src/main/java/com/tvapps/launcher/MainActivity.kt` — ~8 linhas adicionadas em duas funções (`buildTopBar` e `buildRoot`). Nenhuma mudança visual, nenhuma mudança no preview web.
