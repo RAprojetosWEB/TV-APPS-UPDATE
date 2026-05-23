@@ -76,7 +76,7 @@ export function OtaUpdateModal({
         }}
       >
         <div
-          className="mb-6 flex h-24 w-24 items-center justify-center rounded-2xl animate-bounce"
+          className="mb-6 flex h-24 w-24 items-center justify-center rounded-2xl"
           style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
         >
           <RefreshCcw size={56} strokeWidth={2.5} color="white" />
