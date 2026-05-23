@@ -855,6 +855,80 @@ function NewAppForm({
 }
 
 function OtaSection() {
+  return <OtaSectionInner />;
+}
+
+function RawUploadButton({
+  onUpload,
+  busy,
+}: {
+  onUpload: (apk: File, json: File) => Promise<void>;
+  busy: boolean;
+}) {
+  const [apk, setApk] = useState<File | null>(null);
+  const [json, setJson] = useState<File | null>(null);
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        disabled={busy}
+        className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 disabled:opacity-50"
+      >
+        <Upload size={16} /> Upload direto
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full z-20 mt-2 w-80 rounded-xl border border-white/10 bg-black/95 p-4 shadow-2xl backdrop-blur">
+          <div className="text-xs uppercase tracking-wider text-white/50 mb-2">
+            Upload direto (sem form)
+          </div>
+          <p className="text-[11px] text-white/40 mb-3">
+            Envia o APK e o <code>update.json</code> direto pro Storage,
+            substituindo o atual. Não preenche histórico.
+          </p>
+          <label className="block text-[11px] text-white/60 mb-1">APK</label>
+          <input
+            type="file"
+            accept=".apk,application/vnd.android.package-archive"
+            onChange={(e) => setApk(e.target.files?.[0] ?? null)}
+            className="block w-full text-xs text-white/70 mb-3"
+          />
+          <label className="block text-[11px] text-white/60 mb-1">update.json</label>
+          <input
+            type="file"
+            accept="application/json,.json"
+            onChange={(e) => setJson(e.target.files?.[0] ?? null)}
+            className="block w-full text-xs text-white/70 mb-3"
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setOpen(false)}
+              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/70 hover:bg-white/5"
+            >
+              Fechar
+            </button>
+            <button
+              disabled={!apk || !json || busy}
+              onClick={async () => {
+                if (!apk || !json) return;
+                await onUpload(apk, json);
+                setApk(null);
+                setJson(null);
+                setOpen(false);
+              }}
+              className="inline-flex items-center gap-2 rounded-lg bg-[oklch(0.78_0.18_155)] px-3 py-1.5 text-xs font-bold text-black hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
+            >
+              <Upload size={14} /> {busy ? "Enviando..." : "Enviar"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OtaSectionInner() {
   const listFn = useServerFn(listLauncherVersions);
   const publishFn = useServerFn(publishLauncherVersion);
   const setLatestFn = useServerFn(setLatestLauncherVersion);
