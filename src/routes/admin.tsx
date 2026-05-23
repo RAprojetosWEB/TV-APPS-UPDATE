@@ -457,6 +457,7 @@ function AppCard({
   const [displayOrder, setDisplayOrder] = useState(app.display_order);
   const [isActive, setIsActive] = useState(app.is_active);
   const [uploading, setUploading] = useState(false);
+  const uploadIconFn = useServerFn(uploadAppIcon);
 
   async function handleIconUpload(file: File) {
     if (!file.type.startsWith("image/")) {
