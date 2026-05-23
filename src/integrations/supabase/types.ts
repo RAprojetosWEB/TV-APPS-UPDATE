@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          id: string
+          login_password: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          login_password: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          login_password?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       app_versions: {
         Row: {
           apk_size_mb: number | null
