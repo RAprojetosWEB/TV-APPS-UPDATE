@@ -404,7 +404,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="relative min-h-screen w-screen overflow-hidden bg-background text-foreground flex items-center justify-center px-6">
+    <div className="relative min-h-screen w-screen overflow-clip bg-background text-foreground flex items-center justify-center px-6">
       {/* Glow verde */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div
@@ -446,7 +446,12 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
                 ref={inputRef}
                 type="password"
                 inputMode="numeric"
-                autoComplete="off"
+                autoComplete="new-password"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                data-lpignore="true"
+                data-form-type="other"
                 value={password}
                 onChange={(e) => {
                   const nextPassword = e.target.value;
@@ -454,6 +459,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
                   if (nextPassword.trim().length === 0) setSubmitSelected(false);
                   if (error) setError(null);
                 }}
+                onFocus={() => setSubmitSelected(false)}
                 onKeyDown={handleKey}
                 placeholder="••••••"
                 aria-label="Senha"
