@@ -116,7 +116,7 @@ class MainActivity : Activity() {
         setContentView(buildSplashScreen())
         Handler(Looper.getMainLooper()).postDelayed({
             setContentView(buildLoginScreen())
-        }, 1800)
+        }, 3500)
 
         // Limpeza inicial do cache de APKs (apps já instalados + órfãos + limite)
         try {
