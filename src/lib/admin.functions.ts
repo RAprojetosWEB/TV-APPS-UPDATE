@@ -374,3 +374,79 @@ export const deleteLauncherVersion = createServerFn({ method: "POST" })
     }
     return { success: true };
   });
+
+function decodeBase64(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+export const uploadAppIcon = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        appId: z.string().uuid(),
+        fileBase64: z.string().min(1),
+        ext: z.string().regex(/^[a-z0-9]{1,5}$/),
+        contentType: z.string().min(1).max(100),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const bytes = decodeBase64(data.fileBase64);
+    if (bytes.byteLength > 5 * 1024 * 1024) throw new Error("Imagem muito grande (máx 5 MB)");
+    const path = `${data.appId}/${Date.now()}.${data.ext}`;
+    const { error } = await supabaseAdmin.storage
+      .from("app-icons")
+      .upload(path, bytes, { upsert: false, contentType: data.contentType });
+    if (error) throw new Error(error.message);
+    const { data: pub } = supabaseAdmin.storage.from("app-icons").getPublicUrl(path);
+    return { publicUrl: pub.publicUrl, path };
+  });
+
+export const uploadLauncherApk = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        path: z.string().min(1).max(200).regex(/^[a-zA-Z0-9/_.-]+$/),
+        fileBase64: z.string().min(1),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const bytes = decodeBase64(data.fileBase64);
+    const { error } = await supabaseAdmin.storage
+      .from("tvapps-updates")
+      .upload(data.path, bytes, {
+        upsert: true,
+        contentType: "application/vnd.android.package-archive",
+      });
+    if (error) throw new Error(error.message);
+    return { success: true, path: data.path };
+  });
+
+export const uploadLauncherRaw = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        path: z.string().min(1).max(200).regex(/^[a-zA-Z0-9/_.-]+$/),
+        contentBase64: z.string().min(1),
+        contentType: z.string().min(1).max(100),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const bytes = decodeBase64(data.contentBase64);
+    const { error } = await supabaseAdmin.storage
+      .from("tvapps-updates")
+      .upload(data.path, bytes, { upsert: true, contentType: data.contentType });
+    if (error) throw new Error(error.message);
+    return { success: true, path: data.path };
+  });
