@@ -7,10 +7,15 @@ data class CatalogApp(
     val icon: String,
     val packageName: String,
     val iconRes: Int,
+    val iconUrl: String? = null,
+    val isBlocked: Boolean = false,
+    val blockReason: String? = null,
 )
 
 object AppCatalog {
-    val apps: List<CatalogApp> = listOf(
+    // Mutável para que RemoteCatalog possa substituir pela lista vinda do servidor.
+    // O valor default abaixo é o fallback de emergência (sem rede + sem cache).
+    var apps: List<CatalogApp> = listOf(
         CatalogApp(
             name = "UniTV",
             description = "Mais de 400 canais, filmes e séries",
