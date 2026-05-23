@@ -463,7 +463,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
                 onKeyDown={handleKey}
                 placeholder="••••••"
                 aria-label="Senha"
-                className="w-full h-16 rounded-2xl border-2 border-white/10 bg-white/5 px-6 text-2xl tracking-[0.3em] text-white text-center outline-none transition-all duration-200 placeholder:text-white/20 placeholder:tracking-normal focus:border-[oklch(0.78_0.18_155)] focus:bg-white/10 focus:shadow-[0_0_0_4px_oklch(0.78_0.18_155/0.25),0_0_30px_oklch(0.78_0.18_155/0.45)]"
+                className="w-full h-[51px] rounded-2xl border-2 border-white/10 bg-white/5 px-6 text-2xl tracking-[0.3em] text-white text-center outline-none transition-all duration-200 placeholder:text-white/20 placeholder:tracking-normal focus:border-[oklch(0.78_0.18_155)] focus:bg-white/10 focus:shadow-[0_0_0_4px_oklch(0.78_0.18_155/0.25),0_0_30px_oklch(0.78_0.18_155/0.45)]"
               />
 
               {error && (
@@ -482,7 +482,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
                 onKeyDown={handleKey}
                 onBlur={() => setSubmitSelected(false)}
                 disabled={loading || !canSubmit}
-                className={`group relative flex h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 text-lg font-bold tracking-wide transition-all duration-150 focus:outline-none disabled:cursor-not-allowed ${submitSelected && canSubmit ? "scale-[1.03] border-[oklch(0.78_0.18_155)] bg-[oklch(0.78_0.18_155)] text-black ring-2 ring-white/50 shadow-[0_0_50px_oklch(0.78_0.18_155/0.8)]" : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white disabled:opacity-50"}`}
+                className={`group relative flex h-[45px] w-full items-center justify-center gap-2 rounded-2xl border-2 text-lg font-bold tracking-wide transition-all duration-150 focus:outline-none disabled:cursor-not-allowed ${submitSelected && canSubmit ? "scale-[1.03] border-[oklch(0.78_0.18_155)] bg-[oklch(0.78_0.18_155)] text-black ring-2 ring-white/50 shadow-[0_0_50px_oklch(0.78_0.18_155/0.8)]" : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white disabled:opacity-50"}`}
               >
                 <LogIn className="size-5" />
                 ENTRAR
