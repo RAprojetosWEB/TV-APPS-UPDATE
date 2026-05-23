@@ -863,6 +863,32 @@ function OtaSection() {
   const [versions, setVersions] = useState<LauncherVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [rawUploading, setRawUploading] = useState(false);
+
+  async function handleRawUpload(apk: File, json: File) {
+    setRawUploading(true);
+    try {
+      const apkPath = `releases/${apk.name}`;
+      const upApk = await supabase.storage
+        .from("tvapps-updates")
+        .upload(apkPath, apk, { upsert: true, contentType: "application/vnd.android.package-archive" });
+      if (upApk.error) throw upApk.error;
+
+      const upJson = await supabase.storage
+        .from("tvapps-updates")
+        .upload("update.json", json, { upsert: true, contentType: "application/json" });
+      if (upJson.error) throw upJson.error;
+
+      toast.success("Upload concluído", {
+        description: `APK e update.json enviados para o Storage.`,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error("Erro no upload direto", { description: msg });
+    } finally {
+      setRawUploading(false);
+    }
+  }
 
   async function load() {
     setLoading(true);
@@ -896,12 +922,15 @@ function OtaSection() {
             automaticamente quando há versão nova.
           </p>
         </div>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="inline-flex items-center gap-2 rounded-lg bg-[oklch(0.78_0.18_155)] px-3 py-2 text-sm font-bold text-black hover:scale-[1.02]"
-        >
-          <Upload size={16} /> Nova versão
-        </button>
+        <div className="flex gap-2">
+          <RawUploadButton onUpload={handleRawUpload} busy={rawUploading} />
+          <button
+            onClick={() => setShowForm((v) => !v)}
+            className="inline-flex items-center gap-2 rounded-lg bg-[oklch(0.78_0.18_155)] px-3 py-2 text-sm font-bold text-black hover:scale-[1.02]"
+          >
+            <Upload size={16} /> Nova versão
+          </button>
+        </div>
       </div>
 
       {latest && (
