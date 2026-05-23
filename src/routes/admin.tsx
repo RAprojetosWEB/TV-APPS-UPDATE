@@ -17,8 +17,22 @@ import {
   publishLauncherVersion,
   setLatestLauncherVersion,
   deleteLauncherVersion,
+  uploadAppIcon,
+  uploadLauncherApk,
+  uploadLauncherRaw,
 } from "@/lib/admin.functions";
 import { toast } from "sonner";
+
+async function fileToBase64(file: File | Blob): Promise<string> {
+  const buf = await file.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  let bin = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    bin += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(bin);
+}
 import {
   Lock, LogOut, Pencil, Save, X, Eye, EyeOff, KeyRound, Upload,
   Plus, Trash2, Copy, GripVertical, Package, CheckCircle2, RotateCcw,
