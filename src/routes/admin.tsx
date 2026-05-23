@@ -79,11 +79,22 @@ function AdminPage() {
   const checkFn = useServerFn(checkIsAdmin);
   const getPwdFn = useServerFn(getLoginPassword);
   const setPwdFn = useServerFn(updateLoginPassword);
+  const createFn = useServerFn(createApp);
+  const deleteFn = useServerFn(deleteApp);
+  const duplicateFn = useServerFn(duplicateApp);
+  const reorderFn = useServerFn(reorderApps);
 
   const [pwd, setPwd] = useState("");
   const [pwdLoaded, setPwdLoaded] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
   const [savingPwd, setSavingPwd] = useState(false);
+
+  const [showNewForm, setShowNewForm] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -190,6 +201,60 @@ function AdminPage() {
     }
   }
 
+  async function handleCreate(payload: {
+    name: string;
+    package_name: string;
+    description?: string;
+    apk_url?: string;
+    icon_url?: string;
+  }) {
+    try {
+      await createFn({ data: payload });
+      toast.success("App criado");
+      setShowNewForm(false);
+      await refresh();
+    } catch (err) {
+      toast.error("Erro ao criar", { description: String(err) });
+    }
+  }
+
+  async function handleDelete(app: AppRow) {
+    if (!confirm(`Excluir "${app.name}"? Esta ação não pode ser desfeita.`)) return;
+    try {
+      await deleteFn({ data: { appId: app.id } });
+      toast.success("Excluído");
+      await refresh();
+    } catch (err) {
+      toast.error("Erro ao excluir", { description: String(err) });
+    }
+  }
+
+  async function handleDuplicate(app: AppRow) {
+    try {
+      await duplicateFn({ data: { appId: app.id } });
+      toast.success("Duplicado");
+      await refresh();
+    } catch (err) {
+      toast.error("Erro ao duplicar", { description: String(err) });
+    }
+  }
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = apps.findIndex((a) => a.id === active.id);
+    const newIndex = apps.findIndex((a) => a.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const reordered = arrayMove(apps, oldIndex, newIndex);
+    setApps(reordered); // otimista
+    try {
+      await reorderFn({ data: { orderedIds: reordered.map((a) => a.id) } });
+    } catch (err) {
+      toast.error("Erro ao reordenar", { description: String(err) });
+      await refresh();
+    }
+  }
+
   if (checking) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-white/60">
@@ -264,36 +329,69 @@ function AdminPage() {
         {loading ? (
           <div className="text-white/40 py-12 text-center">Carregando...</div>
         ) : (
-          <div className="space-y-3">
-            {apps.map((app) => (
-              <AppCard
-                key={app.id}
-                app={app}
-                editing={editing === app.id}
-                blocking={blocking === app.id}
-                reason={reason}
-                onReasonChange={setReason}
-                onEditStart={() => setEditing(app.id)}
-                onEditCancel={() => setEditing(null)}
-                onEditSave={async (patch) => {
-                  try {
-                    await updateFn({ data: { appId: app.id, ...patch } });
-                    toast.success("Atualizado");
-                    setEditing(null);
-                    await refresh();
-                  } catch (err) {
-                    toast.error("Erro", { description: String(err) });
-                  }
-                }}
-                onToggle={(v) => handleToggle(app, v)}
-                onConfirmBlock={() => confirmBlock(app)}
-                onCancelBlock={() => {
-                  setBlocking(null);
-                  setReason("");
-                }}
-              />
-            ))}
-          </div>
+          <>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-white/50">
+                Apps do catálogo ({apps.length})
+              </h2>
+              <button
+                onClick={() => setShowNewForm((v) => !v)}
+                className="inline-flex items-center gap-2 rounded-lg bg-[oklch(0.78_0.18_155)] px-3 py-2 text-sm font-bold text-black hover:scale-[1.02]"
+              >
+                <Plus size={16} /> Novo app
+              </button>
+            </div>
+
+            {showNewForm && (
+              <NewAppForm onCancel={() => setShowNewForm(false)} onCreate={handleCreate} />
+            )}
+
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={apps.map((a) => a.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-3">
+                  {apps.map((app) => (
+                    <SortableAppCard
+                      key={app.id}
+                      app={app}
+                      editing={editing === app.id}
+                      blocking={blocking === app.id}
+                      reason={reason}
+                      onReasonChange={setReason}
+                      onEditStart={() => setEditing(app.id)}
+                      onEditCancel={() => setEditing(null)}
+                      onEditSave={async (patch) => {
+                        try {
+                          await updateFn({ data: { appId: app.id, ...patch } });
+                          toast.success("Atualizado");
+                          setEditing(null);
+                          await refresh();
+                        } catch (err) {
+                          toast.error("Erro", { description: String(err) });
+                        }
+                      }}
+                      onToggle={(v) => handleToggle(app, v)}
+                      onConfirmBlock={() => confirmBlock(app)}
+                      onCancelBlock={() => {
+                        setBlocking(null);
+                        setReason("");
+                      }}
+                      onDelete={() => handleDelete(app)}
+                      onDuplicate={() => handleDuplicate(app)}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+
+            <OtaSection />
+          </>
         )}
       </main>
     </div>
