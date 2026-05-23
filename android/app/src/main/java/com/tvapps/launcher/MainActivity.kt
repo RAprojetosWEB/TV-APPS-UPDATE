@@ -908,6 +908,13 @@ class MainActivity : Activity() {
         }
         root.addView(row)
 
+        // Garante que "baixo" a partir das pílulas da topbar caia sempre no primeiro card
+        cardViews.firstOrNull()?.container?.let { firstCard ->
+            if (firstCard.id == View.NO_ID) firstCard.id = View.generateViewId()
+            otaStatusPill?.nextFocusDownId = firstCard.id
+            settingsPill?.nextFocusDownId = firstCard.id
+        }
+
         val footer = TextView(this).apply {
             text = "Selecione um aplicativo e pressione OK para instalar ou abrir"
             setTextColor(Color.parseColor("#66FFFFFF"))
