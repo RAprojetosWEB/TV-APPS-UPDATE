@@ -410,6 +410,9 @@ function AppCard({
   onToggle,
   onConfirmBlock,
   onCancelBlock,
+  onDelete,
+  onDuplicate,
+  dragHandle,
 }: {
   app: AppRow;
   editing: boolean;
@@ -429,6 +432,9 @@ function AppCard({
   onToggle: (v: boolean) => void;
   onConfirmBlock: () => void;
   onCancelBlock: () => void;
+  onDelete: () => void;
+  onDuplicate: () => void;
+  dragHandle?: React.ReactNode;
 }) {
   const [name, setName] = useState(app.name);
   const [description, setDescription] = useState(app.description ?? "");
@@ -475,6 +481,7 @@ function AppCard({
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-4 min-w-0 flex-1">
+          {dragHandle}
           {app.icon_url ? (
             <img
               src={app.icon_url}
@@ -519,6 +526,22 @@ function AppCard({
                 aria-label="Editar"
               >
                 <Pencil size={16} />
+              </button>
+              <button
+                onClick={onDuplicate}
+                className="rounded-lg border border-white/10 p-2 text-white/60 hover:bg-white/5"
+                aria-label="Duplicar"
+                title="Duplicar"
+              >
+                <Copy size={16} />
+              </button>
+              <button
+                onClick={onDelete}
+                className="rounded-lg border border-red-500/30 p-2 text-red-400 hover:bg-red-500/10"
+                aria-label="Excluir"
+                title="Excluir"
+              >
+                <Trash2 size={16} />
               </button>
             </>
           )}
