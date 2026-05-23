@@ -62,6 +62,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [submitSelected, setSubmitSelected] = useState(false);
   
   // OTA (Verificação obrigatória antes do login)
   const ota = useOtaUpdate({ autoCheck: true });
@@ -72,6 +73,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const updateBtnRef = useRef<HTMLButtonElement>(null);
+  const canSubmit = password.trim().length > 0;
 
   useEffect(() => {
     setMounted(true);
@@ -175,7 +177,7 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
   };
 
   async function handleSubmit() {
-    if (loading || isTransitioning) return;
+    if (loading || isTransitioning || !canSubmit) return;
     setLoading(true);
     setError(null);
     try {
@@ -219,9 +221,16 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
     }
     if (k === "ArrowDown") {
       e.preventDefault();
-      buttonRef.current?.focus();
+      if (canSubmit) {
+        setSubmitSelected(true);
+        buttonRef.current?.focus();
+      } else {
+        setSubmitSelected(false);
+        inputRef.current?.focus();
+      }
     } else if (k === "ArrowUp") {
       e.preventDefault();
+      setSubmitSelected(false);
       inputRef.current?.focus();
     }
   }
@@ -263,10 +272,10 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
           >
             A maneira mais fácil de baixar apps
           </p>
-          <div className="flex items-center justify-center gap-2 py-4">
-            <span className="inline-block h-2 w-2 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.3s]" />
-            <span className="inline-block h-2 w-2 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.15s]" />
-            <span className="inline-block h-2 w-2 rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce" />
+          <div className="flex h-8 items-start justify-center gap-2 overflow-visible py-1">
+            <span className="splash-dot inline-block h-2 w-2 flex-none rounded-full bg-[var(--tv-accent)] [animation-delay:-0.3s]" />
+            <span className="splash-dot inline-block h-2 w-2 flex-none rounded-full bg-[var(--tv-accent)] [animation-delay:-0.15s]" />
+            <span className="splash-dot inline-block h-2 w-2 flex-none rounded-full bg-[var(--tv-accent)]" />
           </div>
         </div>
       </div>
@@ -434,7 +443,9 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => {
-                  setPassword(e.target.value);
+                  const nextPassword = e.target.value;
+                  setPassword(nextPassword);
+                  if (nextPassword.trim().length === 0) setSubmitSelected(false);
                   if (error) setError(null);
                 }}
                 onKeyDown={handleKey}
@@ -457,8 +468,10 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
                 type="button"
                 onClick={() => void handleSubmit()}
                 onKeyDown={handleKey}
-                disabled={loading || password.length === 0}
-                className="group relative flex h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 border-white/10 bg-white/5 text-lg font-bold tracking-wide text-white/70 transition-all duration-150 hover:bg-white/10 hover:text-white focus:outline-none focus:scale-[1.03] focus:border-[oklch(0.78_0.18_155)] focus:bg-[oklch(0.78_0.18_155)] focus:text-black focus:ring-2 focus:ring-white/50 focus:shadow-[0_0_50px_oklch(0.78_0.18_155/0.8)] disabled:opacity-50 disabled:cursor-not-allowed"
+                onFocus={() => setSubmitSelected(canSubmit)}
+                onBlur={() => setSubmitSelected(false)}
+                disabled={loading || !canSubmit}
+                className={`group relative flex h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 text-lg font-bold tracking-wide transition-all duration-150 focus:outline-none disabled:cursor-not-allowed ${submitSelected && canSubmit ? "scale-[1.03] border-[oklch(0.78_0.18_155)] bg-[oklch(0.78_0.18_155)] text-black ring-2 ring-white/50 shadow-[0_0_50px_oklch(0.78_0.18_155/0.8)]" : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white disabled:opacity-50"}`}
               >
                 <LogIn className="size-5" />
                 ENTRAR
