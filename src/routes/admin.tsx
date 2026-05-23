@@ -891,7 +891,7 @@ function RawUploadButton({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="relative">
+    <>
       <button
         onClick={() => setOpen((v) => !v)}
         disabled={busy}
@@ -899,30 +899,63 @@ function RawUploadButton({
       >
         <Upload size={16} /> Upload direto
       </button>
-      {open && (
-        <div className="absolute right-0 top-full z-20 mt-2 w-80 rounded-xl border border-white/10 bg-black/95 p-4 shadow-2xl backdrop-blur">
-          <div className="text-xs uppercase tracking-wider text-white/50 mb-2">
-            Upload direto (sem form)
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="border-white/10 bg-black/95 text-white sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white">Upload direto (sem form)</DialogTitle>
+            <DialogDescription className="text-white/50">
+              Envia o APK e o <code>update.json</code> direto pro Storage,
+              substituindo o atual. Não preenche histórico.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="block text-xs text-white/60 mb-1.5">APK</label>
+              <div className="flex items-center gap-2">
+                <label
+                  htmlFor="raw-apk-input"
+                  className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10"
+                >
+                  <Upload size={14} /> Escolher APK
+                </label>
+                <span className="text-xs text-white/50 truncate">
+                  {apk ? apk.name : "Nenhum arquivo escolhido"}
+                </span>
+              </div>
+              <input
+                id="raw-apk-input"
+                type="file"
+                accept=".apk,application/vnd.android.package-archive"
+                onChange={(e) => setApk(e.target.files?.[0] ?? null)}
+                className="hidden"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs text-white/60 mb-1.5">update.json</label>
+              <div className="flex items-center gap-2">
+                <label
+                  htmlFor="raw-json-input"
+                  className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10"
+                >
+                  <Upload size={14} /> Escolher update.json
+                </label>
+                <span className="text-xs text-white/50 truncate">
+                  {json ? json.name : "Nenhum arquivo escolhido"}
+                </span>
+              </div>
+              <input
+                id="raw-json-input"
+                type="file"
+                accept="application/json,.json"
+                onChange={(e) => setJson(e.target.files?.[0] ?? null)}
+                className="hidden"
+              />
+            </div>
           </div>
-          <p className="text-[11px] text-white/40 mb-3">
-            Envia o APK e o <code>update.json</code> direto pro Storage,
-            substituindo o atual. Não preenche histórico.
-          </p>
-          <label className="block text-[11px] text-white/60 mb-1">APK</label>
-          <input
-            type="file"
-            accept=".apk,application/vnd.android.package-archive"
-            onChange={(e) => setApk(e.target.files?.[0] ?? null)}
-            className="block w-full text-xs text-white/70 mb-3"
-          />
-          <label className="block text-[11px] text-white/60 mb-1">update.json</label>
-          <input
-            type="file"
-            accept="application/json,.json"
-            onChange={(e) => setJson(e.target.files?.[0] ?? null)}
-            className="block w-full text-xs text-white/70 mb-3"
-          />
-          <div className="flex justify-end gap-2">
+
+          <DialogFooter>
             <button
               onClick={() => setOpen(false)}
               className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/70 hover:bg-white/5"
@@ -942,10 +975,10 @@ function RawUploadButton({
             >
               <Upload size={14} /> {busy ? "Enviando..." : "Enviar"}
             </button>
-          </div>
-        </div>
-      )}
-    </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
