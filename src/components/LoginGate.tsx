@@ -272,10 +272,10 @@ export function LoginGate({ children }: { children: React.ReactNode }) {
           >
             A maneira mais fácil de baixar apps
           </p>
-          <div className="flex h-10 items-center justify-center gap-2 overflow-visible py-2">
-            <span className="inline-block h-2 w-2 flex-none rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.3s]" />
-            <span className="inline-block h-2 w-2 flex-none rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce [animation-delay:-0.15s]" />
-            <span className="inline-block h-2 w-2 flex-none rounded-full bg-[oklch(0.78_0.18_155)] animate-bounce" />
+          <div className="flex h-8 items-start justify-center gap-2 overflow-visible py-1">
+            <span className="splash-dot inline-block h-2 w-2 flex-none rounded-full bg-[var(--tv-accent)] [animation-delay:-0.3s]" />
+            <span className="splash-dot inline-block h-2 w-2 flex-none rounded-full bg-[var(--tv-accent)] [animation-delay:-0.15s]" />
+            <span className="splash-dot inline-block h-2 w-2 flex-none rounded-full bg-[var(--tv-accent)]" />
           </div>
         </div>
       </div>
