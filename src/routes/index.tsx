@@ -127,6 +127,7 @@ function Index() {
     };
   }, []);
   const [focused, setFocused] = useState(0);
+  const carouselRef = useRef<HTMLElement | null>(null);
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
   const [states, setStates] = useState<
     Array<{
@@ -359,14 +360,25 @@ function Index() {
     const isOnCard = !!active && refs.current.includes(active as HTMLButtonElement);
     const isFocusLost = !active || active === document.body;
     if (isFocusLost || isOnCard) {
-      refs.current[focused]?.focus();
-      refs.current[focused]?.scrollIntoView({
-        inline: "center",
-        block: "nearest",
-        behavior: "smooth",
-      });
+      const focusedCard = refs.current[focused];
+      focusedCard?.focus();
+
+      const carousel = carouselRef.current;
+      if (carousel && focusedCard && currentApps.length > 3) {
+        const carouselRect = carousel.getBoundingClientRect();
+        const cardRect = focusedCard.getBoundingClientRect();
+        const centerDelta =
+          cardRect.left + cardRect.width / 2 -
+          (carouselRect.left + carouselRect.width / 2);
+        const nextLeft = Math.max(0, carousel.scrollLeft + centerDelta);
+        try {
+          carousel.scrollTo({ left: nextLeft, behavior: "smooth" });
+        } catch {
+          carousel.scrollLeft = nextLeft;
+        }
+      }
     }
-  }, [focused, modalOpen]);
+  }, [focused, modalOpen, currentApps.length]);
 
   // Força orientação landscape sempre que possível (PWA / fullscreen no Android)
   useEffect(() => {
@@ -745,6 +757,7 @@ function Index() {
       </header>
 
       <section
+        ref={carouselRef}
         className={`${currentApps.length > 3 ? "tv-card-carousel" : "tv-card-grid"} flex-1 min-h-0 items-stretch`}
       >
         {currentApps.map((app, i) => {
