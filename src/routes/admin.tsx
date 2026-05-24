@@ -1329,7 +1329,6 @@ function OtaSectionInner() {
   const publishFn = useServerFn(publishLauncherVersion);
   const setLatestFn = useServerFn(setLatestLauncherVersion);
   const deleteFn = useServerFn(deleteLauncherVersion);
-  const uploadApkFn = useServerFn(uploadLauncherApk);
   const uploadRawFn = useServerFn(uploadLauncherRaw);
 
   const [versions, setVersions] = useState<LauncherVersion[]>([]);
@@ -1337,7 +1336,7 @@ function OtaSectionInner() {
   const [showForm, setShowForm] = useState(false);
   const [rawUploading, setRawUploading] = useState(false);
 
-  async function handleRawUpload(apk: File, json: File) {
+  async function handleRawUpload(apk: File, _json: File) {
     setRawUploading(true);
     try {
       // IMPORTANTE: o update.json gerado pelo Gradle aponta para
@@ -1347,14 +1346,23 @@ function OtaSectionInner() {
       // em loop, porque o manifesto e o APK ficam dessincronizados.
       const apkPath = "app-release-latest.apk";
       const apkB64 = await fileToBase64(apk);
-      await uploadApkFn({ data: { path: apkPath, fileBase64: apkB64 } });
-      const jsonB64 = await fileToBase64(json);
-      await uploadRawFn({
-        data: { path: "update.json", contentBase64: jsonB64, contentType: "application/json" },
+      // Sobe o APK via uploadLauncherRaw: o servidor extrai versionName/
+      // versionCode do AndroidManifest, insere em app_versions com
+      // is_latest=true e regenera update.json automaticamente. O JSON
+      // enviado pelo usuário é ignorado de propósito pra evitar
+      // dessincronizar com o APK real.
+      const result = await uploadRawFn({
+        data: {
+          path: apkPath,
+          contentBase64: apkB64,
+          contentType: "application/vnd.android.package-archive",
+        },
       });
 
+      await load();
+
       toast.success("Upload concluído", {
-        description: `APK salvo como app-release-latest.apk e update.json atualizado.`,
+        description: `Versão ${result.versionName} (code ${result.versionCode}) publicada.`,
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
