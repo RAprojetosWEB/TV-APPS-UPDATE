@@ -1,19 +1,37 @@
 ## Problema
 
-O botão "Upload direto" não atualiza o card "Versão atual" porque:
+Depois que o APK baixa 100% e o usuário libera "fontes desconhecidas", **raramente** o modal fica preso em **INSTALAR APLICATIVO** sem reabrir o instalador. Acontece de vez em quando, não sempre.
 
-1. Em `src/routes/admin.tsx` (linha 1350), o handler chama `uploadLauncherApk` (função do catálogo de apps) para subir o APK, em vez de `uploadLauncherRaw`. Só o `uploadLauncherRaw` tem o bloco que extrai a versão do APK e insere em `app_versions` quando o path termina em `.apk` (linhas 588-633 de `src/lib/admin.functions.ts`).
-2. Depois do upload, `handleRawUpload` não chama `load()`, então o estado local `versions` continua igual mesmo se o banco fosse atualizado.
+## Por que é raro
 
-## Mudança
+O código já tem retomada automática no `onResume` (linha 286 do `MainActivity.kt`) que reabre o instalador quando o usuário volta das configurações. Funciona na maioria das vezes. As falhas pontuais geralmente vêm de:
 
-Editar `handleRawUpload` em `src/routes/admin.tsx`:
+- a TV box demorar um instante para reconhecer que a permissão foi concedida;
+- o `onResume` disparar antes do sistema atualizar o status da permissão;
+- alguma TV box exigir um clique manual extra.
 
-- Substituir a chamada `uploadApkFn({ data: { path: apkPath, fileBase64: apkB64 } })` por `uploadRawFn({ data: { path: apkPath, contentBase64: apkB64, contentType: "application/vnd.android.package-archive" } })`. Isso faz o servidor extrair `versionName`/`versionCode` do AndroidManifest e gravar em `app_versions` com `is_latest=true`.
-- Manter a segunda chamada (subir o `update.json` manual) como está, mas opcional: como o `uploadLauncherRaw` já chama `writeUpdateManifest()` internamente quando recebe um `.apk`, o `update.json` enviado pelo usuário vira redundante. Posso remover esse segundo upload pra evitar sobrescrever o manifesto correto com um possivelmente desatualizado.
-- Chamar `await load()` no final do `try` para o card "Versão atual" refletir o novo APK imediatamente.
-- Remover o import não-usado de `uploadLauncherApk` se ele ficar órfão (verificar antes).
+Como é raro, a correção precisa ser **defensiva e barata**, sem mexer no fluxo principal que já funciona.
 
-## Resultado
+## Plano de correção (mínimo necessário)
 
-Clicar em "Upload direto" → escolher só o APK → card "Versão atual" passa a mostrar `2.80 · code 80` (ou o que vier do APK) automaticamente, igual o fluxo "Publicar versão".
+1. **Retry com pequeno atraso no `onResume`**
+   - Quando voltar das configurações com `pendingInstallApk` definido, tentar instalar imediatamente E também repetir após ~500ms.
+   - Cobre o caso da permissão ainda não ter "propagado" no momento exato do retorno.
+
+2. **Manter o botão "INSTALAR APLICATIVO" sempre clicável como fallback**
+   - O botão já existe no modal (linhas 1963–1972). Garantir que ele continue focado e funcional mesmo depois do retry automático falhar.
+   - Adicionar um texto auxiliar pequeno tipo "Se nada acontecer, toque OK novamente" para o usuário não ficar perdido.
+
+3. **Reforço no `ApkInstaller`**
+   - Adicionar `FLAG_ACTIVITY_CLEAR_TOP` junto com as flags atuais para evitar conflito quando o instalador do sistema já estiver em memória.
+   - Pequena melhoria, não muda o comportamento padrão.
+
+## O que NÃO vamos fazer
+
+- Não refatorar todo o fluxo OTA (já funciona em ~95% dos casos).
+- Não mexer no design do modal.
+- Não tocar no servidor / update.json.
+
+## Resultado esperado
+
+A janela de falha rara deve fechar: na maioria absoluta das vezes a retomada automática vai funcionar, e quando não funcionar o usuário tem o botão claramente disponível para tentar manualmente.

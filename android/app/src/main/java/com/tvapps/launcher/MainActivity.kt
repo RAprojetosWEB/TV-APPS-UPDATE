@@ -289,6 +289,19 @@ class MainActivity : Activity() {
             if (canInstall && apk.exists()) {
                 pendingInstallApk = null
                 ApkInstaller.install(this, apk)
+            } else if (apk.exists()) {
+                // Em algumas TV boxes a permissão demora alguns instantes para
+                // ser reconhecida após o usuário voltar das Configurações.
+                // Tenta de novo após um pequeno atraso antes de desistir.
+                Handler(Looper.getMainLooper()).postDelayed({
+                    val pending = pendingInstallApk ?: return@postDelayed
+                    val canNow = Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
+                        packageManager.canRequestPackageInstalls()
+                    if (canNow && pending.exists()) {
+                        pendingInstallApk = null
+                        ApkInstaller.install(this, pending)
+                    }
+                }, 600)
             }
         }
         // Revalida estado de instalação de cada card e trata limpeza de cache
