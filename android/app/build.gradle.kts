@@ -1,37 +1,72 @@
 import java.util.Properties
 import java.io.File as JFile
+import java.net.HttpURLConnection
+import java.net.URL
 
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
 
-// ---- Versionamento automático --------------------------------------------
-// Lê android/version.properties e gera versionName/versionCode a partir de
-// um contador (buildNumber) que é incrementado a cada build. Sem datas,
-// sem timestamps. Resultado: 2.80, 2.81, 2.82, ...
-val versionPropsFile: JFile = rootProject.file("version.properties")
-val versionProps = Properties().apply {
-    if (versionPropsFile.exists()) versionPropsFile.inputStream().use { load(it) }
-}
-val versionBase: String = versionProps.getProperty("versionBase", "2")
-val previousBuildNumber: Int = versionProps.getProperty("buildNumber", "0").toInt()
-val nextBuildNumber: Int = previousBuildNumber + 1
-val computedVersionCode: Int = nextBuildNumber
-val computedVersionName: String = "$versionBase.$nextBuildNumber"
+// ---- Versionamento via Lovable Cloud -------------------------------------
+// O contador real fica no banco. A cada build, fazemos UM POST autenticado
+// para /api/public/bump-version, que incrementa atomicamente e devolve
+// { versionName, versionCode }. Resultado: 2.1, 2.2, 2.3... que nunca reseta,
+// independente de baixar ZIP novo do GitHub ou trocar de máquina.
+//
+// O token vem de:
+//   1) variável de ambiente BUILD_VERSION_TOKEN, OU
+//   2) android/local.properties com BUILD_VERSION_TOKEN=...
+private val BUMP_URL =
+    "https://project--2f745f30-5619-44f8-8570-ed19b1d0795a.lovable.app/api/public/bump-version"
 
-// Persiste o novo buildNumber de volta no arquivo, preservando comentários
-// simples (header). Só roda quando alguma task de assemble for executada.
-fun bumpBuildNumber() {
-    val header = """
-        # Fonte única de verdade para a versão do TV.Apps.
-        # - versionBase: número "marketing". Só edite quando quiser virar pra 3, 4, 5...
-        # - buildNumber: contador automático. O Gradle soma +1 a cada build.
-        #   NÃO edite na mão (a menos que queira resetar a contagem).
-        # Resultado: versionName = "{versionBase}.{buildNumber}" → ex: 2.80, 2.81, 2.82
-    """.trimIndent()
-    versionPropsFile.writeText("$header\nversionBase=$versionBase\nbuildNumber=$nextBuildNumber\n")
+private fun loadBuildToken(): String? {
+    System.getenv("BUILD_VERSION_TOKEN")?.takeIf { it.isNotBlank() }?.let { return it }
+    val localProps = rootProject.file("local.properties")
+    if (localProps.exists()) {
+        val p = Properties().apply { localProps.inputStream().use { load(it) } }
+        p.getProperty("BUILD_VERSION_TOKEN")?.takeIf { it.isNotBlank() }?.let { return it }
+    }
+    return null
 }
+
+private data class RemoteVersion(val name: String, val code: Int)
+
+private fun fetchRemoteVersion(): RemoteVersion {
+    val token = loadBuildToken()
+        ?: throw GradleException(
+            "BUILD_VERSION_TOKEN ausente. Adicione 'BUILD_VERSION_TOKEN=<seu_token>' " +
+                "em android/local.properties (ou exporte como variável de ambiente) " +
+                "antes de rodar o build."
+        )
+    val conn = (URL(BUMP_URL).openConnection() as HttpURLConnection).apply {
+        requestMethod = "POST"
+        setRequestProperty("x-build-token", token)
+        setRequestProperty("Content-Type", "application/json")
+        connectTimeout = 10_000
+        readTimeout = 10_000
+        doOutput = true
+        outputStream.use { it.write("{}".toByteArray()) }
+    }
+    val status = conn.responseCode
+    val body = (if (status in 200..299) conn.inputStream else conn.errorStream)
+        .bufferedReader().use { it.readText() }
+    if (status !in 200..299) {
+        throw GradleException("Falha ao obter versão remota: HTTP $status — $body")
+    }
+    val nameRegex = Regex("\"versionName\"\\s*:\\s*\"([^\"]+)\"")
+    val codeRegex = Regex("\"versionCode\"\\s*:\\s*(\\d+)")
+    val name = nameRegex.find(body)?.groupValues?.get(1)
+        ?: throw GradleException("Resposta sem versionName: $body")
+    val code = codeRegex.find(body)?.groupValues?.get(1)?.toInt()
+        ?: throw GradleException("Resposta sem versionCode: $body")
+    println("[tvapps] Versão remota obtida: $name (code=$code)")
+    return RemoteVersion(name, code)
+}
+
+private val remoteVersion: RemoteVersion by lazy { fetchRemoteVersion() }
+val computedVersionCode: Int get() = remoteVersion.code
+val computedVersionName: String get() = remoteVersion.name
 // --------------------------------------------------------------------------
 
 android {
@@ -104,7 +139,6 @@ dependencies {
 // (APK + update.json) no bucket tvapps-updates, sempre com os mesmos nomes.
 tasks.register("generateUpdateJson") {
     doLast {
-        bumpBuildNumber()
         listOf("release", "debug").forEach { variant ->
             val apkDir = layout.buildDirectory.dir("outputs/apk/$variant").get().asFile
             if (!apkDir.exists()) return@forEach
