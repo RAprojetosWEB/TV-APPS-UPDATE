@@ -1976,12 +1976,16 @@ class MainActivity : Activity() {
                             ui?.let { views ->
                                 views.button.isEnabled = true
                                 views.button.isFocusable = true
+                                views.button.isFocusableInTouchMode = true
                                 views.button.text = "INSTALAR APLICATIVO"
                                 views.button.setOnClickListener {
                                     if (!ApkInstaller.install(this@MainActivity, p.file)) {
                                         pendingInstallApk = p.file
                                     }
                                 }
+                                views.speed.visibility = View.VISIBLE
+                                views.speed.text = "Se nada acontecer, toque OK novamente"
+                                views.button.post { views.button.requestFocus() }
                             }
                             systemPill?.text = "⚠  Autorize a instalação"
                         }
