@@ -584,6 +584,54 @@ export const uploadLauncherRaw = createServerFn({ method: "POST" })
       .from("tvapps-updates")
       .upload(data.path, bytes, { upsert: true, contentType: data.contentType });
     if (error) throw new Error(error.message);
+
+    // Se for um APK, registra automaticamente em app_versions e atualiza update.json
+    if (data.path.toLowerCase().endsWith(".apk")) {
+      let versionName: string | null = null;
+      let versionCode: number | null = null;
+      try {
+        const info = extractApkVersion(bytes);
+        versionName = info.versionName;
+        versionCode = info.versionCode;
+      } catch (err) {
+        throw new Error(
+          `Upload feito, mas não foi possível ler a versão do APK: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+      if (!versionName || !versionCode || versionCode < 1) {
+        throw new Error("APK não contém versionName/versionCode válidos no AndroidManifest.xml");
+      }
+
+      const { data: pub } = supabaseAdmin.storage
+        .from("tvapps-updates")
+        .getPublicUrl(data.path);
+      const apkUrl = pub.publicUrl;
+      const sizeMb = Math.round((bytes.byteLength / (1024 * 1024)) * 100) / 100;
+
+      await supabaseAdmin
+        .from("app_versions")
+        .update({ is_latest: false })
+        .eq("target", "launcher");
+
+      const { error: insErr } = await supabaseAdmin.from("app_versions").insert({
+        target: "launcher",
+        version_name: versionName,
+        version_code: versionCode,
+        apk_url: apkUrl,
+        apk_size_mb: sizeMb,
+        is_latest: true,
+      });
+      if (insErr) throw new Error(insErr.message);
+
+      await writeUpdateManifest({
+        versionCode,
+        versionName,
+        apkUrl,
+      });
+
+      return { success: true, path: data.path, versionName, versionCode };
+    }
+
     return { success: true, path: data.path };
   });
 
