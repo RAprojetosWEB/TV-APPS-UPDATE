@@ -888,14 +888,15 @@ class MainActivity : Activity() {
             override fun focusSearch(focused: View, direction: Int): View? {
                 val currentIdx = cardViews.indexOfFirst { it.container == focused }
                 if (currentIdx != -1) {
-                    // Pula cards bloqueados (que têm isFocusable=false).
+                    // Pula cards bloqueados (que têm isFocusable=false). Sem wrap circular:
+                    // para nas bordas (primeiro/último card).
                     val total = cardViews.size
                     fun nextFocusable(start: Int, step: Int): View? {
-                        var i = start
-                        for (n in 0 until total) {
-                            i = ((i + step) % total + total) % total
+                        var i = start + step
+                        while (i in 0 until total) {
                             val view = cardViews[i].container
                             if (view.isFocusable && view != focused) return view
+                            i += step
                         }
                         return null
                     }
