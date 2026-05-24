@@ -1057,6 +1057,7 @@ function OtaSectionInner() {
           </p>
         </div>
         <div className="flex gap-2">
+          <BackupButton />
           <RawUploadButton onUpload={handleRawUpload} busy={rawUploading} />
           <button
             onClick={() => setShowForm((v) => !v)}
