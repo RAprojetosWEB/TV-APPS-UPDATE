@@ -38,7 +38,7 @@ async function fileToBase64(file: File | Blob): Promise<string> {
 import {
   Lock, LogOut, Pencil, Save, X, Eye, EyeOff, KeyRound, Upload,
   Plus, Trash2, Copy, GripVertical, Package, CheckCircle2, RotateCcw,
-  Download,
+  Download, ShieldCheck, AppWindow, ChevronDown, ChevronUp,
 } from "lucide-react";
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor,
@@ -282,143 +282,211 @@ function AdminPage() {
 
   if (checking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-white/60">
-        Verificando acesso...
+      <div className="min-h-screen flex items-center justify-center text-[var(--admin-text-muted)]">
+        <div className="flex items-center gap-3 text-sm">
+          <span className="inline-block h-2 w-2 rounded-full bg-[var(--neon)] animate-pulse" />
+          Verificando acesso…
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-white/10 bg-black/30 backdrop-blur sticky top-0 z-10">
-        <div className="mx-auto max-w-4xl px-6 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-black">
-            TV<span style={{ color: "oklch(0.78 0.18 155)" }}>.</span>Apps
-            <span className="ml-3 text-sm font-medium text-white/40">admin</span>
-          </h1>
+    <AdminShell userEmail={undefined} onLogout={handleLogout}>
+      <SectionHeader
+        eyebrow="Acesso"
+        title="Senha do launcher"
+        subtitle="Senha exigida ao abrir o launcher na TV Box."
+        icon={<KeyRound size={16} />}
+      />
+      <div className="admin-surface p-6 admin-anim-in">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <input
+              type={showPwd ? "text" : "password"}
+              value={pwd}
+              onChange={(e) => setPwd(e.target.value)}
+              disabled={!pwdLoaded}
+              placeholder={pwdLoaded ? "" : "Carregando…"}
+              maxLength={50}
+              className="admin-input pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPwd((v) => !v)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 admin-icon-btn"
+              style={{ width: 32, height: 32 }}
+              aria-label={showPwd ? "Ocultar" : "Mostrar"}
+            >
+              {showPwd ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+          </div>
           <button
-            onClick={handleLogout}
-            className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-white/70 hover:bg-white/5"
+            onClick={handleSavePwd}
+            disabled={!pwdLoaded || savingPwd}
+            className="admin-btn-primary"
           >
-            <LogOut size={16} /> Sair
+            <Save size={15} /> {savingPwd ? "Salvando…" : "Salvar senha"}
+          </button>
+        </div>
+      </div>
+
+      <SectionHeader
+        eyebrow="Catálogo"
+        title="Apps"
+        subtitle="Ligue/desligue cada app. Apps bloqueados aparecem como card neutro (cadeado) na TV."
+        icon={<AppWindow size={16} />}
+        right={
+          <div className="flex items-center gap-3">
+            <span className="admin-pill admin-pill-muted">
+              {apps.length} {apps.length === 1 ? "app" : "apps"}
+            </span>
+            <button
+              onClick={() => setShowNewForm((v) => !v)}
+              className="admin-btn-primary"
+            >
+              <Plus size={15} /> Novo app
+            </button>
+          </div>
+        }
+      />
+
+      {loading ? (
+        <div className="admin-surface p-10 text-center text-sm text-[var(--admin-text-muted)]">
+          Carregando catálogo…
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {showNewForm && (
+            <NewAppForm onCancel={() => setShowNewForm(false)} onCreate={handleCreate} />
+          )}
+
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={apps.map((a) => a.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-3">
+                {apps.map((app, i) => (
+                  <SortableAppCard
+                    key={app.id}
+                    index={i}
+                    app={app}
+                    editing={editing === app.id}
+                    blocking={blocking === app.id}
+                    reason={reason}
+                    onReasonChange={setReason}
+                    onEditStart={() => setEditing(app.id)}
+                    onEditCancel={() => setEditing(null)}
+                    onEditSave={async (patch) => {
+                      try {
+                        await updateFn({ data: { appId: app.id, ...patch } });
+                        toast.success("Atualizado");
+                        setEditing(null);
+                        await refresh();
+                      } catch (err) {
+                        toast.error("Erro", { description: String(err) });
+                      }
+                    }}
+                    onToggle={(v) => handleToggle(app, v)}
+                    onConfirmBlock={() => confirmBlock(app)}
+                    onCancelBlock={() => {
+                      setBlocking(null);
+                      setReason("");
+                    }}
+                    onDelete={() => handleDelete(app)}
+                    onDuplicate={() => handleDuplicate(app)}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+
+          <OtaSection />
+        </div>
+      )}
+    </AdminShell>
+  );
+}
+
+/* ============ Shell + Section primitives ============ */
+
+function AdminShell({
+  children,
+  onLogout,
+}: {
+  children: React.ReactNode;
+  userEmail?: string;
+  onLogout: () => void;
+}) {
+  useEffect(() => {
+    document.body.setAttribute("data-admin", "1");
+    return () => {
+      document.body.removeAttribute("data-admin");
+    };
+  }, []);
+
+  return (
+    <div className="min-h-screen text-[var(--admin-text)]">
+      <header className="sticky top-0 z-20 border-b border-[var(--admin-border-soft)] bg-[oklch(0.14_0.025_265_/_0.7)] backdrop-blur-xl">
+        <div className="mx-auto max-w-5xl px-6 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 text-[15px] font-semibold tracking-tight">
+              <span>TV</span>
+              <span className="text-[var(--neon)]">.</span>
+              <span>Apps</span>
+            </div>
+            <span className="admin-pill admin-pill-muted gap-1.5">
+              <ShieldCheck size={11} /> admin
+            </span>
+          </div>
+          <button onClick={onLogout} className="admin-btn-ghost">
+            <LogOut size={14} /> Sair
           </button>
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-6 py-8">
-        <p className="text-sm text-white/50 mb-6">
-          Ligue/desligue cada app. Apps bloqueados aparecem como card neutro
-          (cadeado) na TV, sem nome ou logo.
-        </p>
+      <main className="mx-auto max-w-5xl px-6 py-10 space-y-10">{children}</main>
+    </div>
+  );
+}
 
-        <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-          <div className="flex items-center gap-3 mb-3">
-            <KeyRound size={18} className="text-[oklch(0.78_0.18_155)]" />
-            <div>
-              <h2 className="font-bold">Senha de login do app TV</h2>
-              <p className="text-xs text-white/50">
-                Senha exigida ao abrir o launcher na TV Box.
-              </p>
-            </div>
+function SectionHeader({
+  eyebrow,
+  title,
+  subtitle,
+  icon,
+  right,
+}: {
+  eyebrow?: string;
+  title: string;
+  subtitle?: string;
+  icon?: React.ReactNode;
+  right?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-end justify-between gap-4 mb-4">
+      <div className="min-w-0">
+        {eyebrow && (
+          <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--admin-text-muted)] mb-2">
+            {icon}
+            <span>{eyebrow}</span>
           </div>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <input
-                type={showPwd ? "text" : "password"}
-                value={pwd}
-                onChange={(e) => setPwd(e.target.value)}
-                disabled={!pwdLoaded}
-                placeholder={pwdLoaded ? "" : "Carregando..."}
-                maxLength={50}
-                className="w-full h-10 rounded-lg border border-white/10 bg-black/30 px-3 pr-10 text-white outline-none focus:border-[oklch(0.78_0.18_155)] disabled:opacity-50"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPwd((v) => !v)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
-                aria-label={showPwd ? "Ocultar" : "Mostrar"}
-              >
-                {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-            <button
-              onClick={handleSavePwd}
-              disabled={!pwdLoaded || savingPwd}
-              className="inline-flex items-center gap-2 rounded-lg bg-[oklch(0.78_0.18_155)] px-4 py-2 text-sm font-bold text-black hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Save size={16} /> {savingPwd ? "..." : "Salvar"}
-            </button>
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="text-white/40 py-12 text-center">Carregando...</div>
-        ) : (
-          <>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-white/50">
-                Apps do catálogo ({apps.length})
-              </h2>
-              <button
-                onClick={() => setShowNewForm((v) => !v)}
-                className="inline-flex items-center gap-2 rounded-lg bg-[oklch(0.78_0.18_155)] px-3 py-2 text-sm font-bold text-black hover:scale-[1.02]"
-              >
-                <Plus size={16} /> Novo app
-              </button>
-            </div>
-
-            {showNewForm && (
-              <NewAppForm onCancel={() => setShowNewForm(false)} onCreate={handleCreate} />
-            )}
-
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={apps.map((a) => a.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="space-y-3">
-                  {apps.map((app) => (
-                    <SortableAppCard
-                      key={app.id}
-                      app={app}
-                      editing={editing === app.id}
-                      blocking={blocking === app.id}
-                      reason={reason}
-                      onReasonChange={setReason}
-                      onEditStart={() => setEditing(app.id)}
-                      onEditCancel={() => setEditing(null)}
-                      onEditSave={async (patch) => {
-                        try {
-                          await updateFn({ data: { appId: app.id, ...patch } });
-                          toast.success("Atualizado");
-                          setEditing(null);
-                          await refresh();
-                        } catch (err) {
-                          toast.error("Erro", { description: String(err) });
-                        }
-                      }}
-                      onToggle={(v) => handleToggle(app, v)}
-                      onConfirmBlock={() => confirmBlock(app)}
-                      onCancelBlock={() => {
-                        setBlocking(null);
-                        setReason("");
-                      }}
-                      onDelete={() => handleDelete(app)}
-                      onDuplicate={() => handleDuplicate(app)}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-
-            <OtaSection />
-          </>
         )}
-      </main>
+        <h2 className="text-xl font-semibold tracking-tight text-[var(--admin-text)]">
+          {title}
+        </h2>
+        {subtitle && (
+          <p className="mt-1 text-sm text-[var(--admin-text-muted)] max-w-2xl">
+            {subtitle}
+          </p>
+        )}
+      </div>
+      {right && <div className="shrink-0">{right}</div>}
     </div>
   );
 }
@@ -438,6 +506,7 @@ function AppCard({
   onDelete,
   onDuplicate,
   dragHandle,
+  index = 0,
 }: {
   app: AppRow;
   editing: boolean;
@@ -460,6 +529,7 @@ function AppCard({
   onDelete: () => void;
   onDuplicate: () => void;
   dragHandle?: React.ReactNode;
+  index?: number;
 }) {
   const [name, setName] = useState(app.name);
   const [description, setDescription] = useState(app.description ?? "");
@@ -497,40 +567,58 @@ function AppCard({
 
   return (
     <div
-      className={`rounded-2xl border p-5 transition-all ${
-        app.is_blocked
-          ? "border-red-500/30 bg-red-500/5"
-          : "border-white/10 bg-white/[0.03]"
+      className={`admin-surface admin-surface-hover group p-5 ${
+        app.is_blocked ? "!border-[oklch(0.68_0.22_25_/_0.3)]" : ""
       }`}
+      style={{
+        animation: `admin-fade-in-up 400ms var(--ease-out) both`,
+        animationDelay: `${Math.min(index, 8) * 35}ms`,
+      }}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-4 min-w-0 flex-1">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-5 min-w-0 flex-1">
           {dragHandle}
-          {app.icon_url ? (
-            <img
-              src={app.icon_url}
-              alt={app.name}
-              className="h-14 w-14 rounded-xl object-cover bg-white/5"
-            />
-          ) : (
-            <div className="h-14 w-14 rounded-xl bg-white/10 flex items-center justify-center text-white/40">
-              ▣
-            </div>
-          )}
+          <div className="relative shrink-0">
+            {app.icon_url ? (
+              <img
+                src={app.icon_url}
+                alt={app.name}
+                className="h-16 w-16 rounded-2xl object-cover ring-1 ring-[var(--admin-border)] shadow-[0_8px_20px_-8px_oklch(0_0_0_/_0.6)]"
+              />
+            ) : (
+              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[var(--admin-surface-2)] to-[var(--admin-surface-3)] ring-1 ring-[var(--admin-border)] flex items-center justify-center text-[var(--admin-text-subtle)]">
+                <Package size={24} />
+              </div>
+            )}
+          </div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="font-bold truncate">{app.name}</h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-[15px] font-semibold tracking-tight text-[var(--admin-text)] truncate">
+                {app.name}
+              </h3>
               {app.is_blocked && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-semibold text-red-400">
-                  <Lock size={12} /> BLOQUEADO
+                <span className="admin-pill admin-pill-danger">
+                  <Lock size={11} /> Bloqueado
                 </span>
               )}
+              {!app.is_active && !app.is_blocked && (
+                <span className="admin-pill admin-pill-muted">Inativo</span>
+              )}
             </div>
-            <p className="text-sm text-white/50 truncate">
-              {app.description || app.package_name}
+            <p className="mt-0.5 text-[13px] text-[var(--admin-text-muted)] truncate">
+              {app.description || (
+                <span className="font-mono text-[12px] text-[var(--admin-text-subtle)]">
+                  {app.package_name}
+                </span>
+              )}
             </p>
+            {app.description && (
+              <p className="mt-0.5 font-mono text-[11px] text-[var(--admin-text-subtle)] truncate">
+                {app.package_name}
+              </p>
+            )}
             {app.is_blocked && app.block_reason && (
-              <p className="mt-1 text-xs text-red-400/80">
+              <p className="mt-1 text-xs text-[var(--danger)]/80">
                 Motivo: {app.block_reason}
               </p>
             )}
@@ -544,86 +632,86 @@ function AppCard({
                 checked={!app.is_blocked}
                 onChange={(v) => onToggle(!v)}
               />
-              <button
-                onClick={onEditStart}
-                className="rounded-lg border border-white/10 p-2 text-white/60 hover:bg-white/5"
-                aria-label="Editar"
-              >
-                <Pencil size={16} />
-              </button>
-              <button
-                onClick={onDuplicate}
-                className="rounded-lg border border-white/10 p-2 text-white/60 hover:bg-white/5"
-                aria-label="Duplicar"
-                title="Duplicar"
-              >
-                <Copy size={16} />
-              </button>
-              <button
-                onClick={onDelete}
-                className="rounded-lg border border-red-500/30 p-2 text-red-400 hover:bg-red-500/10"
-                aria-label="Excluir"
-                title="Excluir"
-              >
-                <Trash2 size={16} />
-              </button>
+              <div className="flex items-center rounded-xl border border-[var(--admin-border-soft)] bg-[oklch(0_0_0_/_0.2)] p-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={onEditStart}
+                  className="admin-icon-btn"
+                  style={{ width: 32, height: 32 }}
+                  aria-label="Editar"
+                  title="Editar"
+                >
+                  <Pencil size={14} />
+                </button>
+                <button
+                  onClick={onDuplicate}
+                  className="admin-icon-btn"
+                  style={{ width: 32, height: 32 }}
+                  aria-label="Duplicar"
+                  title="Duplicar"
+                >
+                  <Copy size={14} />
+                </button>
+                <button
+                  onClick={onDelete}
+                  className="admin-icon-btn admin-icon-btn-danger"
+                  style={{ width: 32, height: 32 }}
+                  aria-label="Excluir"
+                  title="Excluir"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </>
           )}
         </div>
       </div>
 
       {blocking && (
-        <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-4">
-          <label className="block text-xs font-semibold uppercase tracking-wider text-white/60 mb-2">
+        <div className="mt-5 rounded-xl border border-[oklch(0.68_0.22_25_/_0.25)] bg-[var(--danger-soft)] p-4 admin-anim-scale">
+          <label className="admin-label !text-[var(--danger)]">
             Motivo do bloqueio (opcional)
           </label>
           <input
             type="text"
             value={reason}
             onChange={(e) => onReasonChange(e.target.value)}
-            placeholder='Ex: "Em manutenção" (deixe vazio se quiser)'
+            placeholder='Ex: "Em manutenção"'
             maxLength={200}
-            className="w-full h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-white outline-none focus:border-red-400"
+            className="admin-input"
             autoFocus
           />
           <div className="mt-3 flex gap-2 justify-end">
-            <button
-              onClick={onCancelBlock}
-              className="rounded-lg border border-white/10 px-3 py-2 text-sm text-white/70 hover:bg-white/5"
-            >
+            <button onClick={onCancelBlock} className="admin-btn-ghost">
               Cancelar
             </button>
-            <button
-              onClick={onConfirmBlock}
-              className="rounded-lg bg-red-500 px-3 py-2 text-sm font-semibold text-white hover:bg-red-600"
-            >
-              Bloquear
+            <button onClick={onConfirmBlock} className="admin-btn-danger">
+              <Lock size={14} /> Bloquear
             </button>
           </div>
         </div>
       )}
 
       {editing && (
-        <div className="mt-4 space-y-3 border-t border-white/10 pt-4">
+        <div className="mt-5 admin-surface-2 p-5 space-y-3 admin-anim-scale">
           <Field label="Nome">
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="input"
+              className="admin-input"
             />
           </Field>
           <Field label="Descrição">
             <input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="input"
+              className="admin-input"
             />
           </Field>
           <Field label="URL do APK">
             <input
               value={apkUrl}
               onChange={(e) => setApkUrl(e.target.value)}
-              className="input"
+              className="admin-input"
               placeholder="https://..."
             />
           </Field>
@@ -633,18 +721,18 @@ function AppCard({
                 <img
                   src={iconUrl}
                   alt="preview"
-                  className="h-10 w-10 rounded-lg object-cover bg-white/5 shrink-0"
+                  className="h-10 w-10 rounded-lg object-cover ring-1 ring-[var(--admin-border)] shrink-0"
                 />
               )}
               <input
                 value={iconUrl}
                 onChange={(e) => setIconUrl(e.target.value)}
-                className="input"
+                className="admin-input"
                 placeholder="https://... ou envie um arquivo"
               />
-              <label className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 h-10 text-sm text-white/70 hover:bg-white/5 cursor-pointer shrink-0">
+              <label className="admin-btn-ghost cursor-pointer shrink-0">
                 <Upload size={14} />
-                {uploading ? "..." : "Upload"}
+                {uploading ? "Enviando…" : "Upload"}
                 <input
                   type="file"
                   accept="image/*"
@@ -667,28 +755,21 @@ function AppCard({
                 onChange={(e) =>
                   setDisplayOrder(parseInt(e.target.value) || 0)
                 }
-                className="input"
+                className="admin-input"
               />
             </Field>
             <Field label="Status">
-              <label className="flex items-center gap-2 h-10">
-                <input
-                  type="checkbox"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                />
-                <span className="text-sm text-white/70">
+              <label className="flex items-center gap-3 h-10">
+                <Switch checked={isActive} onChange={setIsActive} />
+                <span className="text-sm text-[var(--admin-text-secondary)]">
                   Ativo (visível na TV)
                 </span>
               </label>
             </Field>
           </div>
           <div className="flex gap-2 justify-end pt-2">
-            <button
-              onClick={onEditCancel}
-              className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-white/70 hover:bg-white/5"
-            >
-              <X size={16} /> Cancelar
+            <button onClick={onEditCancel} className="admin-btn-ghost">
+              <X size={14} /> Cancelar
             </button>
             <button
               onClick={() =>
@@ -701,12 +782,11 @@ function AppCard({
                   is_active: isActive,
                 })
               }
-              className="inline-flex items-center gap-2 rounded-lg bg-[oklch(0.78_0.18_155)] px-3 py-2 text-sm font-bold text-black hover:scale-[1.02]"
+              className="admin-btn-primary"
             >
-              <Save size={16} /> Salvar
+              <Save size={14} /> Salvar
             </button>
           </div>
-          <style>{`.input{width:100%;height:2.5rem;border-radius:.5rem;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);padding:0 .75rem;color:white;outline:none}.input:focus{border-color:oklch(0.78 0.18 155)}`}</style>
         </div>
       )}
     </div>
@@ -722,9 +802,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-xs font-semibold uppercase tracking-wider text-white/50 mb-1">
-        {label}
-      </label>
+      <label className="admin-label">{label}</label>
       {children}
     </div>
   );
@@ -743,39 +821,33 @@ function Switch({
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-        checked ? "bg-[oklch(0.78_0.18_155)]" : "bg-white/15"
-      }`}
-    >
-      <span
-        className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-          checked ? "translate-x-6" : "translate-x-1"
-        }`}
-      />
-    </button>
+      data-checked={checked}
+      className="admin-switch admin-focus-ring"
+    />
   );
 }
 
 function SortableAppCard(
-  props: React.ComponentProps<typeof AppCard> & { app: AppRow },
+  props: React.ComponentProps<typeof AppCard> & { app: AppRow; index: number },
 ) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: props.app.id });
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.6 : 1,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : "auto",
   };
   const handle = (
     <button
       ref={setNodeRef as never}
       {...attributes}
       {...listeners}
-      className="touch-none cursor-grab active:cursor-grabbing text-white/30 hover:text-white/70 -ml-1"
+      className="touch-none cursor-grab active:cursor-grabbing text-[var(--admin-text-subtle)] hover:text-[var(--admin-text)] transition-colors -ml-1"
       aria-label="Reordenar"
       title="Arraste para reordenar"
     >
-      <GripVertical size={18} />
+      <GripVertical size={16} />
     </button>
   );
   // wrapper for transform; handle wires its own ref
@@ -806,8 +878,8 @@ function NewAppForm({
   const [iconUrl, setIconUrl] = useState("");
 
   return (
-    <div className="mb-4 rounded-2xl border border-[oklch(0.78_0.18_155)]/40 bg-[oklch(0.78_0.18_155)]/5 p-5 space-y-3">
-      <h3 className="font-bold flex items-center gap-2">
+    <div className="admin-surface admin-surface-neon p-5 space-y-3 admin-anim-scale">
+      <h3 className="text-[15px] font-semibold tracking-tight flex items-center gap-2 text-[var(--admin-text)]">
         <Plus size={16} /> Novo app
       </h3>
       <div className="grid grid-cols-2 gap-3">
@@ -815,7 +887,7 @@ function NewAppForm({
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="input"
+            className="admin-input"
             placeholder="Ex: AlphaPlay"
           />
         </Field>
@@ -823,19 +895,19 @@ function NewAppForm({
           <input
             value={pkg}
             onChange={(e) => setPkg(e.target.value)}
-            className="input"
+            className="admin-input"
             placeholder="com.exemplo.app"
           />
         </Field>
       </div>
       <Field label="Descrição">
-        <input value={desc} onChange={(e) => setDesc(e.target.value)} className="input" />
+        <input value={desc} onChange={(e) => setDesc(e.target.value)} className="admin-input" />
       </Field>
       <Field label="URL do APK">
         <input
           value={apkUrl}
           onChange={(e) => setApkUrl(e.target.value)}
-          className="input"
+          className="admin-input"
           placeholder="https://..."
         />
       </Field>
@@ -843,16 +915,13 @@ function NewAppForm({
         <input
           value={iconUrl}
           onChange={(e) => setIconUrl(e.target.value)}
-          className="input"
+          className="admin-input"
           placeholder="https://..."
         />
       </Field>
       <div className="flex gap-2 justify-end">
-        <button
-          onClick={onCancel}
-          className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-white/70 hover:bg-white/5"
-        >
-          <X size={16} /> Cancelar
+        <button onClick={onCancel} className="admin-btn-ghost">
+          <X size={14} /> Cancelar
         </button>
         <button
           onClick={() => {
@@ -868,12 +937,11 @@ function NewAppForm({
               icon_url: iconUrl.trim() || undefined,
             });
           }}
-          className="inline-flex items-center gap-2 rounded-lg bg-[oklch(0.78_0.18_155)] px-3 py-2 text-sm font-bold text-black hover:scale-[1.02]"
+          className="admin-btn-primary"
         >
-          <Save size={16} /> Criar
+          <Save size={14} /> Criar app
         </button>
       </div>
-      <style>{`.input{width:100%;height:2.5rem;border-radius:.5rem;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);padding:0 .75rem;color:white;outline:none}.input:focus{border-color:oklch(0.78 0.18 155)}`}</style>
     </div>
   );
 }
@@ -919,10 +987,10 @@ function BackupButton() {
     <button
       onClick={handleClick}
       disabled={busy}
-      className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 disabled:opacity-50"
+      className="admin-btn-ghost"
       title="Baixa banco + storage em um .zip"
     >
-      <Download size={16} /> {busy ? "Gerando..." : "Backup completo"}
+      <Download size={14} /> {busy ? "Gerando…" : "Backup"}
     </button>
   );
 }
@@ -968,17 +1036,17 @@ function RestoreButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10"
+        className="admin-btn-ghost"
         title="Restaura banco + storage a partir de um .zip"
       >
-        <RotateCcw size={16} /> Restaurar
+        <RotateCcw size={14} /> Restaurar
       </button>
       <Dialog open={open} onOpenChange={(v) => !busy && setOpen(v)}>
-        <DialogContent className="border-white/10 bg-black/95 text-white sm:max-w-md">
+        <DialogContent className="border-[var(--admin-border)] bg-[var(--admin-surface-1)] text-[var(--admin-text)] sm:max-w-md shadow-[var(--shadow-elev)]">
           <DialogHeader>
-            <DialogTitle className="text-white">Restaurar backup</DialogTitle>
-            <DialogDescription className="text-white/60">
-              <strong className="text-red-400">Atenção:</strong> isso{" "}
+            <DialogTitle className="text-[var(--admin-text)]">Restaurar backup</DialogTitle>
+            <DialogDescription className="text-[var(--admin-text-muted)]">
+              <strong className="text-[var(--danger)]">Atenção:</strong> isso{" "}
               <strong>apaga</strong> os apps, versões e configurações atuais
               e substitui pelos do arquivo.
             </DialogDescription>
@@ -986,17 +1054,15 @@ function RestoreButton() {
 
           <div className="space-y-4 py-2">
             <div>
-              <label className="block text-xs text-white/60 mb-1.5">
-                Arquivo .zip do backup
-              </label>
+              <label className="admin-label">Arquivo .zip do backup</label>
               <div className="flex items-center gap-2">
                 <label
                   htmlFor="restore-zip-input"
-                  className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10"
+                  className="admin-btn-ghost cursor-pointer"
                 >
                   <Upload size={14} /> Escolher .zip
                 </label>
-                <span className="text-xs text-white/50 truncate">
+                <span className="text-xs text-[var(--admin-text-muted)] truncate">
                   {file ? `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)` : "Nenhum arquivo"}
                 </span>
               </div>
@@ -1009,12 +1075,12 @@ function RestoreButton() {
               />
             </div>
 
-            <label className="flex items-start gap-2 text-xs text-white/70 cursor-pointer">
+            <label className="flex items-start gap-2 text-xs text-[var(--admin-text-secondary)] cursor-pointer">
               <input
                 type="checkbox"
                 checked={wipe}
                 onChange={(e) => setWipe(e.target.checked)}
-                className="mt-0.5"
+                className="mt-0.5 accent-[var(--neon)]"
               />
               <span>
                 Apagar TODOS os arquivos atuais do storage antes de restaurar
@@ -1023,32 +1089,29 @@ function RestoreButton() {
             </label>
 
             <div>
-              <label className="block text-xs text-white/60 mb-1.5">
-                Para confirmar, digite <code className="text-red-400">RESTAURAR</code>
+              <label className="admin-label">
+                Para confirmar, digite{" "}
+                <code className="text-[var(--danger)] font-mono">RESTAURAR</code>
               </label>
               <input
                 type="text"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                className="w-full h-9 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-white outline-none focus:border-red-400"
+                className="admin-input"
               />
             </div>
           </div>
 
           <DialogFooter>
-            <button
-              onClick={() => setOpen(false)}
-              disabled={busy}
-              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/70 hover:bg-white/5 disabled:opacity-50"
-            >
+            <button onClick={() => setOpen(false)} disabled={busy} className="admin-btn-ghost">
               Cancelar
             </button>
             <button
               disabled={!file || confirm !== "RESTAURAR" || busy}
               onClick={handleRestore}
-              className="inline-flex items-center gap-2 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-600 disabled:opacity-50"
+              className="admin-btn-danger"
             >
-              <RotateCcw size={14} /> {busy ? "Restaurando..." : "Restaurar agora"}
+              <RotateCcw size={14} /> {busy ? "Restaurando…" : "Restaurar agora"}
             </button>
           </DialogFooter>
         </DialogContent>
@@ -1073,15 +1136,15 @@ function RawUploadButton({
       <button
         onClick={() => setOpen((v) => !v)}
         disabled={busy}
-        className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 disabled:opacity-50"
+        className="admin-btn-ghost"
       >
-        <Upload size={16} /> Upload direto
+        <Upload size={14} /> Upload direto
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="border-white/10 bg-black/95 text-white sm:max-w-md">
+        <DialogContent className="border-[var(--admin-border)] bg-[var(--admin-surface-1)] text-[var(--admin-text)] sm:max-w-md shadow-[var(--shadow-elev)]">
           <DialogHeader>
-            <DialogTitle className="text-white">Upload direto (sem form)</DialogTitle>
-            <DialogDescription className="text-white/50">
+            <DialogTitle className="text-[var(--admin-text)]">Upload direto (sem form)</DialogTitle>
+            <DialogDescription className="text-[var(--admin-text-muted)]">
               Envia o APK e o <code>update.json</code> direto pro Storage,
               substituindo o atual. Não preenche histórico.
             </DialogDescription>
@@ -1089,15 +1152,15 @@ function RawUploadButton({
 
           <div className="space-y-4 py-2">
             <div>
-              <label className="block text-xs text-white/60 mb-1.5">APK</label>
+              <label className="admin-label">APK</label>
               <div className="flex items-center gap-2">
                 <label
                   htmlFor="raw-apk-input"
-                  className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10"
+                  className="admin-btn-ghost cursor-pointer"
                 >
                   <Upload size={14} /> Escolher APK
                 </label>
-                <span className="text-xs text-white/50 truncate">
+                <span className="text-xs text-[var(--admin-text-muted)] truncate">
                   {apk ? apk.name : "Nenhum arquivo escolhido"}
                 </span>
               </div>
@@ -1111,15 +1174,15 @@ function RawUploadButton({
             </div>
 
             <div>
-              <label className="block text-xs text-white/60 mb-1.5">update.json</label>
+              <label className="admin-label">update.json</label>
               <div className="flex items-center gap-2">
                 <label
                   htmlFor="raw-json-input"
-                  className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10"
+                  className="admin-btn-ghost cursor-pointer"
                 >
                   <Upload size={14} /> Escolher update.json
                 </label>
-                <span className="text-xs text-white/50 truncate">
+                <span className="text-xs text-[var(--admin-text-muted)] truncate">
                   {json ? json.name : "Nenhum arquivo escolhido"}
                 </span>
               </div>
@@ -1134,10 +1197,7 @@ function RawUploadButton({
           </div>
 
           <DialogFooter>
-            <button
-              onClick={() => setOpen(false)}
-              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/70 hover:bg-white/5"
-            >
+            <button onClick={() => setOpen(false)} className="admin-btn-ghost">
               Fechar
             </button>
             <button
@@ -1149,9 +1209,9 @@ function RawUploadButton({
                 setJson(null);
                 setOpen(false);
               }}
-              className="inline-flex items-center gap-2 rounded-lg bg-[oklch(0.78_0.18_155)] px-3 py-1.5 text-xs font-bold text-black hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
+              className="admin-btn-primary"
             >
-              <Upload size={14} /> {busy ? "Enviando..." : "Enviar"}
+              <Upload size={14} /> {busy ? "Enviando…" : "Enviar"}
             </button>
           </DialogFooter>
         </DialogContent>
@@ -1220,54 +1280,66 @@ function OtaSectionInner() {
   const latest = versions.find((v) => v.is_latest) ?? null;
 
   return (
-    <section className="mt-10 pt-8 border-t border-white/10">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-lg font-bold flex items-center gap-2">
-            <Package size={18} className="text-[oklch(0.78_0.18_155)]" /> OTA do launcher
-          </h2>
-          <p className="text-xs text-white/50">
-            Suba novas versões do APK do launcher. A TV verifica
-            <code className="mx-1 text-white/70">update.json</code> e baixa
-            automaticamente quando há versão nova.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <BackupButton />
-          <RestoreButton />
-          <RawUploadButton onUpload={handleRawUpload} busy={rawUploading} />
-          <button
-            onClick={() => setShowForm((v) => !v)}
-            className="inline-flex items-center gap-2 rounded-lg bg-[oklch(0.78_0.18_155)] px-3 py-2 text-sm font-bold text-black hover:scale-[1.02]"
-          >
-            <Upload size={16} /> Nova versão
-          </button>
-        </div>
-      </div>
+    <section className="pt-2">
+      <div className="admin-divider mb-10" />
 
-      {latest && (
-        <div className="mb-4 rounded-xl border border-[oklch(0.78_0.18_155)]/30 bg-[oklch(0.78_0.18_155)]/5 p-4">
-          <div className="text-xs uppercase tracking-wider text-white/50">
-            Versão atual (publicada)
-          </div>
-          <div className="mt-1 flex items-center gap-3">
-            <span className="text-xl font-black">{latest.version_name}</span>
-            <span className="text-sm text-white/50">code {latest.version_code}</span>
+      <SectionHeader
+        eyebrow="OTA do launcher"
+        title="Versão atual"
+        subtitle="A TV consulta update.json e baixa automaticamente quando há versão nova."
+        icon={<Package size={16} />}
+        right={
+          <button onClick={() => setShowForm((v) => !v)} className="admin-btn-primary">
+            <Upload size={14} /> Publicar versão
+          </button>
+        }
+      />
+
+      {latest ? (
+        <div className="admin-surface admin-surface-neon p-6 admin-anim-in">
+          <div className="flex items-end justify-between gap-4 flex-wrap">
+            <div className="min-w-0">
+              <div className="admin-label !mb-1 !text-[var(--neon)]">Publicada</div>
+              <div className="flex items-baseline gap-3">
+                <span className="text-4xl font-semibold tracking-tight tabular-nums">
+                  {latest.version_name}
+                </span>
+                <span className="font-mono text-xs text-[var(--admin-text-muted)]">
+                  code {latest.version_code}
+                </span>
+              </div>
+              {latest.changelog && (
+                <p className="mt-2 text-sm text-[var(--admin-text-secondary)] whitespace-pre-wrap line-clamp-3 max-w-xl">
+                  {latest.changelog}
+                </p>
+              )}
+            </div>
             {latest.apk_url && (
               <a
                 href={latest.apk_url}
                 target="_blank"
                 rel="noreferrer"
-                className="text-xs text-[oklch(0.78_0.18_155)] hover:underline"
+                className="admin-btn-ghost"
               >
-                Abrir APK
+                <Download size={14} /> Baixar APK
               </a>
             )}
           </div>
         </div>
+      ) : (
+        <div className="admin-surface p-6 text-sm text-[var(--admin-text-muted)]">
+          Nenhuma versão publicada ainda.
+        </div>
       )}
 
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <BackupButton />
+        <RestoreButton />
+        <RawUploadButton onUpload={handleRawUpload} busy={rawUploading} />
+      </div>
+
       {showForm && (
+        <div className="mt-6">
         <PublishVersionForm
           onCancel={() => setShowForm(false)}
           onPublish={async (payload) => {
@@ -1281,91 +1353,117 @@ function OtaSectionInner() {
             }
           }}
         />
+        </div>
       )}
 
-      <div className="mt-4">
-        <h3 className="text-sm font-semibold uppercase tracking-wider text-white/50 mb-3">
-          Histórico
-        </h3>
+      <div className="mt-10">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--admin-text-muted)]">
+            Histórico
+          </h3>
+          <span className="text-[10px] text-[var(--admin-text-subtle)]">
+            {versions.length} {versions.length === 1 ? "versão" : "versões"}
+          </span>
+        </div>
         {loading ? (
-          <div className="text-white/40 py-6 text-center text-sm">Carregando...</div>
+          <div className="text-[var(--admin-text-muted)] py-6 text-center text-sm">
+            Carregando…
+          </div>
         ) : versions.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-white/10 py-8 text-center text-sm text-white/40">
+          <div className="admin-surface p-8 text-center text-sm text-[var(--admin-text-muted)]">
             Nenhuma versão publicada ainda.
           </div>
         ) : (
-          <div className="space-y-2">
-            {versions.map((v) => (
+          <div className="admin-surface overflow-hidden">
+            {versions.map((v, i) => (
               <div
                 key={v.id}
-                className="rounded-xl border border-white/10 bg-white/[0.02] p-4 flex items-start justify-between gap-4"
+                className={`group flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-[oklch(1_0_0_/_0.03)] ${
+                  i > 0 ? "border-t border-[var(--admin-border-soft)]" : ""
+                }`}
               >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-bold">{v.version_name}</span>
-                    <span className="text-xs text-white/40">code {v.version_code}</span>
-                    {v.is_latest && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[oklch(0.78_0.18_155)]/20 px-2 py-0.5 text-xs font-semibold text-[oklch(0.78_0.18_155)]">
-                        <CheckCircle2 size={12} /> ATUAL
-                      </span>
-                    )}
-                    <span className="text-xs text-white/40">
-                      {new Date(v.created_at).toLocaleString("pt-BR")}
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <span
+                    className={`font-mono text-sm tabular-nums ${
+                      v.is_latest
+                        ? "text-[var(--neon)] font-semibold"
+                        : "text-[var(--admin-text-secondary)]"
+                    }`}
+                  >
+                    {v.version_name}
+                  </span>
+                  {v.is_latest && (
+                    <span className="admin-pill admin-pill-neon">
+                      <CheckCircle2 size={11} /> Atual
                     </span>
-                  </div>
-                  {v.changelog && (
-                    <p className="mt-1 text-sm text-white/60 whitespace-pre-wrap">
-                      {v.changelog}
-                    </p>
                   )}
+                  <span className="font-mono text-[11px] text-[var(--admin-text-subtle)]">
+                    code {v.version_code}
+                  </span>
+                  <span className="text-[11px] text-[var(--admin-text-subtle)] hidden md:inline">
+                    · {new Date(v.created_at).toLocaleDateString("pt-BR")}
+                  </span>
+                  {v.apk_size_mb && (
+                    <span className="text-[11px] text-[var(--admin-text-subtle)] hidden md:inline">
+                      · {v.apk_size_mb.toFixed(1)} MB
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                   {v.apk_url && (
                     <a
                       href={v.apk_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-1 inline-block text-xs text-[oklch(0.78_0.18_155)] hover:underline"
+                      className="admin-icon-btn"
+                      style={{ width: 32, height: 32 }}
+                      title="Baixar APK"
                     >
-                      Baixar APK
+                      <Download size={13} />
                     </a>
                   )}
-                </div>
-                <div className="flex gap-2 shrink-0">
                   {!v.is_latest && (
-                    <button
-                      onClick={async () => {
-                        if (!confirm(`Marcar ${v.version_name} como atual? Todas as TVs vão atualizar para esta versão.`))
-                          return;
-                        try {
-                          await setLatestFn({ data: { versionId: v.id } });
-                          toast.success("Versão atual atualizada");
-                          await load();
-                        } catch (err) {
-                          toast.error("Erro", { description: String(err) });
-                        }
-                      }}
-                      className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1.5 text-xs text-white/70 hover:bg-white/5"
-                      title="Marcar como atual"
-                    >
-                      <RotateCcw size={14} /> Tornar atual
-                    </button>
-                  )}
-                  {!v.is_latest && (
-                    <button
-                      onClick={async () => {
-                        if (!confirm(`Excluir versão ${v.version_name}?`)) return;
-                        try {
-                          await deleteFn({ data: { versionId: v.id } });
-                          toast.success("Excluída");
-                          await load();
-                        } catch (err) {
-                          toast.error("Erro", { description: String(err) });
-                        }
-                      }}
-                      className="inline-flex items-center gap-1 rounded-lg border border-red-500/30 px-2 py-1.5 text-xs text-red-400 hover:bg-red-500/10"
-                      title="Excluir"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    <>
+                      <button
+                        onClick={async () => {
+                          if (
+                            !confirm(
+                              `Marcar ${v.version_name} como atual? Todas as TVs vão atualizar para esta versão.`,
+                            )
+                          )
+                            return;
+                          try {
+                            await setLatestFn({ data: { versionId: v.id } });
+                            toast.success("Versão atual atualizada");
+                            await load();
+                          } catch (err) {
+                            toast.error("Erro", { description: String(err) });
+                          }
+                        }}
+                        className="admin-icon-btn"
+                        style={{ width: 32, height: 32 }}
+                        title="Marcar como atual"
+                      >
+                        <RotateCcw size={13} />
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (!confirm(`Excluir versão ${v.version_name}?`)) return;
+                          try {
+                            await deleteFn({ data: { versionId: v.id } });
+                            toast.success("Excluída");
+                            await load();
+                          } catch (err) {
+                            toast.error("Erro", { description: String(err) });
+                          }
+                        }}
+                        className="admin-icon-btn admin-icon-btn-danger"
+                        style={{ width: 32, height: 32 }}
+                        title="Excluir"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -1434,8 +1532,8 @@ function PublishVersionForm({
   }
 
   return (
-    <div className="rounded-2xl border border-[oklch(0.78_0.18_155)]/40 bg-[oklch(0.78_0.18_155)]/5 p-5 space-y-3">
-      <h3 className="font-bold flex items-center gap-2">
+    <div className="admin-surface admin-surface-neon p-5 space-y-3 admin-anim-scale">
+      <h3 className="text-[15px] font-semibold tracking-tight flex items-center gap-2">
         <Upload size={16} /> Publicar nova versão
       </h3>
       <div className="grid grid-cols-2 gap-3">
@@ -1443,7 +1541,7 @@ function PublishVersionForm({
           <input
             value={versionName}
             onChange={(e) => setVersionName(e.target.value)}
-            className="input"
+            className="admin-input"
             placeholder="2.5.0"
           />
         </Field>
@@ -1452,7 +1550,7 @@ function PublishVersionForm({
             type="number"
             value={versionCode}
             onChange={(e) => setVersionCode(e.target.value)}
-            className="input"
+            className="admin-input"
             placeholder="250"
           />
         </Field>
@@ -1461,8 +1559,7 @@ function PublishVersionForm({
         <textarea
           value={changelog}
           onChange={(e) => setChangelog(e.target.value)}
-          className="input"
-          style={{ height: "auto", minHeight: 70, padding: "0.5rem 0.75rem" }}
+          className="admin-input"
           rows={3}
           placeholder="O que mudou nesta versão?"
         />
@@ -1472,34 +1569,25 @@ function PublishVersionForm({
           type="file"
           accept=".apk,application/vnd.android.package-archive"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          className="block w-full text-sm text-white/70 file:mr-3 file:rounded-lg file:border file:border-white/10 file:bg-white/5 file:px-3 file:py-2 file:text-white/80 file:cursor-pointer hover:file:bg-white/10"
+          className="block w-full text-sm text-[var(--admin-text-muted)] file:mr-3 file:rounded-lg file:border file:border-[var(--admin-border)] file:bg-[oklch(1_0_0_/_0.04)] file:px-3 file:py-2 file:text-[var(--admin-text-secondary)] file:cursor-pointer hover:file:bg-[oklch(1_0_0_/_0.08)] file:transition-colors"
         />
         {file && (
-          <p className="mt-1 text-xs text-white/50">
+          <p className="mt-1.5 text-xs text-[var(--admin-text-muted)] font-mono">
             {file.name} — {(file.size / (1024 * 1024)).toFixed(2)} MB
           </p>
         )}
       </Field>
       {uploading && (
-        <div className="text-xs text-white/60">Enviando... {progress}%</div>
+        <div className="text-xs text-[var(--admin-text-muted)]">Enviando… {progress}%</div>
       )}
       <div className="flex gap-2 justify-end">
-        <button
-          onClick={onCancel}
-          disabled={uploading}
-          className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-white/70 hover:bg-white/5 disabled:opacity-50"
-        >
-          <X size={16} /> Cancelar
+        <button onClick={onCancel} disabled={uploading} className="admin-btn-ghost">
+          <X size={14} /> Cancelar
         </button>
-        <button
-          onClick={handleSubmit}
-          disabled={uploading}
-          className="inline-flex items-center gap-2 rounded-lg bg-[oklch(0.78_0.18_155)] px-3 py-2 text-sm font-bold text-black hover:scale-[1.02] disabled:opacity-50"
-        >
-          <Upload size={16} /> {uploading ? "Enviando..." : "Publicar"}
+        <button onClick={handleSubmit} disabled={uploading} className="admin-btn-primary">
+          <Upload size={14} /> {uploading ? "Enviando…" : "Publicar"}
         </button>
       </div>
-      <style>{`.input{width:100%;height:2.5rem;border-radius:.5rem;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);padding:0 .75rem;color:white;outline:none}.input:focus{border-color:oklch(0.78 0.18 155)}`}</style>
     </div>
   );
 }

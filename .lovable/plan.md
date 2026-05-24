@@ -1,61 +1,84 @@
-## Backup completo v2
+## Redesign do painel admin — dark premium
 
-Hoje o `.zip` já tem `apps`, `app_versions`, `app_settings` e os dois buckets de storage. Vou expandir para incluir tudo que é razoável guardar.
+Estilo-alvo: Linear / Vercel / Raycast — superfícies dark com profundidade real, acento verde neon **só** no que importa, tipografia com hierarquia clara, microinterações discretas.
 
-### O que entra no zip (novo conteúdo em **negrito**)
+### 1. Sistema de design (src/styles.css)
 
-```
-backup-YYYY-MM-DD-HHMM.zip
-├── manifest.json
-├── README.txt
-├── db/
-│   ├── apps.json
-│   ├── app_versions.json
-│   ├── app_settings.json
-│   ├── **user_roles.json**        # quem é admin etc.
-│   └── **auth_users.json**        # id, email, created_at, last_sign_in_at, metadata
-├── **schema/**
-│   ├── **schema.sql**             # CREATE TABLE, RLS, functions, triggers (via pg_dump --schema-only)
-│   └── **storage_buckets.json**   # config dos buckets (public/privado, limites)
-├── storage/
-│   ├── tvapps-updates/...
-│   └── app-icons/...
-└── **secrets/**
-    └── **names.txt**              # só os NOMES dos secrets, nunca os valores
+Adicionar tokens semânticos no `:root` (e mapear em `@theme inline`) para parar de hard-codar `oklch(...)` e `white/10` no JSX:
+
+```text
+--surface-0   #0A0B0F  (fundo da página)
+--surface-1   gradiente sutil p/ cards
+--surface-2   superfície elevada (hover, dialog)
+--border-soft / --border-strong   (2 níveis)
+--text-primary / --text-secondary / --text-muted   (3 níveis)
+--neon          verde principal
+--neon-glow     versão translúcida p/ ring/shadow
+--shadow-card   sombra ampla + difusa
+--shadow-glow   glow neon no hover/foco
+--shadow-inset  highlight 1px no topo do card
 ```
 
-### Como funciona
+Mais: keyframes `fade-in-up`, `scale-in`, `glow-pulse`; transição padrão `cubic-bezier(.2,.8,.2,1) 220ms`.
 
-Tudo numa server function `createBackup` em `src/lib/admin.functions.ts`, protegida por `requireSupabaseAuth` + checagem de role `admin` (como já está).
+### 2. Primitivos reutilizáveis (novos componentes em src/components/admin/)
 
-1. **Usuários auth**: `supabaseAdmin.auth.admin.listUsers()` paginado. Salvo apenas: `id`, `email`, `phone`, `created_at`, `last_sign_in_at`, `email_confirmed_at`, `user_metadata`, `app_metadata`. **Senhas (hash) não são exportadas** — o Supabase não expõe o hash via API, então restaurar usuários precisa de e-mail de reset ou senha nova.
-2. **user_roles**: `supabaseAdmin.from('user_roles').select('*')`.
-3. **Schema SQL**: como `pg_dump` não roda em Worker, vou montar via queries no `information_schema` + `pg_catalog`:
-   - `CREATE TABLE` de cada tabela do schema `public`
-   - políticas RLS (`pg_policies`)
-   - funções (`has_role`, `update_updated_at_column`)
-   - enums (`app_role`)
-   - triggers
-   
-   Gera um arquivo `schema.sql` legível e (em maior parte) executável.
-4. **Buckets**: `supabaseAdmin.storage.listBuckets()` → salva config como JSON.
-5. **Secrets**: lista apenas nomes via env (`LOVABLE_API_KEY`, `SUPABASE_*`). Valores **nunca** entram no zip.
-6. **README.txt** atualizado explicando cada pasta e o caveat dos usuários.
+- `<Surface>` — card base com gradiente `surface-1`, borda `border-soft`, sombra + highlight interno, hover eleva e ganha glow neon suave.
+- `<SectionHeader title subtitle action />` — padrão pra cada bloco (label uppercase fininho + título grande + ação à direita).
+- `<StatPill label value tone="neon|muted|danger" />` — chips de status.
+- `<NeonButton variant="primary|ghost|danger">` — substitui os `inline-flex … bg-[oklch…]` espalhados; primary com leve glow, ghost com borda fina, danger só na hora.
+- `<Toggle>` — switch estilo Stripe (track 36×20, thumb com sombra, transição suave, glow neon quando ativo).
+- `<IconButton>` — botão quadrado 36px para ações de linha (editar/duplicar/excluir).
 
-Continua usando `fflate` num único `.zip`.
+### 3. Header
 
-### O que NÃO entra (e por quê)
+Fininho (h=56), sticky, fundo `surface-0/80` + `backdrop-blur-xl`, borda inferior `border-soft`. Logo "TV.Apps" + chip discreto "admin". À direita: chip do email + "Sair" como ghost button.
 
-- **Hashes de senha** — Supabase não expõe via API.
-- **Valores de secrets** — risco de vazamento se o zip cair em mãos erradas.
-- **Logs / histórico OTA** — não há tabela própria; o que existe é só `app_versions` (já incluído).
-- **Restore dos novos itens** — o restore atual cobre apps/versions/settings + storage. Posso estender pra também restaurar `user_roles` e re-criar usuários (sem senha — mandando convite por e-mail) numa próxima iteração, se quiser. Schema SQL fica como referência, não é executado automaticamente no restore (pra evitar quebrar o banco vivo).
+### 4. Layout da página
+
+- Container `max-w-5xl` (era 4xl) com `space-y-10` entre seções pra dar respiro.
+- Título da seção (Senha / Apps / OTA) usando `<SectionHeader>` — não mais um header dentro do próprio card.
+- Grid de apps mantém 1 coluna (cards full-width, é o que cabe melhor a lista ordenável).
+
+### 5. AppCard
+
+- Padding interno `p-6`, gap maior, alinhamento estável (handle de drag à esquerda virando ícone discreto).
+- Ícone do app **80×80** (era 56), com fundo gradiente e ring sutil — vira o "herói" do card.
+- Nome do app: `text-lg font-semibold tracking-tight` (era `font-bold` no `text-base`).
+- Pacote em `text-xs text-muted font-mono` (assina o lado técnico sem competir).
+- Badges (bloqueado / inativo) compactos, com glow quando críticos.
+- Ações: 3 IconButtons agrupados num pill com divisores finos, aparecendo full-opacity só no hover (some pra reduzir poluição quando o card não está em foco).
+- Hover: leve `translateY(-1px)`, glow neon `0 0 0 1px var(--neon-glow), 0 12px 40px -12px var(--neon-glow)`.
+- Formulário expandido (edição): bloco interno com `surface-2`, separador limpo, inputs com `h-10` e foco neon.
+
+### 6. Seção OTA
+
+- Card único de "Versão atual" no topo, grande, com número da versão em display (`text-4xl font-semibold tabular-nums`), changelog truncado, botão "Publicar nova" como primary neon.
+- Histórico: lista compacta (linha 56px), 1 linha por versão: `v1.2.3` mono • data • size • menu de ação. Só a versão atual ganha o badge neon glow; as outras ficam em `text-muted` sem borda visível, separadas por divider finíssimo (`border-b border-soft/50`).
+- Form "Publicar versão" colapsa por padrão e abre num bloco `surface-2` (não num card flutuando).
+- Backup / Restore / Upload direto: agrupados num cluster `<StatPill>`-like no rodapé da seção, não mais botões soltos no meio.
+
+### 7. Dialogs (Restore, confirmação de delete)
+
+`DialogContent` com `surface-2`, borda `border-strong`, sombra ampla, `animate-scale-in`. Inputs e checkboxes seguem o mesmo sistema.
+
+### 8. Microinterações
+
+- Mount de cards: `animate-fade-in-up` com stagger leve (delay por index, capado em 8).
+- Hover em qualquer botão/card: 180ms easing suave (scale 1.01 + glow).
+- Focus visible: ring neon de 2px sempre, em vez de outline default.
+- Toggle: spring-like (200ms ease-out no thumb).
+- Smooth scroll global: `html { scroll-behavior: smooth }`.
+
+### O que NÃO muda
+
+- Estrutura de rotas, server functions, lógica de DnD (`dnd-kit`), backup/restore — só visual.
+- Funcionalidades existentes ficam idênticas: senha, CRUD de apps, OTA, backup/restore, upload direto.
 
 ### Arquivos alterados
 
-- `src/lib/admin.functions.ts` — expande `createBackup` com as novas seções; sem mudar a assinatura/retorno (continua `{ filename, dataBase64 }`).
-- `.lovable/plan.md` — atualizar a descrição.
+- `src/styles.css` — tokens + keyframes + utilitários (.surface, .surface-2, .glow-neon).
+- `src/components/admin/Surface.tsx`, `SectionHeader.tsx`, `NeonButton.tsx`, `Toggle.tsx`, `IconButton.tsx`, `StatPill.tsx` (novos).
+- `src/routes/admin.tsx` — refatora JSX pra usar os primitivos; sem lógica nova.
 
-Sem mudanças no UI (`src/routes/admin.tsx`): o botão "Backup completo" continua o mesmo, só baixa um zip mais gordo.
-
-Confirma que pode seguir assim?
+Confirma seguir assim?
