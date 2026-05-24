@@ -248,3 +248,362 @@
   will-change: transform, opacity;
   animation: tv-loading-dot-safe 1s ease-in-out infinite;
 }
+
+/* ============================================================
+ * Admin — premium dark design system
+ * Tokens + utilities used by /admin (Linear / Vercel / Raycast vibe)
+ * ============================================================ */
+
+:root {
+  /* Surfaces */
+  --admin-bg: oklch(0.14 0.025 265);
+  --admin-surface-1: oklch(0.19 0.025 265);
+  --admin-surface-2: oklch(0.23 0.028 265);
+  --admin-surface-3: oklch(0.27 0.03 265);
+
+  /* Borders */
+  --admin-border-soft: oklch(1 0 0 / 0.06);
+  --admin-border: oklch(1 0 0 / 0.1);
+  --admin-border-strong: oklch(1 0 0 / 0.16);
+
+  /* Text */
+  --admin-text: oklch(0.98 0.005 250);
+  --admin-text-secondary: oklch(0.78 0.01 250);
+  --admin-text-muted: oklch(0.58 0.015 255);
+  --admin-text-subtle: oklch(0.45 0.015 255);
+
+  /* Neon accent */
+  --neon: oklch(0.82 0.2 150);
+  --neon-soft: oklch(0.82 0.2 150 / 0.18);
+  --neon-glow: oklch(0.82 0.2 150 / 0.35);
+  --neon-ink: oklch(0.18 0.05 150);
+
+  /* Danger */
+  --danger: oklch(0.68 0.22 25);
+  --danger-soft: oklch(0.68 0.22 25 / 0.14);
+  --danger-glow: oklch(0.68 0.22 25 / 0.3);
+
+  /* Shadows */
+  --shadow-card: 0 1px 0 0 oklch(1 0 0 / 0.04) inset, 0 8px 24px -12px oklch(0 0 0 / 0.6),
+    0 2px 6px -2px oklch(0 0 0 / 0.4);
+  --shadow-elev: 0 1px 0 0 oklch(1 0 0 / 0.06) inset, 0 24px 60px -24px oklch(0 0 0 / 0.8),
+    0 8px 20px -8px oklch(0 0 0 / 0.6);
+  --shadow-glow: 0 0 0 1px var(--neon-glow), 0 18px 50px -18px var(--neon-glow);
+
+  /* Easing */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@keyframes admin-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes admin-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes admin-glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--neon-glow);
+  }
+  50% {
+    box-shadow: 0 0 0 6px oklch(0.82 0.2 150 / 0);
+  }
+}
+
+@layer components {
+  /* The admin page sets data-admin on <body> so we can scope a darker bg */
+  body[data-admin="1"] {
+    background: radial-gradient(
+        ellipse at top,
+        oklch(0.21 0.05 265 / 0.6) 0%,
+        transparent 55%
+      ),
+      var(--admin-bg);
+  }
+
+  .admin-surface {
+    position: relative;
+    background: linear-gradient(
+      180deg,
+      var(--admin-surface-1) 0%,
+      oklch(0.17 0.025 265) 100%
+    );
+    border: 1px solid var(--admin-border-soft);
+    border-radius: 16px;
+    box-shadow: var(--shadow-card);
+    transition: transform 220ms var(--ease-out), border-color 220ms var(--ease-out),
+      box-shadow 220ms var(--ease-out);
+  }
+
+  .admin-surface-hover:hover {
+    transform: translateY(-1px);
+    border-color: var(--admin-border);
+    box-shadow: var(--shadow-elev);
+  }
+
+  .admin-surface-neon {
+    border-color: var(--neon-glow);
+    box-shadow: var(--shadow-glow), var(--shadow-card);
+  }
+
+  .admin-surface-2 {
+    background: var(--admin-surface-2);
+    border: 1px solid var(--admin-border-soft);
+    border-radius: 14px;
+  }
+
+  .admin-input {
+    width: 100%;
+    height: 2.5rem;
+    border-radius: 10px;
+    border: 1px solid var(--admin-border);
+    background: oklch(0 0 0 / 0.35);
+    padding: 0 0.875rem;
+    color: var(--admin-text);
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 180ms var(--ease-out), box-shadow 180ms var(--ease-out),
+      background 180ms var(--ease-out);
+  }
+  .admin-input::placeholder {
+    color: var(--admin-text-subtle);
+  }
+  .admin-input:focus {
+    border-color: var(--neon);
+    box-shadow: 0 0 0 3px var(--neon-soft);
+    background: oklch(0 0 0 / 0.5);
+  }
+  .admin-input:disabled {
+    opacity: 0.5;
+  }
+  textarea.admin-input {
+    height: auto;
+    padding: 0.625rem 0.875rem;
+    line-height: 1.5;
+    resize: vertical;
+  }
+
+  .admin-label {
+    display: block;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--admin-text-muted);
+    margin-bottom: 0.4rem;
+  }
+
+  .admin-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2.25rem;
+    padding: 0 0.875rem;
+    border-radius: 10px;
+    background: linear-gradient(180deg, oklch(0.88 0.2 150), var(--neon));
+    color: var(--neon-ink);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    border: 1px solid oklch(0.95 0.15 150 / 0.4);
+    box-shadow: 0 0 0 1px oklch(0 0 0 / 0.2) inset,
+      0 6px 20px -8px var(--neon-glow), 0 1px 0 0 oklch(1 0 0 / 0.25) inset;
+    transition: transform 180ms var(--ease-out), box-shadow 180ms var(--ease-out),
+      filter 180ms var(--ease-out);
+    cursor: pointer;
+  }
+  .admin-btn-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 0 0 1px oklch(0 0 0 / 0.2) inset,
+      0 12px 30px -10px var(--neon-glow), 0 1px 0 0 oklch(1 0 0 / 0.3) inset;
+    filter: brightness(1.05);
+  }
+  .admin-btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  .admin-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .admin-btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2.25rem;
+    padding: 0 0.875rem;
+    border-radius: 10px;
+    background: oklch(1 0 0 / 0.04);
+    color: var(--admin-text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    border: 1px solid var(--admin-border);
+    transition: background 180ms var(--ease-out), color 180ms var(--ease-out),
+      border-color 180ms var(--ease-out);
+    cursor: pointer;
+  }
+  .admin-btn-ghost:hover:not(:disabled) {
+    background: oklch(1 0 0 / 0.08);
+    color: var(--admin-text);
+    border-color: var(--admin-border-strong);
+  }
+  .admin-btn-ghost:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .admin-btn-danger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2.25rem;
+    padding: 0 0.875rem;
+    border-radius: 10px;
+    background: var(--danger);
+    color: white;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    border: 1px solid oklch(0.78 0.22 25 / 0.5);
+    box-shadow: 0 6px 20px -8px var(--danger-glow);
+    transition: filter 180ms var(--ease-out), transform 180ms var(--ease-out);
+    cursor: pointer;
+  }
+  .admin-btn-danger:hover:not(:disabled) {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
+  .admin-btn-danger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .admin-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--admin-text-muted);
+    border: 1px solid transparent;
+    transition: background 160ms var(--ease-out), color 160ms var(--ease-out),
+      border-color 160ms var(--ease-out);
+    cursor: pointer;
+  }
+  .admin-icon-btn:hover {
+    background: oklch(1 0 0 / 0.06);
+    color: var(--admin-text);
+    border-color: var(--admin-border);
+  }
+  .admin-icon-btn-danger:hover {
+    color: var(--danger);
+    background: var(--danger-soft);
+    border-color: oklch(0.68 0.22 25 / 0.3);
+  }
+
+  .admin-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    height: 1.5rem;
+    padding: 0 0.625rem;
+    border-radius: 999px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .admin-pill-neon {
+    background: var(--neon-soft);
+    color: var(--neon);
+    border: 1px solid var(--neon-glow);
+    box-shadow: 0 0 12px -2px var(--neon-glow);
+  }
+  .admin-pill-danger {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border: 1px solid oklch(0.68 0.22 25 / 0.3);
+  }
+  .admin-pill-muted {
+    background: oklch(1 0 0 / 0.05);
+    color: var(--admin-text-muted);
+    border: 1px solid var(--admin-border);
+  }
+
+  .admin-divider {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--admin-border) 20%,
+      var(--admin-border) 80%,
+      transparent
+    );
+  }
+
+  .admin-focus-ring:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--admin-bg), 0 0 0 4px var(--neon);
+  }
+
+  /* Stripe-style switch */
+  .admin-switch {
+    position: relative;
+    width: 2.5rem;
+    height: 1.375rem;
+    border-radius: 999px;
+    background: oklch(1 0 0 / 0.12);
+    border: 1px solid var(--admin-border);
+    transition: background 220ms var(--ease-out), border-color 220ms var(--ease-out),
+      box-shadow 220ms var(--ease-out);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .admin-switch::after {
+    content: "";
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 999px;
+    background: white;
+    box-shadow: 0 1px 3px oklch(0 0 0 / 0.4), 0 0 0 0.5px oklch(0 0 0 / 0.1);
+    transition: transform 220ms var(--ease-out);
+  }
+  .admin-switch[data-checked="true"] {
+    background: var(--neon);
+    border-color: transparent;
+    box-shadow: 0 0 14px -2px var(--neon-glow);
+  }
+  .admin-switch[data-checked="true"]::after {
+    transform: translateX(1.125rem);
+  }
+
+  .admin-anim-in {
+    animation: admin-fade-in-up 360ms var(--ease-out) both;
+  }
+  .admin-anim-scale {
+    animation: admin-scale-in 220ms var(--ease-out) both;
+  }
+}
