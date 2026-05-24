@@ -18,6 +18,7 @@ import {
   setLatestLauncherVersion,
   deleteLauncherVersion,
   uploadAppIcon,
+  uploadAppApk,
   uploadLauncherApk,
   uploadLauncherRaw,
   createBackup,
