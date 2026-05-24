@@ -38,7 +38,33 @@ export const listAppsForAdmin = createServerFn({ method: "GET" })
       )
       .order("display_order", { ascending: true });
     if (error) throw new Error(error.message);
-    return { apps: data ?? [] };
+    const apps = data ?? [];
+    const ids = apps.map((a) => a.id);
+    let versionsByApp: Record<string, {
+      version_name: string;
+      version_code: number;
+      apk_size_mb: number | null;
+      created_at: string;
+    }> = {};
+    if (ids.length > 0) {
+      const { data: vs } = await supabaseAdmin
+        .from("app_versions")
+        .select("app_id, version_name, version_code, apk_size_mb, created_at")
+        .eq("target", "app")
+        .eq("is_latest", true)
+        .in("app_id", ids);
+      for (const v of vs ?? []) {
+        if (v.app_id) versionsByApp[v.app_id] = {
+          version_name: v.version_name,
+          version_code: v.version_code,
+          apk_size_mb: v.apk_size_mb,
+          created_at: v.created_at,
+        };
+      }
+    }
+    return {
+      apps: apps.map((a) => ({ ...a, latest_version: versionsByApp[a.id] ?? null })),
+    };
   });
 
 export const toggleAppBlock = createServerFn({ method: "POST" })
