@@ -1329,7 +1329,6 @@ function OtaSectionInner() {
   const publishFn = useServerFn(publishLauncherVersion);
   const setLatestFn = useServerFn(setLatestLauncherVersion);
   const deleteFn = useServerFn(deleteLauncherVersion);
-  const uploadApkFn = useServerFn(uploadLauncherApk);
   const uploadRawFn = useServerFn(uploadLauncherRaw);
 
   const [versions, setVersions] = useState<LauncherVersion[]>([]);
