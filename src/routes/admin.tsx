@@ -927,6 +927,136 @@ function BackupButton() {
   );
 }
 
+function RestoreButton() {
+  const [open, setOpen] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [wipe, setWipe] = useState(false);
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+  const restoreFn = useServerFn(restoreBackup);
+
+  async function handleRestore() {
+    if (!file) return;
+    if (confirm !== "RESTAURAR") {
+      toast.error("Digite RESTAURAR para confirmar");
+      return;
+    }
+    setBusy(true);
+    try {
+      toast.info("Restaurando backup...", {
+        description: "Não feche essa aba. Pode demorar alguns minutos.",
+      });
+      const b64 = await fileToBase64(file);
+      const res = await restoreFn({ data: { zipBase64: b64, wipeStorage: wipe } });
+      toast.success("Backup restaurado", {
+        description: `Apps: ${res.restored.apps} · Versões: ${res.restored.app_versions} · Arquivos: ${Object.values(res.restored.storage).reduce((a, b) => a + b, 0)}`,
+      });
+      setOpen(false);
+      setFile(null);
+      setConfirm("");
+      setWipe(false);
+      // Recarrega a página pra refletir tudo
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (err) {
+      toast.error("Falha ao restaurar", { description: String(err) });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10"
+        title="Restaura banco + storage a partir de um .zip"
+      >
+        <RotateCcw size={16} /> Restaurar
+      </button>
+      <Dialog open={open} onOpenChange={(v) => !busy && setOpen(v)}>
+        <DialogContent className="border-white/10 bg-black/95 text-white sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white">Restaurar backup</DialogTitle>
+            <DialogDescription className="text-white/60">
+              <strong className="text-red-400">Atenção:</strong> isso{" "}
+              <strong>apaga</strong> os apps, versões e configurações atuais
+              e substitui pelos do arquivo.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="block text-xs text-white/60 mb-1.5">
+                Arquivo .zip do backup
+              </label>
+              <div className="flex items-center gap-2">
+                <label
+                  htmlFor="restore-zip-input"
+                  className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10"
+                >
+                  <Upload size={14} /> Escolher .zip
+                </label>
+                <span className="text-xs text-white/50 truncate">
+                  {file ? `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)` : "Nenhum arquivo"}
+                </span>
+              </div>
+              <input
+                id="restore-zip-input"
+                type="file"
+                accept=".zip,application/zip"
+                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                className="hidden"
+              />
+            </div>
+
+            <label className="flex items-start gap-2 text-xs text-white/70 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={wipe}
+                onChange={(e) => setWipe(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span>
+                Apagar TODOS os arquivos atuais do storage antes de restaurar
+                (recomendado para restore limpo; sem isso, arquivos extras ficam).
+              </span>
+            </label>
+
+            <div>
+              <label className="block text-xs text-white/60 mb-1.5">
+                Para confirmar, digite <code className="text-red-400">RESTAURAR</code>
+              </label>
+              <input
+                type="text"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                className="w-full h-9 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-white outline-none focus:border-red-400"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <button
+              onClick={() => setOpen(false)}
+              disabled={busy}
+              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/70 hover:bg-white/5 disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              disabled={!file || confirm !== "RESTAURAR" || busy}
+              onClick={handleRestore}
+              className="inline-flex items-center gap-2 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-600 disabled:opacity-50"
+            >
+              <RotateCcw size={14} /> {busy ? "Restaurando..." : "Restaurar agora"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 function RawUploadButton({
   onUpload,
   busy,
