@@ -127,6 +127,27 @@ export type Database = {
         }
         Relationships: []
       }
+      build_counter: {
+        Row: {
+          build_number: number
+          id: string
+          updated_at: string
+          version_base: number
+        }
+        Insert: {
+          build_number?: number
+          id: string
+          updated_at?: string
+          version_base?: number
+        }
+        Update: {
+          build_number?: number
+          id?: string
+          updated_at?: string
+          version_base?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -153,6 +174,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      bump_build_counter: {
+        Args: { _id: string }
+        Returns: {
+          version_code: number
+          version_name: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
