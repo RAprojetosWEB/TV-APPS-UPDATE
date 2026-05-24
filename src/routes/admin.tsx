@@ -77,6 +77,12 @@ type AppRow = {
   is_active: boolean;
   is_blocked: boolean;
   block_reason: string | null;
+  latest_version?: {
+    version_name: string;
+    version_code: number;
+    apk_size_mb: number | null;
+    created_at: string;
+  } | null;
 };
 
 type LauncherVersion = {
