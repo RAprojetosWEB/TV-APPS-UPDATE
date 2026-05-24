@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { zipSync, strToU8, type Zippable } from "fflate";
 
 async function assertAdmin(userId: string) {
   const { data, error } = await supabaseAdmin
@@ -449,4 +450,128 @@ export const uploadLauncherRaw = createServerFn({ method: "POST" })
       .upload(data.path, bytes, { upsert: true, contentType: data.contentType });
     if (error) throw new Error(error.message);
     return { success: true, path: data.path };
+  });
+
+// ============ Backup completo ============
+
+function encodeBase64(bytes: Uint8Array): string {
+  let bin = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    bin += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(bin);
+}
+
+async function listBucketRecursive(
+  bucket: string,
+  prefix = "",
+): Promise<string[]> {
+  const out: string[] = [];
+  const { data, error } = await supabaseAdmin.storage
+    .from(bucket)
+    .list(prefix, { limit: 1000, sortBy: { column: "name", order: "asc" } });
+  if (error) throw new Error(`list ${bucket}/${prefix}: ${error.message}`);
+  for (const item of data ?? []) {
+    const full = prefix ? `${prefix}/${item.name}` : item.name;
+    // Pastas no Supabase storage não têm id/metadata
+    const isFolder = !item.id && !item.metadata;
+    if (isFolder) {
+      const nested = await listBucketRecursive(bucket, full);
+      out.push(...nested);
+    } else {
+      out.push(full);
+    }
+  }
+  return out;
+}
+
+export const createBackup = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+
+    // 1. Dados das tabelas
+    const [appsRes, versionsRes, settingsRes] = await Promise.all([
+      supabaseAdmin.from("apps").select("*"),
+      supabaseAdmin.from("app_versions").select("*"),
+      supabaseAdmin.from("app_settings").select("*"),
+    ]);
+    if (appsRes.error) throw new Error(appsRes.error.message);
+    if (versionsRes.error) throw new Error(versionsRes.error.message);
+    if (settingsRes.error) throw new Error(settingsRes.error.message);
+
+    const zip: Zippable = {};
+
+    zip["db/apps.json"] = strToU8(JSON.stringify(appsRes.data ?? [], null, 2));
+    zip["db/app_versions.json"] = strToU8(
+      JSON.stringify(versionsRes.data ?? [], null, 2),
+    );
+    zip["db/app_settings.json"] = strToU8(
+      JSON.stringify(settingsRes.data ?? [], null, 2),
+    );
+
+    // 2. Storage (arquivos dos dois buckets)
+    const buckets = ["tvapps-updates", "app-icons"];
+    const fileCounts: Record<string, number> = {};
+    let totalBytes = 0;
+
+    for (const bucket of buckets) {
+      const paths = await listBucketRecursive(bucket);
+      fileCounts[bucket] = paths.length;
+      for (const p of paths) {
+        const { data: blob, error } = await supabaseAdmin.storage
+          .from(bucket)
+          .download(p);
+        if (error) {
+          console.error(`download ${bucket}/${p}: ${error.message}`);
+          continue;
+        }
+        const buf = new Uint8Array(await blob.arrayBuffer());
+        zip[`storage/${bucket}/${p}`] = buf;
+        totalBytes += buf.byteLength;
+      }
+    }
+
+    const now = new Date();
+    const stamp = now.toISOString().replace(/[:.]/g, "-").slice(0, 16);
+
+    const manifest = {
+      version: 1,
+      createdAt: now.toISOString(),
+      counts: {
+        apps: appsRes.data?.length ?? 0,
+        app_versions: versionsRes.data?.length ?? 0,
+        app_settings: settingsRes.data?.length ?? 0,
+        storage: fileCounts,
+      },
+      totalStorageBytes: totalBytes,
+    };
+    zip["manifest.json"] = strToU8(JSON.stringify(manifest, null, 2));
+
+    const readme = [
+      "Backup TV.Apps",
+      `Gerado em: ${now.toISOString()}`,
+      "",
+      "Conteúdo:",
+      "- db/apps.json           — catálogo de apps",
+      "- db/app_versions.json   — histórico de versões OTA",
+      "- db/app_settings.json   — configurações (senha do launcher)",
+      "- storage/tvapps-updates — APKs do launcher + update.json",
+      "- storage/app-icons      — ícones dos apps do catálogo",
+      "- manifest.json          — metadados deste backup",
+      "",
+      "Para restaurar, contate o suporte ou peça uma rotina de restore.",
+    ].join("\n");
+    zip["README.txt"] = strToU8(readme);
+
+    const zipped = zipSync(zip, { level: 6 });
+    const filename = `tvapps-backup-${stamp}.zip`;
+
+    return {
+      filename,
+      base64: encodeBase64(zipped),
+      byteLength: zipped.byteLength,
+      manifest,
+    };
   });
