@@ -62,7 +62,14 @@ import {
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
   head: () => ({
-    meta: [{ title: "Admin — TV.Apps" }],
+    meta: [
+      { title: "Admin — TV.Apps" },
+      { name: "theme-color", content: "#0a0a0a" },
+      { name: "apple-mobile-web-app-title", content: "TV.Apps Admin" },
+    ],
+    links: [
+      { rel: "manifest", href: "/manifest-admin.json" },
+    ],
   }),
 });
 
