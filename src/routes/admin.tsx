@@ -1151,49 +1151,68 @@ function RawUploadButton({
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            <div>
-              <label className="admin-label">APK</label>
-              <div className="flex items-center gap-2">
-                <label
-                  htmlFor="raw-apk-input"
-                  className="admin-btn-ghost cursor-pointer"
-                >
-                  <Upload size={14} /> Escolher APK
-                </label>
-                <span className="text-xs text-[var(--admin-text-muted)] truncate">
-                  {apk ? apk.name : "Nenhum arquivo escolhido"}
-                </span>
-              </div>
+            <div className="flex flex-col items-center gap-3">
+              <label
+                htmlFor="raw-multi-input"
+                className="admin-btn-ghost cursor-pointer w-full justify-center py-3"
+              >
+                <Upload size={16} /> Escolher arquivos (APK + update.json)
+              </label>
               <input
-                id="raw-apk-input"
+                id="raw-multi-input"
                 type="file"
-                accept=".apk,application/vnd.android.package-archive"
-                onChange={(e) => setApk(e.target.files?.[0] ?? null)}
+                multiple
+                accept=".apk,application/vnd.android.package-archive,application/json,.json"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files ?? []);
+                  let nextApk: File | null = apk;
+                  let nextJson: File | null = json;
+                  for (const f of files) {
+                    const n = f.name.toLowerCase();
+                    if (n.endsWith(".apk")) nextApk = f;
+                    else if (n.endsWith(".json")) nextJson = f;
+                  }
+                  setApk(nextApk);
+                  setJson(nextJson);
+                  e.target.value = "";
+                }}
                 className="hidden"
               />
+              <p className="text-[11px] text-[var(--admin-text-muted)] text-center">
+                Segure Ctrl/Cmd na janela do sistema para marcar os dois de uma vez.
+              </p>
             </div>
 
-            <div>
-              <label className="admin-label">update.json</label>
-              <div className="flex items-center gap-2">
-                <label
-                  htmlFor="raw-json-input"
-                  className="admin-btn-ghost cursor-pointer"
-                >
-                  <Upload size={14} /> Escolher update.json
-                </label>
-                <span className="text-xs text-[var(--admin-text-muted)] truncate">
-                  {json ? json.name : "Nenhum arquivo escolhido"}
+            <div className="rounded-md border border-[var(--admin-border)] bg-[var(--admin-surface-0)] divide-y divide-[var(--admin-border)]">
+              <div className="flex items-center justify-between gap-3 px-3 py-2 text-xs">
+                <span className="flex items-center gap-2">
+                  <span
+                    className={`inline-block h-2 w-2 rounded-full ${apk ? "bg-emerald-400" : "bg-[var(--admin-border)]"}`}
+                  />
+                  <span className="font-medium text-[var(--admin-text)]">APK</span>
+                </span>
+                <span className="truncate text-[var(--admin-text-muted)] max-w-[60%] text-right">
+                  {apk ? apk.name : "—"}
                 </span>
               </div>
-              <input
-                id="raw-json-input"
-                type="file"
-                accept="application/json,.json"
-                onChange={(e) => setJson(e.target.files?.[0] ?? null)}
-                className="hidden"
-              />
+              <div className="flex items-center justify-between gap-3 px-3 py-2 text-xs">
+                <span className="flex items-center gap-2">
+                  <span
+                    className={`inline-block h-2 w-2 rounded-full ${json ? "bg-emerald-400" : "bg-[var(--admin-border)]"}`}
+                  />
+                  <span className="font-medium text-[var(--admin-text)]">update.json</span>
+                </span>
+                <span className="truncate text-[var(--admin-text-muted)] max-w-[60%] text-right">
+                  {json ? json.name : "—"}
+                </span>
+              </div>
             </div>
+
+            {(apk && !json) || (!apk && json) ? (
+              <p className="text-[11px] text-amber-400">
+                Selecione 1 APK e 1 update.json para enviar.
+              </p>
+            ) : null}
           </div>
 
           <DialogFooter>
