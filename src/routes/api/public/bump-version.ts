@@ -11,7 +11,18 @@ export const Route = createFileRoute("/api/public/bump-version")({
         }
         const provided = request.headers.get("x-build-token");
         if (!provided || provided !== expected) {
-          return new Response("Unauthorized", { status: 401 });
+          return new Response(
+            JSON.stringify({
+              error: "Unauthorized",
+              debug: {
+                expectedLength: expected.length,
+                providedLength: provided?.length ?? 0,
+                expectedPrefix: expected.slice(0, 4),
+                providedPrefix: provided?.slice(0, 4) ?? null,
+              },
+            }),
+            { status: 401, headers: { "Content-Type": "application/json" } },
+          );
         }
 
         const { data, error } = await supabaseAdmin.rpc("bump_build_counter", {
