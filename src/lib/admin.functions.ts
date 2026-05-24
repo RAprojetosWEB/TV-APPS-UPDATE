@@ -431,6 +431,39 @@ export const uploadLauncherApk = createServerFn({ method: "POST" })
     return { success: true, path: data.path };
   });
 
+export const uploadAppApk = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        appId: z.string().uuid(),
+        fileName: z.string().min(1).max(100).regex(/^[a-zA-Z0-9._-]+$/),
+        fileBase64: z.string().min(1),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const bytes = decodeBase64(data.fileBase64);
+    if (bytes.byteLength > 150 * 1024 * 1024)
+      throw new Error("APK muito grande (máx 150 MB)");
+    const safeName = data.fileName.toLowerCase().endsWith(".apk")
+      ? data.fileName
+      : `${data.fileName}.apk`;
+    const path = `apks/${data.appId}/${Date.now()}-${safeName}`;
+    const { error } = await supabaseAdmin.storage
+      .from("tvapps-updates")
+      .upload(path, bytes, {
+        upsert: false,
+        contentType: "application/vnd.android.package-archive",
+      });
+    if (error) throw new Error(error.message);
+    const { data: pub } = supabaseAdmin.storage
+      .from("tvapps-updates")
+      .getPublicUrl(path);
+    return { publicUrl: pub.publicUrl, path };
+  });
+
 export const uploadLauncherRaw = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
