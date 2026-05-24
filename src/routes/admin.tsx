@@ -1305,7 +1305,7 @@ function OtaSectionInner() {
   const [showForm, setShowForm] = useState(false);
   const [rawUploading, setRawUploading] = useState(false);
 
-  async function handleRawUpload(apk: File, _json: File) {
+  async function handleRawUpload(apk: File) {
     setRawUploading(true);
     try {
       // IMPORTANTE: o update.json gerado pelo Gradle aponta para
