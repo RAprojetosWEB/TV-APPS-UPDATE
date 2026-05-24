@@ -1,5 +1,3 @@
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Properties
 import java.io.File as JFile
 
@@ -9,17 +7,31 @@ plugins {
 }
 
 // ---- Versionamento automático --------------------------------------------
-// Lê android/version.properties (versionBase) e gera versionCode/Name
-// dinamicamente baseado no timestamp da build. Resultado: toda compilação
-// produz uma versão maior que a anterior, sem edição manual.
+// Lê android/version.properties e gera versionName/versionCode a partir de
+// um contador (buildNumber) que é incrementado a cada build. Sem datas,
+// sem timestamps. Resultado: 2.80, 2.81, 2.82, ...
+val versionPropsFile: JFile = rootProject.file("version.properties")
 val versionProps = Properties().apply {
-    val f = rootProject.file("version.properties")
-    if (f.exists()) f.inputStream().use { load(it) }
+    if (versionPropsFile.exists()) versionPropsFile.inputStream().use { load(it) }
 }
 val versionBase: String = versionProps.getProperty("versionBase", "2")
-val buildTimestamp: String = SimpleDateFormat("yyyy.MM.dd.HHmm").format(Date())
-val computedVersionCode: Int = ((Date().time / 1000) - 1700000000).toInt()
-val computedVersionName: String = "$versionBase.$buildTimestamp"
+val previousBuildNumber: Int = versionProps.getProperty("buildNumber", "0").toInt()
+val nextBuildNumber: Int = previousBuildNumber + 1
+val computedVersionCode: Int = nextBuildNumber
+val computedVersionName: String = "$versionBase.$nextBuildNumber"
+
+// Persiste o novo buildNumber de volta no arquivo, preservando comentários
+// simples (header). Só roda quando alguma task de assemble for executada.
+fun bumpBuildNumber() {
+    val header = """
+        # Fonte única de verdade para a versão do TV.Apps.
+        # - versionBase: número "marketing". Só edite quando quiser virar pra 3, 4, 5...
+        # - buildNumber: contador automático. O Gradle soma +1 a cada build.
+        #   NÃO edite na mão (a menos que queira resetar a contagem).
+        # Resultado: versionName = "{versionBase}.{buildNumber}" → ex: 2.80, 2.81, 2.82
+    """.trimIndent()
+    versionPropsFile.writeText("$header\nversionBase=$versionBase\nbuildNumber=$nextBuildNumber\n")
+}
 // --------------------------------------------------------------------------
 
 android {
@@ -92,6 +104,7 @@ dependencies {
 // (APK + update.json) no bucket tvapps-updates, sempre com os mesmos nomes.
 tasks.register("generateUpdateJson") {
     doLast {
+        bumpBuildNumber()
         listOf("release", "debug").forEach { variant ->
             val apkDir = layout.buildDirectory.dir("outputs/apk/$variant").get().asFile
             if (!apkDir.exists()) return@forEach
