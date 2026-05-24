@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { zipSync, strToU8, type Zippable } from "fflate";
+import { zipSync, unzipSync, strToU8, strFromU8, type Zippable } from "fflate";
 
 async function assertAdmin(userId: string) {
   const { data, error } = await supabaseAdmin
@@ -573,5 +573,126 @@ export const createBackup = createServerFn({ method: "POST" })
       base64: encodeBase64(zipped),
       byteLength: zipped.byteLength,
       manifest,
+    };
+  });
+
+export const restoreBackup = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        zipBase64: z.string().min(1),
+        wipeStorage: z.boolean().optional().default(false),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+
+    const bytes = decodeBase64(data.zipBase64);
+    let files: Record<string, Uint8Array>;
+    try {
+      files = unzipSync(bytes);
+    } catch (e) {
+      throw new Error(`Arquivo inválido (não é um zip): ${String(e)}`);
+    }
+
+    // Validação básica: precisa ter manifest e os 3 JSON do db
+    const manifestRaw = files["manifest.json"];
+    if (!manifestRaw) throw new Error("Backup inválido: manifest.json ausente");
+    const requiredDb = ["db/apps.json", "db/app_versions.json", "db/app_settings.json"];
+    for (const k of requiredDb) {
+      if (!files[k]) throw new Error(`Backup inválido: ${k} ausente`);
+    }
+
+    const apps = JSON.parse(strFromU8(files["db/apps.json"])) as Array<Record<string, unknown>>;
+    const versions = JSON.parse(strFromU8(files["db/app_versions.json"])) as Array<Record<string, unknown>>;
+    const settings = JSON.parse(strFromU8(files["db/app_settings.json"])) as Array<Record<string, unknown>>;
+
+    // 1. Restaurar tabelas: apagar tudo e reinserir
+    // Ordem: app_versions (pode ter FK pra apps), apps, app_settings
+    const delVer = await supabaseAdmin
+      .from("app_versions")
+      .delete()
+      .not("id", "is", null);
+    if (delVer.error) throw new Error(`apagar app_versions: ${delVer.error.message}`);
+
+    const delApps = await supabaseAdmin.from("apps").delete().not("id", "is", null);
+    if (delApps.error) throw new Error(`apagar apps: ${delApps.error.message}`);
+
+    const delSet = await supabaseAdmin
+      .from("app_settings")
+      .delete()
+      .not("id", "is", null);
+    if (delSet.error) throw new Error(`apagar app_settings: ${delSet.error.message}`);
+
+    if (apps.length > 0) {
+      const { error } = await supabaseAdmin.from("apps").insert(apps as never);
+      if (error) throw new Error(`inserir apps: ${error.message}`);
+    }
+    if (versions.length > 0) {
+      const { error } = await supabaseAdmin
+        .from("app_versions")
+        .insert(versions as never);
+      if (error) throw new Error(`inserir app_versions: ${error.message}`);
+    }
+    if (settings.length > 0) {
+      const { error } = await supabaseAdmin
+        .from("app_settings")
+        .insert(settings as never);
+      if (error) throw new Error(`inserir app_settings: ${error.message}`);
+    }
+
+    // 2. Restaurar storage
+    const buckets = ["tvapps-updates", "app-icons"];
+    const counts: Record<string, number> = {};
+
+    if (data.wipeStorage) {
+      for (const bucket of buckets) {
+        const existing = await listBucketRecursive(bucket);
+        if (existing.length > 0) {
+          const { error } = await supabaseAdmin.storage.from(bucket).remove(existing);
+          if (error) console.error(`limpar ${bucket}: ${error.message}`);
+        }
+      }
+    }
+
+    for (const bucket of buckets) {
+      counts[bucket] = 0;
+      const prefix = `storage/${bucket}/`;
+      for (const [path, content] of Object.entries(files)) {
+        if (!path.startsWith(prefix)) continue;
+        const inner = path.slice(prefix.length);
+        if (!inner) continue;
+        const contentType = inner.endsWith(".apk")
+          ? "application/vnd.android.package-archive"
+          : inner.endsWith(".json")
+            ? "application/json"
+            : inner.endsWith(".png")
+              ? "image/png"
+              : inner.endsWith(".jpg") || inner.endsWith(".jpeg")
+                ? "image/jpeg"
+                : inner.endsWith(".webp")
+                  ? "image/webp"
+                  : "application/octet-stream";
+        const { error } = await supabaseAdmin.storage
+          .from(bucket)
+          .upload(inner, content, { upsert: true, contentType });
+        if (error) {
+          console.error(`upload ${bucket}/${inner}: ${error.message}`);
+        } else {
+          counts[bucket]++;
+        }
+      }
+    }
+
+    return {
+      success: true,
+      restored: {
+        apps: apps.length,
+        app_versions: versions.length,
+        app_settings: settings.length,
+        storage: counts,
+      },
     };
   });
