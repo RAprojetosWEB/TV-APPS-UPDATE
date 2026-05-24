@@ -38,7 +38,33 @@ export const listAppsForAdmin = createServerFn({ method: "GET" })
       )
       .order("display_order", { ascending: true });
     if (error) throw new Error(error.message);
-    return { apps: data ?? [] };
+    const apps = data ?? [];
+    const ids = apps.map((a) => a.id);
+    let versionsByApp: Record<string, {
+      version_name: string;
+      version_code: number;
+      apk_size_mb: number | null;
+      created_at: string;
+    }> = {};
+    if (ids.length > 0) {
+      const { data: vs } = await supabaseAdmin
+        .from("app_versions")
+        .select("app_id, version_name, version_code, apk_size_mb, created_at")
+        .eq("target", "app")
+        .eq("is_latest", true)
+        .in("app_id", ids);
+      for (const v of vs ?? []) {
+        if (v.app_id) versionsByApp[v.app_id] = {
+          version_name: v.version_name,
+          version_code: v.version_code,
+          apk_size_mb: v.apk_size_mb,
+          created_at: v.created_at,
+        };
+      }
+    }
+    return {
+      apps: apps.map((a) => ({ ...a, latest_version: versionsByApp[a.id] ?? null })),
+    };
   });
 
 export const toggleAppBlock = createServerFn({ method: "POST" })
@@ -439,6 +465,8 @@ export const uploadAppApk = createServerFn({ method: "POST" })
         appId: z.string().uuid(),
         fileName: z.string().min(1).max(100).regex(/^[a-zA-Z0-9._-]+$/),
         fileBase64: z.string().min(1),
+        versionName: z.string().min(1).max(50).optional().nullable(),
+        versionCode: z.number().int().min(1).max(2_000_000_000).optional().nullable(),
       })
       .parse(input),
   )
@@ -461,6 +489,25 @@ export const uploadAppApk = createServerFn({ method: "POST" })
     const { data: pub } = supabaseAdmin.storage
       .from("tvapps-updates")
       .getPublicUrl(path);
+    // Se versão informada, registra em app_versions e marca como atual
+    if (data.versionName && data.versionCode) {
+      const sizeMb = Math.round((bytes.byteLength / (1024 * 1024)) * 10) / 10;
+      await supabaseAdmin
+        .from("app_versions")
+        .update({ is_latest: false })
+        .eq("target", "app")
+        .eq("app_id", data.appId);
+      const { error: insErr } = await supabaseAdmin.from("app_versions").insert({
+        target: "app",
+        app_id: data.appId,
+        version_name: data.versionName,
+        version_code: data.versionCode,
+        apk_url: pub.publicUrl,
+        apk_size_mb: sizeMb,
+        is_latest: true,
+      });
+      if (insErr) throw new Error(insErr.message);
+    }
     return { publicUrl: pub.publicUrl, path };
   });
 
