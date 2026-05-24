@@ -998,7 +998,12 @@ function OtaSectionInner() {
   async function handleRawUpload(apk: File, json: File) {
     setRawUploading(true);
     try {
-      const apkPath = `releases/${apk.name}`;
+      // IMPORTANTE: o update.json gerado pelo Gradle aponta para
+      // `app-release-latest.apk`. Por isso forçamos esse mesmo caminho
+      // aqui, senão o app instala um APK antigo (o que estava em
+      // app-release-latest.apk) e continua detectando "nova versão"
+      // em loop, porque o manifesto e o APK ficam dessincronizados.
+      const apkPath = "app-release-latest.apk";
       const apkB64 = await fileToBase64(apk);
       await uploadApkFn({ data: { path: apkPath, fileBase64: apkB64 } });
       const jsonB64 = await fileToBase64(json);
@@ -1007,7 +1012,7 @@ function OtaSectionInner() {
       });
 
       toast.success("Upload concluído", {
-        description: `APK e update.json enviados para o Storage.`,
+        description: `APK salvo como app-release-latest.apk e update.json atualizado.`,
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
