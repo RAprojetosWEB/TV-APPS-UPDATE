@@ -1209,11 +1209,10 @@ function RawUploadButton({
   onUpload,
   busy,
 }: {
-  onUpload: (apk: File, json: File) => Promise<void>;
+  onUpload: (apk: File) => Promise<void>;
   busy: boolean;
 }) {
   const [apk, setApk] = useState<File | null>(null);
-  const [json, setJson] = useState<File | null>(null);
   const [open, setOpen] = useState(false);
 
   return (
@@ -1230,42 +1229,30 @@ function RawUploadButton({
           <DialogHeader>
             <DialogTitle className="text-[var(--admin-text)]">Upload direto (sem form)</DialogTitle>
             <DialogDescription className="text-[var(--admin-text-muted)]">
-              Envia o APK e o <code>update.json</code> direto pro Storage,
-              substituindo o atual. Não preenche histórico.
+              Envia o APK direto pro Storage e regenera o <code>update.json</code>
+              automaticamente a partir da versão lida do AndroidManifest.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             <div className="flex flex-col items-center gap-3">
               <label
-                htmlFor="raw-multi-input"
+                htmlFor="raw-apk-input"
                 className="admin-btn-ghost cursor-pointer w-full justify-center py-3"
               >
-                <Upload size={16} /> Escolher arquivos (APK + update.json)
+                <Upload size={16} /> Escolher APK
               </label>
               <input
-                id="raw-multi-input"
+                id="raw-apk-input"
                 type="file"
-                multiple
-                accept=".apk,application/vnd.android.package-archive,application/json,.json"
+                accept=".apk,application/vnd.android.package-archive"
                 onChange={(e) => {
-                  const files = Array.from(e.target.files ?? []);
-                  let nextApk: File | null = apk;
-                  let nextJson: File | null = json;
-                  for (const f of files) {
-                    const n = f.name.toLowerCase();
-                    if (n.endsWith(".apk")) nextApk = f;
-                    else if (n.endsWith(".json")) nextJson = f;
-                  }
-                  setApk(nextApk);
-                  setJson(nextJson);
+                  const f = e.target.files?.[0] ?? null;
+                  if (f && f.name.toLowerCase().endsWith(".apk")) setApk(f);
                   e.target.value = "";
                 }}
                 className="hidden"
               />
-              <p className="text-[11px] text-[var(--admin-text-muted)] text-center">
-                Segure Ctrl/Cmd na janela do sistema para marcar os dois de uma vez.
-              </p>
             </div>
 
             <div className="rounded-md border border-[var(--admin-border)] bg-[var(--admin-surface-0)] divide-y divide-[var(--admin-border)]">
@@ -1280,24 +1267,7 @@ function RawUploadButton({
                   {apk ? apk.name : "—"}
                 </span>
               </div>
-              <div className="flex items-center justify-between gap-3 px-3 py-2 text-xs">
-                <span className="flex items-center gap-2">
-                  <span
-                    className={`inline-block h-2 w-2 rounded-full ${json ? "bg-emerald-400" : "bg-[var(--admin-border)]"}`}
-                  />
-                  <span className="font-medium text-[var(--admin-text)]">update.json</span>
-                </span>
-                <span className="truncate text-[var(--admin-text-muted)] max-w-[60%] text-right">
-                  {json ? json.name : "—"}
-                </span>
-              </div>
             </div>
-
-            {(apk && !json) || (!apk && json) ? (
-              <p className="text-[11px] text-amber-400">
-                Selecione 1 APK e 1 update.json para enviar.
-              </p>
-            ) : null}
           </div>
 
           <DialogFooter>
@@ -1305,12 +1275,11 @@ function RawUploadButton({
               Fechar
             </button>
             <button
-              disabled={!apk || !json || busy}
+              disabled={!apk || busy}
               onClick={async () => {
-                if (!apk || !json) return;
-                await onUpload(apk, json);
+                if (!apk) return;
+                await onUpload(apk);
                 setApk(null);
-                setJson(null);
                 setOpen(false);
               }}
               className="admin-btn-primary"
@@ -1336,7 +1305,7 @@ function OtaSectionInner() {
   const [showForm, setShowForm] = useState(false);
   const [rawUploading, setRawUploading] = useState(false);
 
-  async function handleRawUpload(apk: File, _json: File) {
+  async function handleRawUpload(apk: File) {
     setRawUploading(true);
     try {
       // IMPORTANTE: o update.json gerado pelo Gradle aponta para
