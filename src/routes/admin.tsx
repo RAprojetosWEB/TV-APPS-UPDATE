@@ -21,6 +21,7 @@ import {
   uploadLauncherApk,
   uploadLauncherRaw,
   createBackup,
+  restoreBackup,
 } from "@/lib/admin.functions";
 import { toast } from "sonner";
 
@@ -1103,6 +1104,7 @@ function OtaSectionInner() {
         </div>
         <div className="flex gap-2">
           <BackupButton />
+          <RestoreButton />
           <RawUploadButton onUpload={handleRawUpload} busy={rawUploading} />
           <button
             onClick={() => setShowForm((v) => !v)}
