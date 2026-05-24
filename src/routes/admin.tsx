@@ -282,143 +282,211 @@ function AdminPage() {
 
   if (checking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-white/60">
-        Verificando acesso...
+      <div className="min-h-screen flex items-center justify-center text-[var(--admin-text-muted)]">
+        <div className="flex items-center gap-3 text-sm">
+          <span className="inline-block h-2 w-2 rounded-full bg-[var(--neon)] animate-pulse" />
+          Verificando acesso…
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-white/10 bg-black/30 backdrop-blur sticky top-0 z-10">
-        <div className="mx-auto max-w-4xl px-6 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-black">
-            TV<span style={{ color: "oklch(0.78 0.18 155)" }}>.</span>Apps
-            <span className="ml-3 text-sm font-medium text-white/40">admin</span>
-          </h1>
+    <AdminShell userEmail={undefined} onLogout={handleLogout}>
+      <SectionHeader
+        eyebrow="Acesso"
+        title="Senha do launcher"
+        subtitle="Senha exigida ao abrir o launcher na TV Box."
+        icon={<KeyRound size={16} />}
+      />
+      <div className="admin-surface p-6 admin-anim-in">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <input
+              type={showPwd ? "text" : "password"}
+              value={pwd}
+              onChange={(e) => setPwd(e.target.value)}
+              disabled={!pwdLoaded}
+              placeholder={pwdLoaded ? "" : "Carregando…"}
+              maxLength={50}
+              className="admin-input pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPwd((v) => !v)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 admin-icon-btn"
+              style={{ width: 32, height: 32 }}
+              aria-label={showPwd ? "Ocultar" : "Mostrar"}
+            >
+              {showPwd ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+          </div>
           <button
-            onClick={handleLogout}
-            className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-white/70 hover:bg-white/5"
+            onClick={handleSavePwd}
+            disabled={!pwdLoaded || savingPwd}
+            className="admin-btn-primary"
           >
-            <LogOut size={16} /> Sair
+            <Save size={15} /> {savingPwd ? "Salvando…" : "Salvar senha"}
+          </button>
+        </div>
+      </div>
+
+      <SectionHeader
+        eyebrow="Catálogo"
+        title="Apps"
+        subtitle="Ligue/desligue cada app. Apps bloqueados aparecem como card neutro (cadeado) na TV."
+        icon={<AppWindow size={16} />}
+        right={
+          <div className="flex items-center gap-3">
+            <span className="admin-pill admin-pill-muted">
+              {apps.length} {apps.length === 1 ? "app" : "apps"}
+            </span>
+            <button
+              onClick={() => setShowNewForm((v) => !v)}
+              className="admin-btn-primary"
+            >
+              <Plus size={15} /> Novo app
+            </button>
+          </div>
+        }
+      />
+
+      {loading ? (
+        <div className="admin-surface p-10 text-center text-sm text-[var(--admin-text-muted)]">
+          Carregando catálogo…
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {showNewForm && (
+            <NewAppForm onCancel={() => setShowNewForm(false)} onCreate={handleCreate} />
+          )}
+
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={apps.map((a) => a.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-3">
+                {apps.map((app, i) => (
+                  <SortableAppCard
+                    key={app.id}
+                    index={i}
+                    app={app}
+                    editing={editing === app.id}
+                    blocking={blocking === app.id}
+                    reason={reason}
+                    onReasonChange={setReason}
+                    onEditStart={() => setEditing(app.id)}
+                    onEditCancel={() => setEditing(null)}
+                    onEditSave={async (patch) => {
+                      try {
+                        await updateFn({ data: { appId: app.id, ...patch } });
+                        toast.success("Atualizado");
+                        setEditing(null);
+                        await refresh();
+                      } catch (err) {
+                        toast.error("Erro", { description: String(err) });
+                      }
+                    }}
+                    onToggle={(v) => handleToggle(app, v)}
+                    onConfirmBlock={() => confirmBlock(app)}
+                    onCancelBlock={() => {
+                      setBlocking(null);
+                      setReason("");
+                    }}
+                    onDelete={() => handleDelete(app)}
+                    onDuplicate={() => handleDuplicate(app)}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+
+          <OtaSection />
+        </div>
+      )}
+    </AdminShell>
+  );
+}
+
+/* ============ Shell + Section primitives ============ */
+
+function AdminShell({
+  children,
+  onLogout,
+}: {
+  children: React.ReactNode;
+  userEmail?: string;
+  onLogout: () => void;
+}) {
+  useEffect(() => {
+    document.body.setAttribute("data-admin", "1");
+    return () => {
+      document.body.removeAttribute("data-admin");
+    };
+  }, []);
+
+  return (
+    <div className="min-h-screen text-[var(--admin-text)]">
+      <header className="sticky top-0 z-20 border-b border-[var(--admin-border-soft)] bg-[oklch(0.14_0.025_265_/_0.7)] backdrop-blur-xl">
+        <div className="mx-auto max-w-5xl px-6 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 text-[15px] font-semibold tracking-tight">
+              <span>TV</span>
+              <span className="text-[var(--neon)]">.</span>
+              <span>Apps</span>
+            </div>
+            <span className="admin-pill admin-pill-muted gap-1.5">
+              <ShieldCheck size={11} /> admin
+            </span>
+          </div>
+          <button onClick={onLogout} className="admin-btn-ghost">
+            <LogOut size={14} /> Sair
           </button>
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-6 py-8">
-        <p className="text-sm text-white/50 mb-6">
-          Ligue/desligue cada app. Apps bloqueados aparecem como card neutro
-          (cadeado) na TV, sem nome ou logo.
-        </p>
+      <main className="mx-auto max-w-5xl px-6 py-10 space-y-10">{children}</main>
+    </div>
+  );
+}
 
-        <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-          <div className="flex items-center gap-3 mb-3">
-            <KeyRound size={18} className="text-[oklch(0.78_0.18_155)]" />
-            <div>
-              <h2 className="font-bold">Senha de login do app TV</h2>
-              <p className="text-xs text-white/50">
-                Senha exigida ao abrir o launcher na TV Box.
-              </p>
-            </div>
+function SectionHeader({
+  eyebrow,
+  title,
+  subtitle,
+  icon,
+  right,
+}: {
+  eyebrow?: string;
+  title: string;
+  subtitle?: string;
+  icon?: React.ReactNode;
+  right?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-end justify-between gap-4 mb-4">
+      <div className="min-w-0">
+        {eyebrow && (
+          <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--admin-text-muted)] mb-2">
+            {icon}
+            <span>{eyebrow}</span>
           </div>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <input
-                type={showPwd ? "text" : "password"}
-                value={pwd}
-                onChange={(e) => setPwd(e.target.value)}
-                disabled={!pwdLoaded}
-                placeholder={pwdLoaded ? "" : "Carregando..."}
-                maxLength={50}
-                className="w-full h-10 rounded-lg border border-white/10 bg-black/30 px-3 pr-10 text-white outline-none focus:border-[oklch(0.78_0.18_155)] disabled:opacity-50"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPwd((v) => !v)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
-                aria-label={showPwd ? "Ocultar" : "Mostrar"}
-              >
-                {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-            <button
-              onClick={handleSavePwd}
-              disabled={!pwdLoaded || savingPwd}
-              className="inline-flex items-center gap-2 rounded-lg bg-[oklch(0.78_0.18_155)] px-4 py-2 text-sm font-bold text-black hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Save size={16} /> {savingPwd ? "..." : "Salvar"}
-            </button>
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="text-white/40 py-12 text-center">Carregando...</div>
-        ) : (
-          <>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-white/50">
-                Apps do catálogo ({apps.length})
-              </h2>
-              <button
-                onClick={() => setShowNewForm((v) => !v)}
-                className="inline-flex items-center gap-2 rounded-lg bg-[oklch(0.78_0.18_155)] px-3 py-2 text-sm font-bold text-black hover:scale-[1.02]"
-              >
-                <Plus size={16} /> Novo app
-              </button>
-            </div>
-
-            {showNewForm && (
-              <NewAppForm onCancel={() => setShowNewForm(false)} onCreate={handleCreate} />
-            )}
-
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={apps.map((a) => a.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="space-y-3">
-                  {apps.map((app) => (
-                    <SortableAppCard
-                      key={app.id}
-                      app={app}
-                      editing={editing === app.id}
-                      blocking={blocking === app.id}
-                      reason={reason}
-                      onReasonChange={setReason}
-                      onEditStart={() => setEditing(app.id)}
-                      onEditCancel={() => setEditing(null)}
-                      onEditSave={async (patch) => {
-                        try {
-                          await updateFn({ data: { appId: app.id, ...patch } });
-                          toast.success("Atualizado");
-                          setEditing(null);
-                          await refresh();
-                        } catch (err) {
-                          toast.error("Erro", { description: String(err) });
-                        }
-                      }}
-                      onToggle={(v) => handleToggle(app, v)}
-                      onConfirmBlock={() => confirmBlock(app)}
-                      onCancelBlock={() => {
-                        setBlocking(null);
-                        setReason("");
-                      }}
-                      onDelete={() => handleDelete(app)}
-                      onDuplicate={() => handleDuplicate(app)}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-
-            <OtaSection />
-          </>
         )}
-      </main>
+        <h2 className="text-xl font-semibold tracking-tight text-[var(--admin-text)]">
+          {title}
+        </h2>
+        {subtitle && (
+          <p className="mt-1 text-sm text-[var(--admin-text-muted)] max-w-2xl">
+            {subtitle}
+          </p>
+        )}
+      </div>
+      {right && <div className="shrink-0">{right}</div>}
     </div>
   );
 }
