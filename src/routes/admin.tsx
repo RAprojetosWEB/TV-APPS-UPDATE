@@ -1280,54 +1280,66 @@ function OtaSectionInner() {
   const latest = versions.find((v) => v.is_latest) ?? null;
 
   return (
-    <section className="mt-10 pt-8 border-t border-white/10">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-lg font-bold flex items-center gap-2">
-            <Package size={18} className="text-[oklch(0.78_0.18_155)]" /> OTA do launcher
-          </h2>
-          <p className="text-xs text-white/50">
-            Suba novas versões do APK do launcher. A TV verifica
-            <code className="mx-1 text-white/70">update.json</code> e baixa
-            automaticamente quando há versão nova.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <BackupButton />
-          <RestoreButton />
-          <RawUploadButton onUpload={handleRawUpload} busy={rawUploading} />
-          <button
-            onClick={() => setShowForm((v) => !v)}
-            className="inline-flex items-center gap-2 rounded-lg bg-[oklch(0.78_0.18_155)] px-3 py-2 text-sm font-bold text-black hover:scale-[1.02]"
-          >
-            <Upload size={16} /> Nova versão
-          </button>
-        </div>
-      </div>
+    <section className="pt-2">
+      <div className="admin-divider mb-10" />
 
-      {latest && (
-        <div className="mb-4 rounded-xl border border-[oklch(0.78_0.18_155)]/30 bg-[oklch(0.78_0.18_155)]/5 p-4">
-          <div className="text-xs uppercase tracking-wider text-white/50">
-            Versão atual (publicada)
-          </div>
-          <div className="mt-1 flex items-center gap-3">
-            <span className="text-xl font-black">{latest.version_name}</span>
-            <span className="text-sm text-white/50">code {latest.version_code}</span>
+      <SectionHeader
+        eyebrow="OTA do launcher"
+        title="Versão atual"
+        subtitle="A TV consulta update.json e baixa automaticamente quando há versão nova."
+        icon={<Package size={16} />}
+        right={
+          <button onClick={() => setShowForm((v) => !v)} className="admin-btn-primary">
+            <Upload size={14} /> Publicar versão
+          </button>
+        }
+      />
+
+      {latest ? (
+        <div className="admin-surface admin-surface-neon p-6 admin-anim-in">
+          <div className="flex items-end justify-between gap-4 flex-wrap">
+            <div className="min-w-0">
+              <div className="admin-label !mb-1 !text-[var(--neon)]">Publicada</div>
+              <div className="flex items-baseline gap-3">
+                <span className="text-4xl font-semibold tracking-tight tabular-nums">
+                  {latest.version_name}
+                </span>
+                <span className="font-mono text-xs text-[var(--admin-text-muted)]">
+                  code {latest.version_code}
+                </span>
+              </div>
+              {latest.changelog && (
+                <p className="mt-2 text-sm text-[var(--admin-text-secondary)] whitespace-pre-wrap line-clamp-3 max-w-xl">
+                  {latest.changelog}
+                </p>
+              )}
+            </div>
             {latest.apk_url && (
               <a
                 href={latest.apk_url}
                 target="_blank"
                 rel="noreferrer"
-                className="text-xs text-[oklch(0.78_0.18_155)] hover:underline"
+                className="admin-btn-ghost"
               >
-                Abrir APK
+                <Download size={14} /> Baixar APK
               </a>
             )}
           </div>
         </div>
+      ) : (
+        <div className="admin-surface p-6 text-sm text-[var(--admin-text-muted)]">
+          Nenhuma versão publicada ainda.
+        </div>
       )}
 
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <BackupButton />
+        <RestoreButton />
+        <RawUploadButton onUpload={handleRawUpload} busy={rawUploading} />
+      </div>
+
       {showForm && (
+        <div className="mt-6">
         <PublishVersionForm
           onCancel={() => setShowForm(false)}
           onPublish={async (payload) => {
@@ -1341,91 +1353,117 @@ function OtaSectionInner() {
             }
           }}
         />
+        </div>
       )}
 
-      <div className="mt-4">
-        <h3 className="text-sm font-semibold uppercase tracking-wider text-white/50 mb-3">
-          Histórico
-        </h3>
+      <div className="mt-10">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--admin-text-muted)]">
+            Histórico
+          </h3>
+          <span className="text-[10px] text-[var(--admin-text-subtle)]">
+            {versions.length} {versions.length === 1 ? "versão" : "versões"}
+          </span>
+        </div>
         {loading ? (
-          <div className="text-white/40 py-6 text-center text-sm">Carregando...</div>
+          <div className="text-[var(--admin-text-muted)] py-6 text-center text-sm">
+            Carregando…
+          </div>
         ) : versions.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-white/10 py-8 text-center text-sm text-white/40">
+          <div className="admin-surface p-8 text-center text-sm text-[var(--admin-text-muted)]">
             Nenhuma versão publicada ainda.
           </div>
         ) : (
-          <div className="space-y-2">
-            {versions.map((v) => (
+          <div className="admin-surface overflow-hidden">
+            {versions.map((v, i) => (
               <div
                 key={v.id}
-                className="rounded-xl border border-white/10 bg-white/[0.02] p-4 flex items-start justify-between gap-4"
+                className={`group flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-[oklch(1_0_0_/_0.03)] ${
+                  i > 0 ? "border-t border-[var(--admin-border-soft)]" : ""
+                }`}
               >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-bold">{v.version_name}</span>
-                    <span className="text-xs text-white/40">code {v.version_code}</span>
-                    {v.is_latest && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[oklch(0.78_0.18_155)]/20 px-2 py-0.5 text-xs font-semibold text-[oklch(0.78_0.18_155)]">
-                        <CheckCircle2 size={12} /> ATUAL
-                      </span>
-                    )}
-                    <span className="text-xs text-white/40">
-                      {new Date(v.created_at).toLocaleString("pt-BR")}
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <span
+                    className={`font-mono text-sm tabular-nums ${
+                      v.is_latest
+                        ? "text-[var(--neon)] font-semibold"
+                        : "text-[var(--admin-text-secondary)]"
+                    }`}
+                  >
+                    {v.version_name}
+                  </span>
+                  {v.is_latest && (
+                    <span className="admin-pill admin-pill-neon">
+                      <CheckCircle2 size={11} /> Atual
                     </span>
-                  </div>
-                  {v.changelog && (
-                    <p className="mt-1 text-sm text-white/60 whitespace-pre-wrap">
-                      {v.changelog}
-                    </p>
                   )}
+                  <span className="font-mono text-[11px] text-[var(--admin-text-subtle)]">
+                    code {v.version_code}
+                  </span>
+                  <span className="text-[11px] text-[var(--admin-text-subtle)] hidden md:inline">
+                    · {new Date(v.created_at).toLocaleDateString("pt-BR")}
+                  </span>
+                  {v.apk_size_mb && (
+                    <span className="text-[11px] text-[var(--admin-text-subtle)] hidden md:inline">
+                      · {v.apk_size_mb.toFixed(1)} MB
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                   {v.apk_url && (
                     <a
                       href={v.apk_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-1 inline-block text-xs text-[oklch(0.78_0.18_155)] hover:underline"
+                      className="admin-icon-btn"
+                      style={{ width: 32, height: 32 }}
+                      title="Baixar APK"
                     >
-                      Baixar APK
+                      <Download size={13} />
                     </a>
                   )}
-                </div>
-                <div className="flex gap-2 shrink-0">
                   {!v.is_latest && (
-                    <button
-                      onClick={async () => {
-                        if (!confirm(`Marcar ${v.version_name} como atual? Todas as TVs vão atualizar para esta versão.`))
-                          return;
-                        try {
-                          await setLatestFn({ data: { versionId: v.id } });
-                          toast.success("Versão atual atualizada");
-                          await load();
-                        } catch (err) {
-                          toast.error("Erro", { description: String(err) });
-                        }
-                      }}
-                      className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1.5 text-xs text-white/70 hover:bg-white/5"
-                      title="Marcar como atual"
-                    >
-                      <RotateCcw size={14} /> Tornar atual
-                    </button>
-                  )}
-                  {!v.is_latest && (
-                    <button
-                      onClick={async () => {
-                        if (!confirm(`Excluir versão ${v.version_name}?`)) return;
-                        try {
-                          await deleteFn({ data: { versionId: v.id } });
-                          toast.success("Excluída");
-                          await load();
-                        } catch (err) {
-                          toast.error("Erro", { description: String(err) });
-                        }
-                      }}
-                      className="inline-flex items-center gap-1 rounded-lg border border-red-500/30 px-2 py-1.5 text-xs text-red-400 hover:bg-red-500/10"
-                      title="Excluir"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    <>
+                      <button
+                        onClick={async () => {
+                          if (
+                            !confirm(
+                              `Marcar ${v.version_name} como atual? Todas as TVs vão atualizar para esta versão.`,
+                            )
+                          )
+                            return;
+                          try {
+                            await setLatestFn({ data: { versionId: v.id } });
+                            toast.success("Versão atual atualizada");
+                            await load();
+                          } catch (err) {
+                            toast.error("Erro", { description: String(err) });
+                          }
+                        }}
+                        className="admin-icon-btn"
+                        style={{ width: 32, height: 32 }}
+                        title="Marcar como atual"
+                      >
+                        <RotateCcw size={13} />
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (!confirm(`Excluir versão ${v.version_name}?`)) return;
+                          try {
+                            await deleteFn({ data: { versionId: v.id } });
+                            toast.success("Excluída");
+                            await load();
+                          } catch (err) {
+                            toast.error("Erro", { description: String(err) });
+                          }
+                        }}
+                        className="admin-icon-btn admin-icon-btn-danger"
+                        style={{ width: 32, height: 32 }}
+                        title="Excluir"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -1494,8 +1532,8 @@ function PublishVersionForm({
   }
 
   return (
-    <div className="rounded-2xl border border-[oklch(0.78_0.18_155)]/40 bg-[oklch(0.78_0.18_155)]/5 p-5 space-y-3">
-      <h3 className="font-bold flex items-center gap-2">
+    <div className="admin-surface admin-surface-neon p-5 space-y-3 admin-anim-scale">
+      <h3 className="text-[15px] font-semibold tracking-tight flex items-center gap-2">
         <Upload size={16} /> Publicar nova versão
       </h3>
       <div className="grid grid-cols-2 gap-3">
@@ -1503,7 +1541,7 @@ function PublishVersionForm({
           <input
             value={versionName}
             onChange={(e) => setVersionName(e.target.value)}
-            className="input"
+            className="admin-input"
             placeholder="2.5.0"
           />
         </Field>
@@ -1512,7 +1550,7 @@ function PublishVersionForm({
             type="number"
             value={versionCode}
             onChange={(e) => setVersionCode(e.target.value)}
-            className="input"
+            className="admin-input"
             placeholder="250"
           />
         </Field>
@@ -1521,8 +1559,7 @@ function PublishVersionForm({
         <textarea
           value={changelog}
           onChange={(e) => setChangelog(e.target.value)}
-          className="input"
-          style={{ height: "auto", minHeight: 70, padding: "0.5rem 0.75rem" }}
+          className="admin-input"
           rows={3}
           placeholder="O que mudou nesta versão?"
         />
@@ -1532,34 +1569,25 @@ function PublishVersionForm({
           type="file"
           accept=".apk,application/vnd.android.package-archive"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          className="block w-full text-sm text-white/70 file:mr-3 file:rounded-lg file:border file:border-white/10 file:bg-white/5 file:px-3 file:py-2 file:text-white/80 file:cursor-pointer hover:file:bg-white/10"
+          className="block w-full text-sm text-[var(--admin-text-muted)] file:mr-3 file:rounded-lg file:border file:border-[var(--admin-border)] file:bg-[oklch(1_0_0_/_0.04)] file:px-3 file:py-2 file:text-[var(--admin-text-secondary)] file:cursor-pointer hover:file:bg-[oklch(1_0_0_/_0.08)] file:transition-colors"
         />
         {file && (
-          <p className="mt-1 text-xs text-white/50">
+          <p className="mt-1.5 text-xs text-[var(--admin-text-muted)] font-mono">
             {file.name} — {(file.size / (1024 * 1024)).toFixed(2)} MB
           </p>
         )}
       </Field>
       {uploading && (
-        <div className="text-xs text-white/60">Enviando... {progress}%</div>
+        <div className="text-xs text-[var(--admin-text-muted)]">Enviando… {progress}%</div>
       )}
       <div className="flex gap-2 justify-end">
-        <button
-          onClick={onCancel}
-          disabled={uploading}
-          className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-white/70 hover:bg-white/5 disabled:opacity-50"
-        >
-          <X size={16} /> Cancelar
+        <button onClick={onCancel} disabled={uploading} className="admin-btn-ghost">
+          <X size={14} /> Cancelar
         </button>
-        <button
-          onClick={handleSubmit}
-          disabled={uploading}
-          className="inline-flex items-center gap-2 rounded-lg bg-[oklch(0.78_0.18_155)] px-3 py-2 text-sm font-bold text-black hover:scale-[1.02] disabled:opacity-50"
-        >
-          <Upload size={16} /> {uploading ? "Enviando..." : "Publicar"}
+        <button onClick={handleSubmit} disabled={uploading} className="admin-btn-primary">
+          <Upload size={14} /> {uploading ? "Enviando…" : "Publicar"}
         </button>
       </div>
-      <style>{`.input{width:100%;height:2.5rem;border-radius:.5rem;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);padding:0 .75rem;color:white;outline:none}.input:focus{border-color:oklch(0.78 0.18 155)}`}</style>
     </div>
   );
 }
