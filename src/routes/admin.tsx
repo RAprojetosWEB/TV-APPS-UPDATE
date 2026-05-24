@@ -881,6 +881,51 @@ function OtaSection() {
   return <OtaSectionInner />;
 }
 
+function BackupButton() {
+  const [busy, setBusy] = useState(false);
+  const backupFn = useServerFn(createBackup);
+
+  async function handleClick() {
+    setBusy(true);
+    try {
+      toast.info("Gerando backup...", {
+        description: "Pode demorar alguns segundos se houver muitos APKs.",
+      });
+      const { filename, base64, byteLength } = await backupFn();
+      const bin = atob(base64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const blob = new Blob([bytes], { type: "application/zip" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast.success("Backup baixado", {
+        description: `${filename} (${(byteLength / 1024 / 1024).toFixed(2)} MB)`,
+      });
+    } catch (err) {
+      toast.error("Falha no backup", { description: String(err) });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={busy}
+      className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 disabled:opacity-50"
+      title="Baixa banco + storage em um .zip"
+    >
+      <Download size={16} /> {busy ? "Gerando..." : "Backup completo"}
+    </button>
+  );
+}
+
 function RawUploadButton({
   onUpload,
   busy,
