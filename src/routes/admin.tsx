@@ -756,31 +756,12 @@ function AppCard({
               className="admin-input"
             />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Nome da versão (ex: 2.2.0)">
-              <input
-                value={versionName}
-                onChange={(e) => setVersionName(e.target.value)}
-                className="admin-input"
-                placeholder="2.2.0"
-                maxLength={50}
-              />
-            </Field>
-            <Field label="Código da versão (inteiro)">
-              <input
-                type="number"
-                value={versionCode}
-                onChange={(e) => setVersionCode(e.target.value)}
-                className="admin-input"
-                placeholder="22"
-                min={1}
-              />
-            </Field>
-          </div>
           {app.latest_version && (
-            <p className="-mt-1 text-[11px] text-[var(--admin-text-subtle)]">
-              Versão atual: <span className="font-mono">v{app.latest_version.version_name}</span>{" "}
-              (code {app.latest_version.version_code}). O novo código deve ser maior.
+            <p className="text-[11px] text-[var(--admin-text-subtle)]">
+              Versão atual:{" "}
+              <span className="font-mono">v{app.latest_version.version_name}</span>{" "}
+              (code {app.latest_version.version_code}). A versão do APK enviado é
+              lida automaticamente e deve ter código maior.
             </p>
           )}
           <Field label="URL do APK">
