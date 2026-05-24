@@ -486,6 +486,82 @@ async function listBucketRecursive(
   return out;
 }
 
+function buildSchemaSql(): string {
+  return `-- TV.Apps schema (referência, snapshot manual)
+-- Não é executado automaticamente no restore.
+
+CREATE TYPE IF NOT EXISTS public.app_role AS ENUM ('admin', 'moderator', 'user');
+
+CREATE TABLE IF NOT EXISTS public.apps (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  package_name text NOT NULL,
+  description text,
+  logo_url text,
+  icon_url text,
+  apk_url text,
+  display_order integer NOT NULL DEFAULT 0,
+  is_active boolean NOT NULL DEFAULT true,
+  is_blocked boolean NOT NULL DEFAULT false,
+  block_reason text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.app_versions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  app_id uuid,
+  target text NOT NULL DEFAULT 'launcher',
+  version_name text NOT NULL,
+  version_code integer NOT NULL,
+  apk_url text NOT NULL,
+  apk_size_mb numeric,
+  changelog text,
+  is_latest boolean DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.app_settings (
+  id text PRIMARY KEY,
+  login_password text NOT NULL,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.user_roles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  role public.app_role NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (user_id, role)
+);
+
+CREATE OR REPLACE FUNCTION public.has_role(_user_id uuid, _role public.app_role)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = _role
+  )
+$$;
+
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $$
+BEGIN NEW.updated_at = now(); RETURN NEW; END; $$;
+
+ALTER TABLE public.apps ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.app_versions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Apps are viewable by everyone" ON public.apps FOR SELECT USING (true);
+CREATE POLICY "Admins can insert apps" ON public.apps FOR INSERT TO authenticated WITH CHECK (public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins can update apps" ON public.apps FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins can delete apps" ON public.apps FOR DELETE TO authenticated USING (public.has_role(auth.uid(), 'admin'));
+
+CREATE POLICY "App versions are viewable by everyone" ON public.app_versions FOR SELECT USING (true);
+CREATE POLICY "Admins manage versions" ON public.app_versions FOR ALL TO authenticated USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
+
+CREATE POLICY "Users can view their own roles" ON public.user_roles FOR SELECT TO authenticated USING (auth.uid() = user_id);
+`;
+}
+
 export const createBackup = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
