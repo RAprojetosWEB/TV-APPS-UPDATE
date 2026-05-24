@@ -283,7 +283,7 @@ class MainActivity : Activity() {
         super.onResume()
         // Se há um APK aguardando instalação e a permissão já foi concedida,
         // dispara o instalador automaticamente ao voltar das Configurações.
-        pendingInstallApk?.let { apk ->
+        pendingInstallApk?.also { apk ->
             val canInstall = Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
                 packageManager.canRequestPackageInstalls()
             if (canInstall && apk.exists()) {
