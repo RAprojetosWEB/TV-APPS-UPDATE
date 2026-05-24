@@ -1585,15 +1585,11 @@ function PublishVersionForm({
 }: {
   onCancel: () => void;
   onPublish: (p: {
-    versionName: string;
-    versionCode: number;
     changelog?: string;
     apkStoragePath: string;
     apkSizeMb?: number;
   }) => void | Promise<void>;
 }) {
-  const [versionName, setVersionName] = useState("");
-  const [versionCode, setVersionCode] = useState("");
   const [changelog, setChangelog] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -1601,13 +1597,8 @@ function PublishVersionForm({
   const uploadApkFn = useServerFn(uploadLauncherApk);
 
   async function handleSubmit() {
-    if (!versionName.trim() || !versionCode.trim() || !file) {
-      toast.error("Preencha versionName, versionCode e selecione o APK.");
-      return;
-    }
-    const codeNum = parseInt(versionCode, 10);
-    if (!codeNum || codeNum < 1) {
-      toast.error("versionCode inválido");
+    if (!file) {
+      toast.error("Selecione o APK.");
       return;
     }
     if (!file.name.toLowerCase().endsWith(".apk")) {
@@ -1617,13 +1608,12 @@ function PublishVersionForm({
     setUploading(true);
     setProgress(0);
     try {
-      const path = `releases/${codeNum}.apk`;
+      // Path único por timestamp; a versão real vem do AndroidManifest no servidor.
+      const path = `releases/${Date.now()}.apk`;
       const fileBase64 = await fileToBase64(file);
       await uploadApkFn({ data: { path, fileBase64 } });
       setProgress(100);
       await onPublish({
-        versionName: versionName.trim(),
-        versionCode: codeNum,
         changelog: changelog.trim() || undefined,
         apkStoragePath: path,
         apkSizeMb: Math.round((file.size / (1024 * 1024)) * 100) / 100,
@@ -1640,25 +1630,9 @@ function PublishVersionForm({
       <h3 className="text-[15px] font-semibold tracking-tight flex items-center gap-2">
         <Upload size={16} /> Publicar nova versão
       </h3>
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="versionName *">
-          <input
-            value={versionName}
-            onChange={(e) => setVersionName(e.target.value)}
-            className="admin-input"
-            placeholder="2.5.0"
-          />
-        </Field>
-        <Field label="versionCode *">
-          <input
-            type="number"
-            value={versionCode}
-            onChange={(e) => setVersionCode(e.target.value)}
-            className="admin-input"
-            placeholder="250"
-          />
-        </Field>
-      </div>
+      <p className="text-xs text-[var(--admin-text-muted)]">
+        A versão (versionName / versionCode) é lida automaticamente do AndroidManifest do APK.
+      </p>
       <Field label="Changelog (opcional)">
         <textarea
           value={changelog}
