@@ -946,6 +946,11 @@ class MainActivity : Activity() {
         root.addView(scroller)
 
         // Centraliza o card focado dentro do scroller ao navegar com D-pad.
+        // Rolagem suave customizada: o smoothScrollTo padrão é curto (~250ms)
+        // e linear, parecendo "duro". Animamos scrollX com desaceleração para
+        // ficar fluido. Guardamos o animator atual para cancelar se o foco
+        // mudar rapidamente (evita travadas no D-pad).
+        var currentScrollAnim: android.animation.ObjectAnimator? = null
         cardViews.forEach { card ->
             val view = card.container
             val previous = view.onFocusChangeListener
@@ -959,18 +964,15 @@ class MainActivity : Activity() {
                         val target = (cardCenter - scrollerWidth / 2)
                             .coerceAtLeast(0)
                             .coerceAtMost((row.width - scrollerWidth).coerceAtLeast(0))
-                        // Rolagem suave customizada: o smoothScrollTo padrão é
-                        // curto (~250ms) e linear, parecendo "duro". Aqui
-                        // animamos scrollX com desaceleração para ficar fluido.
-                        (scroller.getTag(R.id.tag_scroll_anim) as? android.animation.ObjectAnimator)?.cancel()
-                        val anim = android.animation.ObjectAnimator
+                        if (target == scroller.scrollX) return@post
+                        currentScrollAnim?.cancel()
+                        currentScrollAnim = android.animation.ObjectAnimator
                             .ofInt(scroller, "scrollX", scroller.scrollX, target)
                             .apply {
                                 duration = 450
                                 interpolator = android.view.animation.DecelerateInterpolator(1.6f)
+                                start()
                             }
-                        scroller.setTag(R.id.tag_scroll_anim, anim)
-                        anim.start()
                     }
                 }
             }
