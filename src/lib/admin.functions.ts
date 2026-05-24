@@ -491,8 +491,6 @@ export const createBackup = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
 
-    void buildSchemaSql;
-
     // 1. Dados das tabelas
     const [appsRes, versionsRes, settingsRes] = await Promise.all([
       supabaseAdmin.from("apps").select("*"),
