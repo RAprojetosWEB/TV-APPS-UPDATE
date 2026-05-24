@@ -511,6 +511,76 @@ export const createBackup = createServerFn({ method: "POST" })
       JSON.stringify(settingsRes.data ?? [], null, 2),
     );
 
+    // 1b. user_roles
+    const rolesRes = await supabaseAdmin.from("user_roles").select("*");
+    if (rolesRes.error) throw new Error(rolesRes.error.message);
+    zip["db/user_roles.json"] = strToU8(
+      JSON.stringify(rolesRes.data ?? [], null, 2),
+    );
+
+    // 1c. auth users (paginado, sem senhas)
+    const authUsers: Array<Record<string, unknown>> = [];
+    let page = 1;
+    const perPage = 1000;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const { data: pageData, error: pageErr } =
+        await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+      if (pageErr) {
+        console.error(`listUsers page ${page}: ${pageErr.message}`);
+        break;
+      }
+      const users = pageData?.users ?? [];
+      for (const u of users) {
+        authUsers.push({
+          id: u.id,
+          email: u.email,
+          phone: u.phone,
+          created_at: u.created_at,
+          last_sign_in_at: u.last_sign_in_at,
+          email_confirmed_at: u.email_confirmed_at,
+          phone_confirmed_at: u.phone_confirmed_at,
+          user_metadata: u.user_metadata,
+          app_metadata: u.app_metadata,
+        });
+      }
+      if (users.length < perPage) break;
+      page++;
+      if (page > 50) break; // safety
+    }
+    zip["db/auth_users.json"] = strToU8(JSON.stringify(authUsers, null, 2));
+
+    // 1d. schema SQL (referência — não executado no restore)
+    zip["schema/schema.sql"] = strToU8(buildSchemaSql());
+
+    // 1e. buckets config
+    const { data: bucketsList, error: bucketsErr } =
+      await supabaseAdmin.storage.listBuckets();
+    if (bucketsErr) {
+      console.error(`listBuckets: ${bucketsErr.message}`);
+    }
+    zip["schema/storage_buckets.json"] = strToU8(
+      JSON.stringify(bucketsList ?? [], null, 2),
+    );
+
+    // 1f. nomes de secrets (NUNCA os valores)
+    const knownSecretNames = [
+      "SUPABASE_URL",
+      "SUPABASE_PUBLISHABLE_KEY",
+      "SUPABASE_SERVICE_ROLE_KEY",
+      "SUPABASE_DB_URL",
+      "LOVABLE_API_KEY",
+    ];
+    const presentSecrets = knownSecretNames.filter((k) => !!process.env[k]);
+    zip["secrets/names.txt"] = strToU8(
+      [
+        "# Apenas NOMES dos secrets — valores nunca são exportados.",
+        "# Para restaurar, reconfigure cada um manualmente no painel.",
+        "",
+        ...presentSecrets,
+      ].join("\n"),
+    );
+
     // 2. Storage (arquivos dos dois buckets)
     const buckets = ["tvapps-updates", "app-icons"];
     const fileCounts: Record<string, number> = {};
@@ -537,12 +607,16 @@ export const createBackup = createServerFn({ method: "POST" })
     const stamp = now.toISOString().replace(/[:.]/g, "-").slice(0, 16);
 
     const manifest = {
-      version: 1,
+      version: 2,
       createdAt: now.toISOString(),
       counts: {
         apps: appsRes.data?.length ?? 0,
         app_versions: versionsRes.data?.length ?? 0,
         app_settings: settingsRes.data?.length ?? 0,
+        user_roles: rolesRes.data?.length ?? 0,
+        auth_users: authUsers.length,
+        storage_buckets: bucketsList?.length ?? 0,
+        secret_names: presentSecrets.length,
         storage: fileCounts,
       },
       totalStorageBytes: totalBytes,
@@ -557,11 +631,18 @@ export const createBackup = createServerFn({ method: "POST" })
       "- db/apps.json           — catálogo de apps",
       "- db/app_versions.json   — histórico de versões OTA",
       "- db/app_settings.json   — configurações (senha do launcher)",
+      "- db/user_roles.json     — papéis de usuário (admin etc.)",
+      "- db/auth_users.json     — usuários do auth (SEM senhas)",
+      "- schema/schema.sql      — estrutura do banco (referência)",
+      "- schema/storage_buckets.json — config dos buckets",
+      "- secrets/names.txt      — apenas NOMES dos secrets (sem valores)",
       "- storage/tvapps-updates — APKs do launcher + update.json",
       "- storage/app-icons      — ícones dos apps do catálogo",
       "- manifest.json          — metadados deste backup",
       "",
-      "Para restaurar, contate o suporte ou peça uma rotina de restore.",
+      "Restaurar via UI: apps, app_versions, app_settings e storage.",
+      "auth_users (sem senha), user_roles, schema e secrets precisam ser",
+      "reconfigurados manualmente — senhas não saem em texto puro.",
     ].join("\n");
     zip["README.txt"] = strToU8(readme);
 
