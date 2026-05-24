@@ -686,6 +686,13 @@ function AppCard({
                 Motivo: {app.block_reason}
               </p>
             )}
+            {app.latest_version && (
+              <p className="mt-1 text-[11px] font-mono text-[var(--admin-text-subtle)]">
+                v{app.latest_version.version_name} · code {app.latest_version.version_code}
+                {app.latest_version.apk_size_mb != null && ` · ${app.latest_version.apk_size_mb} MB`}
+                {` · ${new Date(app.latest_version.created_at).toLocaleDateString("pt-BR")}`}
+              </p>
+            )}
           </div>
         </div>
 
