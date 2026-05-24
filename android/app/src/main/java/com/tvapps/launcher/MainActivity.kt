@@ -1227,7 +1227,7 @@ class MainActivity : Activity() {
         val iconBadge = FrameLayout(this).apply {
             background = GradientDrawable().apply {
                 cornerRadius = dp((16 * scale).toInt()).toFloat()
-                setColor(grayMid)
+                setColor(android.graphics.Color.parseColor("#3A1212"))
             }
             val size = (100 * scale).toInt()
             val lp = LinearLayout.LayoutParams(dp(size), dp(size))
@@ -1240,7 +1240,7 @@ class MainActivity : Activity() {
             scaleType = ImageView.ScaleType.FIT_CENTER
             val pad = dp((18 * scale).toInt())
             setPadding(pad, pad, pad, pad)
-            setColorFilter(grayLabel)
+            setColorFilter(android.graphics.Color.parseColor("#FF4D4D"))
             layoutParams = FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -1249,14 +1249,19 @@ class MainActivity : Activity() {
         iconBadge.addView(iconImage)
 
         val title = TextView(this).apply {
-            text = "Indisponível"
+            text = "Em breve um novo app aqui"
             setTextColor(grayLabel)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             gravity = Gravity.CENTER
         }
+        val rawReason = app.blockReason?.trim().orEmpty()
+        val hasReason = rawReason.isNotEmpty() &&
+            !rawReason.equals("null", ignoreCase = true) &&
+            !rawReason.equals("undefined", ignoreCase = true)
         val subtitle = TextView(this).apply {
-            text = if (!app.blockReason.isNullOrBlank()) app.blockReason else "Em manutenção"
+            text = if (hasReason) rawReason else ""
+            visibility = if (hasReason) View.VISIBLE else View.GONE
             setTextColor(grayText)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f * scale)
             gravity = Gravity.CENTER
