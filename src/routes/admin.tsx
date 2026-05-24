@@ -540,6 +540,9 @@ function AppCard({
   const [isActive, setIsActive] = useState(app.is_active);
   const [uploading, setUploading] = useState(false);
   const uploadIconFn = useServerFn(uploadAppIcon);
+  const uploadApkFn = useServerFn(uploadAppApk);
+  const [uploadingApk, setUploadingApk] = useState(false);
+  const [apkProgress, setApkProgress] = useState(0);
 
   async function handleIconUpload(file: File) {
     if (!file.type.startsWith("image/")) {
@@ -563,6 +566,36 @@ function AppCard({
       toast.error("Falha no upload", { description: String(err) });
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function handleApkUpload(file: File) {
+    if (!file.name.toLowerCase().endsWith(".apk")) {
+      toast.error("Arquivo inválido", { description: "Envie um arquivo .apk" });
+      return;
+    }
+    if (file.size > 150 * 1024 * 1024) {
+      toast.error("APK muito grande", { description: "Máximo 150 MB." });
+      return;
+    }
+    setUploadingApk(true);
+    setApkProgress(0);
+    try {
+      // Lê o arquivo em chunks pra mostrar progresso
+      setApkProgress(10);
+      const fileBase64 = await fileToBase64(file);
+      setApkProgress(50);
+      const { publicUrl } = await uploadApkFn({
+        data: { appId: app.id, fileName: file.name, fileBase64 },
+      });
+      setApkProgress(100);
+      setApkUrl(publicUrl);
+      toast.success("APK enviado. Clique em Salvar para aplicar.");
+    } catch (err) {
+      toast.error("Falha no upload do APK", { description: String(err) });
+    } finally {
+      setUploadingApk(false);
+      setTimeout(() => setApkProgress(0), 1500);
     }
   }
 
@@ -709,12 +742,40 @@ function AppCard({
             />
           </Field>
           <Field label="URL do APK">
-            <input
-              value={apkUrl}
-              onChange={(e) => setApkUrl(e.target.value)}
-              className="admin-input"
-              placeholder="https://..."
-            />
+            <div className="flex gap-2 items-start">
+              <input
+                value={apkUrl}
+                onChange={(e) => setApkUrl(e.target.value)}
+                className="admin-input"
+                placeholder="https://... ou envie um arquivo"
+              />
+              <label className="admin-btn-ghost cursor-pointer shrink-0">
+                <Upload size={14} />
+                {uploadingApk ? `${apkProgress}%` : "Upload APK"}
+                <input
+                  type="file"
+                  accept=".apk,application/vnd.android.package-archive"
+                  className="hidden"
+                  disabled={uploadingApk}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleApkUpload(f);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+            </div>
+            {uploadingApk && (
+              <div className="mt-2 h-1 w-full rounded-full bg-[var(--admin-surface-3)] overflow-hidden">
+                <div
+                  className="h-full bg-[var(--neon)] transition-all duration-300"
+                  style={{ width: `${apkProgress}%` }}
+                />
+              </div>
+            )}
+            <p className="mt-1 text-[11px] text-[var(--admin-text-subtle)]">
+              Hospedado no Lovable Cloud. Máx 150 MB.
+            </p>
           </Field>
           <Field label="URL do ícone (PNG 512×512)">
             <div className="flex gap-2 items-start">
