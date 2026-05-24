@@ -1,31 +1,25 @@
 ## Problema
 
-O `build.gradle.kts` faz POST para:
+- `local.properties` no PC: `BUILD_VERSION_TOKEN=tvapps_k7m3x9q2p8w4n6` ✅
+- Secret no Lovable Cloud: valor diferente (qualquer outra coisa) ❌
+- Resultado: o endpoint compara os dois e devolve `HTTP 401 Unauthorized`.
+
+## Solução
+
+Atualizar o secret `BUILD_VERSION_TOKEN` no Lovable Cloud para exatamente:
 ```
-https://project--2f745f30-...lovable.app/api/public/bump-version
+tvapps_k7m3x9q2p8w4n6
 ```
 
-Esta URL aponta para a **versão publicada** do app. Eu testei agora e ela retorna **HTTP 404** — a rota `/api/public/bump-version` existe no código mas ainda não foi publicada. Por isso o Android Studio mostra:
+Isso vai sincronizar os dois lados. Não precisa republicar — secrets são lidos em tempo real pelo endpoint.
 
-> Falha ao obter versão remota: HTTP 404 — &lt;!DOCTYPE html&gt;...
+## Passos
 
-## Solução (1 passo, em linguagem leiga)
+1. Chamar `update_secret` para `BUILD_VERSION_TOKEN` → vai abrir um formulário pra você colar/digitar o valor `tvapps_k7m3x9q2p8w4n6` e confirmar
+2. Eu testo o endpoint daqui pra confirmar que voltou 200
+3. Você roda **Build → Rebuild Project** no Android Studio
+4. O APK compila e a versão começa em `2.1`, `2.2`, `2.3`...
 
-**Publicar o app no Lovable.** Isso "deploya" o endpoint de versionamento e a URL passa a responder corretamente. Depois disso o Android Studio compila normalmente, toda vez, sem mexer em mais nada.
+## Sem alterações de código
 
-Como publicar: clicar no botão **Publish** no canto superior direito do Lovable e confirmar. Leva ~30 segundos.
-
-## Depois de publicar
-
-1. Voltar no Android Studio
-2. Build → Rebuild Project
-3. O build vai bater no endpoint, receber `{ versionName: "2.1", versionCode: 21 }` e compilar com sucesso
-4. O APK sai como `app-release-latest.apk` em `android/app/build/outputs/apk/release/`
-
-## Observação
-
-Toda vez que você quiser que o contador de versão funcione (2.1 → 2.2 → 2.3…), o app **precisa estar publicado**. Se eu editar o código do endpoint depois, você terá que publicar de novo pra a mudança valer.
-
-## Nada de código vai mudar
-
-Esse plano não envolve editar nenhum arquivo — é só você clicar em Publish. Quer que eu te mostre exatamente onde fica o botão?
+Não vou mexer em nenhum arquivo do projeto. É só atualização de secret.
