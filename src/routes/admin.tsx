@@ -38,7 +38,7 @@ async function fileToBase64(file: File | Blob): Promise<string> {
 import {
   Lock, LogOut, Pencil, Save, X, Eye, EyeOff, KeyRound, Upload,
   Plus, Trash2, Copy, GripVertical, Package, CheckCircle2, RotateCcw,
-  Download,
+  Download, ShieldCheck, AppWindow, ChevronDown, ChevronUp,
 } from "lucide-react";
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor,
