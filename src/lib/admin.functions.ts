@@ -301,8 +301,6 @@ export const publishLauncherVersion = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z
       .object({
-        versionName: z.string().min(1).max(50),
-        versionCode: z.number().int().min(1).max(2_000_000_000),
         changelog: z.string().max(2000).optional().nullable(),
         apkStoragePath: z.string().min(1).max(500),
         apkSizeMb: z.number().min(0).max(2000).optional().nullable(),
@@ -317,6 +315,27 @@ export const publishLauncherVersion = createServerFn({ method: "POST" })
       .getPublicUrl(data.apkStoragePath);
     const apkUrl = pub.publicUrl;
 
+    // baixa o APK do storage e extrai a versão direto do AndroidManifest
+    const { data: blob, error: dlErr } = await supabaseAdmin.storage
+      .from("tvapps-updates")
+      .download(data.apkStoragePath);
+    if (dlErr || !blob) throw new Error(`Falha ao baixar APK do storage: ${dlErr?.message ?? "sem dados"}`);
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let versionName: string | null = null;
+    let versionCode: number | null = null;
+    try {
+      const info = extractApkVersion(bytes);
+      versionName = info.versionName;
+      versionCode = info.versionCode;
+    } catch (err) {
+      throw new Error(
+        `Não foi possível ler a versão do APK: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+    if (!versionName || !versionCode || versionCode < 1) {
+      throw new Error("APK não contém versionName/versionCode válidos no AndroidManifest.xml");
+    }
+
     // marca todas como não-latest
     await supabaseAdmin
       .from("app_versions")
@@ -326,8 +345,8 @@ export const publishLauncherVersion = createServerFn({ method: "POST" })
     // insere nova
     const { error: insErr } = await supabaseAdmin.from("app_versions").insert({
       target: "launcher",
-      version_name: data.versionName,
-      version_code: data.versionCode,
+      version_name: versionName,
+      version_code: versionCode,
       apk_url: apkUrl,
       apk_size_mb: data.apkSizeMb ?? null,
       changelog: data.changelog ?? null,
@@ -336,13 +355,13 @@ export const publishLauncherVersion = createServerFn({ method: "POST" })
     if (insErr) throw new Error(insErr.message);
 
     await writeUpdateManifest({
-      versionCode: data.versionCode,
-      versionName: data.versionName,
+      versionCode,
+      versionName,
       apkUrl,
       changelog: data.changelog ?? undefined,
     });
 
-    return { success: true, apkUrl };
+    return { success: true, apkUrl, versionName, versionCode };
   });
 
 export const setLatestLauncherVersion = createServerFn({ method: "POST" })
