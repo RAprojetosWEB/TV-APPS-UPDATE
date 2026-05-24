@@ -549,6 +549,10 @@ function AppCard({
   const uploadApkFn = useServerFn(uploadAppApk);
   const [uploadingApk, setUploadingApk] = useState(false);
   const [apkProgress, setApkProgress] = useState(0);
+  const [versionName, setVersionName] = useState(app.latest_version?.version_name ?? "");
+  const [versionCode, setVersionCode] = useState<string>(
+    app.latest_version ? String(app.latest_version.version_code) : "",
+  );
 
   async function handleIconUpload(file: File) {
     if (!file.type.startsWith("image/")) {
@@ -584,6 +588,20 @@ function AppCard({
       toast.error("APK muito grande", { description: "Máximo 150 MB." });
       return;
     }
+    const vName = versionName.trim();
+    const vCode = parseInt(versionCode, 10);
+    if (!vName || !Number.isFinite(vCode) || vCode < 1) {
+      toast.error("Informe a versão antes de enviar", {
+        description: 'Preencha "Nome da versão" (ex: 2.2.0) e "Código" (ex: 22).',
+      });
+      return;
+    }
+    if (app.latest_version && vCode <= app.latest_version.version_code) {
+      toast.error("Código de versão muito baixo", {
+        description: `Deve ser maior que ${app.latest_version.version_code} (versão atual).`,
+      });
+      return;
+    }
     setUploadingApk(true);
     setApkProgress(0);
     try {
@@ -592,11 +610,17 @@ function AppCard({
       const fileBase64 = await fileToBase64(file);
       setApkProgress(50);
       const { publicUrl } = await uploadApkFn({
-        data: { appId: app.id, fileName: file.name, fileBase64 },
+        data: {
+          appId: app.id,
+          fileName: file.name,
+          fileBase64,
+          versionName: vName,
+          versionCode: vCode,
+        },
       });
       setApkProgress(100);
       setApkUrl(publicUrl);
-      toast.success("APK enviado. Clique em Salvar para aplicar.");
+      toast.success(`APK v${vName} (code ${vCode}) registrado. Clique em Salvar para aplicar.`);
     } catch (err) {
       toast.error("Falha no upload do APK", { description: String(err) });
     } finally {
