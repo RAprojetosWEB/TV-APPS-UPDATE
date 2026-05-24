@@ -987,10 +987,10 @@ function BackupButton() {
     <button
       onClick={handleClick}
       disabled={busy}
-      className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 disabled:opacity-50"
+      className="admin-btn-ghost"
       title="Baixa banco + storage em um .zip"
     >
-      <Download size={16} /> {busy ? "Gerando..." : "Backup completo"}
+      <Download size={14} /> {busy ? "Gerando…" : "Backup"}
     </button>
   );
 }
@@ -1036,17 +1036,17 @@ function RestoreButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10"
+        className="admin-btn-ghost"
         title="Restaura banco + storage a partir de um .zip"
       >
-        <RotateCcw size={16} /> Restaurar
+        <RotateCcw size={14} /> Restaurar
       </button>
       <Dialog open={open} onOpenChange={(v) => !busy && setOpen(v)}>
-        <DialogContent className="border-white/10 bg-black/95 text-white sm:max-w-md">
+        <DialogContent className="border-[var(--admin-border)] bg-[var(--admin-surface-1)] text-[var(--admin-text)] sm:max-w-md shadow-[var(--shadow-elev)]">
           <DialogHeader>
-            <DialogTitle className="text-white">Restaurar backup</DialogTitle>
-            <DialogDescription className="text-white/60">
-              <strong className="text-red-400">Atenção:</strong> isso{" "}
+            <DialogTitle className="text-[var(--admin-text)]">Restaurar backup</DialogTitle>
+            <DialogDescription className="text-[var(--admin-text-muted)]">
+              <strong className="text-[var(--danger)]">Atenção:</strong> isso{" "}
               <strong>apaga</strong> os apps, versões e configurações atuais
               e substitui pelos do arquivo.
             </DialogDescription>
@@ -1054,17 +1054,15 @@ function RestoreButton() {
 
           <div className="space-y-4 py-2">
             <div>
-              <label className="block text-xs text-white/60 mb-1.5">
-                Arquivo .zip do backup
-              </label>
+              <label className="admin-label">Arquivo .zip do backup</label>
               <div className="flex items-center gap-2">
                 <label
                   htmlFor="restore-zip-input"
-                  className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10"
+                  className="admin-btn-ghost cursor-pointer"
                 >
                   <Upload size={14} /> Escolher .zip
                 </label>
-                <span className="text-xs text-white/50 truncate">
+                <span className="text-xs text-[var(--admin-text-muted)] truncate">
                   {file ? `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)` : "Nenhum arquivo"}
                 </span>
               </div>
@@ -1077,12 +1075,12 @@ function RestoreButton() {
               />
             </div>
 
-            <label className="flex items-start gap-2 text-xs text-white/70 cursor-pointer">
+            <label className="flex items-start gap-2 text-xs text-[var(--admin-text-secondary)] cursor-pointer">
               <input
                 type="checkbox"
                 checked={wipe}
                 onChange={(e) => setWipe(e.target.checked)}
-                className="mt-0.5"
+                className="mt-0.5 accent-[var(--neon)]"
               />
               <span>
                 Apagar TODOS os arquivos atuais do storage antes de restaurar
@@ -1091,32 +1089,29 @@ function RestoreButton() {
             </label>
 
             <div>
-              <label className="block text-xs text-white/60 mb-1.5">
-                Para confirmar, digite <code className="text-red-400">RESTAURAR</code>
+              <label className="admin-label">
+                Para confirmar, digite{" "}
+                <code className="text-[var(--danger)] font-mono">RESTAURAR</code>
               </label>
               <input
                 type="text"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                className="w-full h-9 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-white outline-none focus:border-red-400"
+                className="admin-input"
               />
             </div>
           </div>
 
           <DialogFooter>
-            <button
-              onClick={() => setOpen(false)}
-              disabled={busy}
-              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/70 hover:bg-white/5 disabled:opacity-50"
-            >
+            <button onClick={() => setOpen(false)} disabled={busy} className="admin-btn-ghost">
               Cancelar
             </button>
             <button
               disabled={!file || confirm !== "RESTAURAR" || busy}
               onClick={handleRestore}
-              className="inline-flex items-center gap-2 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-600 disabled:opacity-50"
+              className="admin-btn-danger"
             >
-              <RotateCcw size={14} /> {busy ? "Restaurando..." : "Restaurar agora"}
+              <RotateCcw size={14} /> {busy ? "Restaurando…" : "Restaurar agora"}
             </button>
           </DialogFooter>
         </DialogContent>
@@ -1141,15 +1136,15 @@ function RawUploadButton({
       <button
         onClick={() => setOpen((v) => !v)}
         disabled={busy}
-        className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 disabled:opacity-50"
+        className="admin-btn-ghost"
       >
-        <Upload size={16} /> Upload direto
+        <Upload size={14} /> Upload direto
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="border-white/10 bg-black/95 text-white sm:max-w-md">
+        <DialogContent className="border-[var(--admin-border)] bg-[var(--admin-surface-1)] text-[var(--admin-text)] sm:max-w-md shadow-[var(--shadow-elev)]">
           <DialogHeader>
-            <DialogTitle className="text-white">Upload direto (sem form)</DialogTitle>
-            <DialogDescription className="text-white/50">
+            <DialogTitle className="text-[var(--admin-text)]">Upload direto (sem form)</DialogTitle>
+            <DialogDescription className="text-[var(--admin-text-muted)]">
               Envia o APK e o <code>update.json</code> direto pro Storage,
               substituindo o atual. Não preenche histórico.
             </DialogDescription>
@@ -1157,15 +1152,15 @@ function RawUploadButton({
 
           <div className="space-y-4 py-2">
             <div>
-              <label className="block text-xs text-white/60 mb-1.5">APK</label>
+              <label className="admin-label">APK</label>
               <div className="flex items-center gap-2">
                 <label
                   htmlFor="raw-apk-input"
-                  className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10"
+                  className="admin-btn-ghost cursor-pointer"
                 >
                   <Upload size={14} /> Escolher APK
                 </label>
-                <span className="text-xs text-white/50 truncate">
+                <span className="text-xs text-[var(--admin-text-muted)] truncate">
                   {apk ? apk.name : "Nenhum arquivo escolhido"}
                 </span>
               </div>
@@ -1179,15 +1174,15 @@ function RawUploadButton({
             </div>
 
             <div>
-              <label className="block text-xs text-white/60 mb-1.5">update.json</label>
+              <label className="admin-label">update.json</label>
               <div className="flex items-center gap-2">
                 <label
                   htmlFor="raw-json-input"
-                  className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10"
+                  className="admin-btn-ghost cursor-pointer"
                 >
                   <Upload size={14} /> Escolher update.json
                 </label>
-                <span className="text-xs text-white/50 truncate">
+                <span className="text-xs text-[var(--admin-text-muted)] truncate">
                   {json ? json.name : "Nenhum arquivo escolhido"}
                 </span>
               </div>
@@ -1202,10 +1197,7 @@ function RawUploadButton({
           </div>
 
           <DialogFooter>
-            <button
-              onClick={() => setOpen(false)}
-              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/70 hover:bg-white/5"
-            >
+            <button onClick={() => setOpen(false)} className="admin-btn-ghost">
               Fechar
             </button>
             <button
@@ -1217,9 +1209,9 @@ function RawUploadButton({
                 setJson(null);
                 setOpen(false);
               }}
-              className="inline-flex items-center gap-2 rounded-lg bg-[oklch(0.78_0.18_155)] px-3 py-1.5 text-xs font-bold text-black hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
+              className="admin-btn-primary"
             >
-              <Upload size={14} /> {busy ? "Enviando..." : "Enviar"}
+              <Upload size={14} /> {busy ? "Enviando…" : "Enviar"}
             </button>
           </DialogFooter>
         </DialogContent>
