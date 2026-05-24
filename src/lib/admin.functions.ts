@@ -486,6 +486,82 @@ async function listBucketRecursive(
   return out;
 }
 
+function buildSchemaSql(): string {
+  return `-- TV.Apps schema (referência, snapshot manual)
+-- Não é executado automaticamente no restore.
+
+CREATE TYPE IF NOT EXISTS public.app_role AS ENUM ('admin', 'moderator', 'user');
+
+CREATE TABLE IF NOT EXISTS public.apps (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  package_name text NOT NULL,
+  description text,
+  logo_url text,
+  icon_url text,
+  apk_url text,
+  display_order integer NOT NULL DEFAULT 0,
+  is_active boolean NOT NULL DEFAULT true,
+  is_blocked boolean NOT NULL DEFAULT false,
+  block_reason text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.app_versions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  app_id uuid,
+  target text NOT NULL DEFAULT 'launcher',
+  version_name text NOT NULL,
+  version_code integer NOT NULL,
+  apk_url text NOT NULL,
+  apk_size_mb numeric,
+  changelog text,
+  is_latest boolean DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.app_settings (
+  id text PRIMARY KEY,
+  login_password text NOT NULL,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.user_roles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  role public.app_role NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (user_id, role)
+);
+
+CREATE OR REPLACE FUNCTION public.has_role(_user_id uuid, _role public.app_role)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = _role
+  )
+$$;
+
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $$
+BEGIN NEW.updated_at = now(); RETURN NEW; END; $$;
+
+ALTER TABLE public.apps ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.app_versions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Apps are viewable by everyone" ON public.apps FOR SELECT USING (true);
+CREATE POLICY "Admins can insert apps" ON public.apps FOR INSERT TO authenticated WITH CHECK (public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins can update apps" ON public.apps FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins can delete apps" ON public.apps FOR DELETE TO authenticated USING (public.has_role(auth.uid(), 'admin'));
+
+CREATE POLICY "App versions are viewable by everyone" ON public.app_versions FOR SELECT USING (true);
+CREATE POLICY "Admins manage versions" ON public.app_versions FOR ALL TO authenticated USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
+
+CREATE POLICY "Users can view their own roles" ON public.user_roles FOR SELECT TO authenticated USING (auth.uid() = user_id);
+`;
+}
+
 export const createBackup = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -509,6 +585,76 @@ export const createBackup = createServerFn({ method: "POST" })
     );
     zip["db/app_settings.json"] = strToU8(
       JSON.stringify(settingsRes.data ?? [], null, 2),
+    );
+
+    // 1b. user_roles
+    const rolesRes = await supabaseAdmin.from("user_roles").select("*");
+    if (rolesRes.error) throw new Error(rolesRes.error.message);
+    zip["db/user_roles.json"] = strToU8(
+      JSON.stringify(rolesRes.data ?? [], null, 2),
+    );
+
+    // 1c. auth users (paginado, sem senhas)
+    const authUsers: Array<Record<string, unknown>> = [];
+    let page = 1;
+    const perPage = 1000;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const { data: pageData, error: pageErr } =
+        await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+      if (pageErr) {
+        console.error(`listUsers page ${page}: ${pageErr.message}`);
+        break;
+      }
+      const users = pageData?.users ?? [];
+      for (const u of users) {
+        authUsers.push({
+          id: u.id,
+          email: u.email,
+          phone: u.phone,
+          created_at: u.created_at,
+          last_sign_in_at: u.last_sign_in_at,
+          email_confirmed_at: u.email_confirmed_at,
+          phone_confirmed_at: u.phone_confirmed_at,
+          user_metadata: u.user_metadata,
+          app_metadata: u.app_metadata,
+        });
+      }
+      if (users.length < perPage) break;
+      page++;
+      if (page > 50) break; // safety
+    }
+    zip["db/auth_users.json"] = strToU8(JSON.stringify(authUsers, null, 2));
+
+    // 1d. schema SQL (referência — não executado no restore)
+    zip["schema/schema.sql"] = strToU8(buildSchemaSql());
+
+    // 1e. buckets config
+    const { data: bucketsList, error: bucketsErr } =
+      await supabaseAdmin.storage.listBuckets();
+    if (bucketsErr) {
+      console.error(`listBuckets: ${bucketsErr.message}`);
+    }
+    zip["schema/storage_buckets.json"] = strToU8(
+      JSON.stringify(bucketsList ?? [], null, 2),
+    );
+
+    // 1f. nomes de secrets (NUNCA os valores)
+    const knownSecretNames = [
+      "SUPABASE_URL",
+      "SUPABASE_PUBLISHABLE_KEY",
+      "SUPABASE_SERVICE_ROLE_KEY",
+      "SUPABASE_DB_URL",
+      "LOVABLE_API_KEY",
+    ];
+    const presentSecrets = knownSecretNames.filter((k) => !!process.env[k]);
+    zip["secrets/names.txt"] = strToU8(
+      [
+        "# Apenas NOMES dos secrets — valores nunca são exportados.",
+        "# Para restaurar, reconfigure cada um manualmente no painel.",
+        "",
+        ...presentSecrets,
+      ].join("\n"),
     );
 
     // 2. Storage (arquivos dos dois buckets)
@@ -537,12 +683,16 @@ export const createBackup = createServerFn({ method: "POST" })
     const stamp = now.toISOString().replace(/[:.]/g, "-").slice(0, 16);
 
     const manifest = {
-      version: 1,
+      version: 2,
       createdAt: now.toISOString(),
       counts: {
         apps: appsRes.data?.length ?? 0,
         app_versions: versionsRes.data?.length ?? 0,
         app_settings: settingsRes.data?.length ?? 0,
+        user_roles: rolesRes.data?.length ?? 0,
+        auth_users: authUsers.length,
+        storage_buckets: bucketsList?.length ?? 0,
+        secret_names: presentSecrets.length,
         storage: fileCounts,
       },
       totalStorageBytes: totalBytes,
@@ -557,11 +707,18 @@ export const createBackup = createServerFn({ method: "POST" })
       "- db/apps.json           — catálogo de apps",
       "- db/app_versions.json   — histórico de versões OTA",
       "- db/app_settings.json   — configurações (senha do launcher)",
+      "- db/user_roles.json     — papéis de usuário (admin etc.)",
+      "- db/auth_users.json     — usuários do auth (SEM senhas)",
+      "- schema/schema.sql      — estrutura do banco (referência)",
+      "- schema/storage_buckets.json — config dos buckets",
+      "- secrets/names.txt      — apenas NOMES dos secrets (sem valores)",
       "- storage/tvapps-updates — APKs do launcher + update.json",
       "- storage/app-icons      — ícones dos apps do catálogo",
       "- manifest.json          — metadados deste backup",
       "",
-      "Para restaurar, contate o suporte ou peça uma rotina de restore.",
+      "Restaurar via UI: apps, app_versions, app_settings e storage.",
+      "auth_users (sem senha), user_roles, schema e secrets precisam ser",
+      "reconfigurados manualmente — senhas não saem em texto puro.",
     ].join("\n");
     zip["README.txt"] = strToU8(readme);
 
