@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicCatalogRouteImport } from './routes/api/public/catalog'
+import { Route as ApiPublicBumpVersionRouteImport } from './routes/api/public/bump-version'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -34,17 +35,24 @@ const ApiPublicCatalogRoute = ApiPublicCatalogRouteImport.update({
   path: '/api/public/catalog',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBumpVersionRoute = ApiPublicBumpVersionRouteImport.update({
+  id: '/api/public/bump-version',
+  path: '/api/public/bump-version',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/login': typeof LoginRoute
+  '/api/public/bump-version': typeof ApiPublicBumpVersionRoute
   '/api/public/catalog': typeof ApiPublicCatalogRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/login': typeof LoginRoute
+  '/api/public/bump-version': typeof ApiPublicBumpVersionRoute
   '/api/public/catalog': typeof ApiPublicCatalogRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,38 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/login': typeof LoginRoute
+  '/api/public/bump-version': typeof ApiPublicBumpVersionRoute
   '/api/public/catalog': typeof ApiPublicCatalogRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/login' | '/api/public/catalog'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/login'
+    | '/api/public/bump-version'
+    | '/api/public/catalog'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/login' | '/api/public/catalog'
-  id: '__root__' | '/' | '/admin' | '/login' | '/api/public/catalog'
+  to:
+    | '/'
+    | '/admin'
+    | '/login'
+    | '/api/public/bump-version'
+    | '/api/public/catalog'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/login'
+    | '/api/public/bump-version'
+    | '/api/public/catalog'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   LoginRoute: typeof LoginRoute
+  ApiPublicBumpVersionRoute: typeof ApiPublicBumpVersionRoute
   ApiPublicCatalogRoute: typeof ApiPublicCatalogRoute
 }
 
@@ -99,6 +125,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCatalogRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/bump-version': {
+      id: '/api/public/bump-version'
+      path: '/api/public/bump-version'
+      fullPath: '/api/public/bump-version'
+      preLoaderRoute: typeof ApiPublicBumpVersionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -106,6 +139,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   LoginRoute: LoginRoute,
+  ApiPublicBumpVersionRoute: ApiPublicBumpVersionRoute,
   ApiPublicCatalogRoute: ApiPublicCatalogRoute,
 }
 export const routeTree = rootRouteImport
