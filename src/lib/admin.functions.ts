@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { zipSync, unzipSync, strToU8, strFromU8, type Zippable } from "fflate";
+import { extractApkVersion } from "./apk-parser.server";
 
 async function assertAdmin(userId: string) {
   const { data, error } = await supabaseAdmin
@@ -465,8 +466,6 @@ export const uploadAppApk = createServerFn({ method: "POST" })
         appId: z.string().uuid(),
         fileName: z.string().min(1).max(100).regex(/^[a-zA-Z0-9._-]+$/),
         fileBase64: z.string().min(1),
-        versionName: z.string().min(1).max(50).optional().nullable(),
-        versionCode: z.number().int().min(1).max(2_000_000_000).optional().nullable(),
       })
       .parse(input),
   )
@@ -475,6 +474,39 @@ export const uploadAppApk = createServerFn({ method: "POST" })
     const bytes = decodeBase64(data.fileBase64);
     if (bytes.byteLength > 150 * 1024 * 1024)
       throw new Error("APK muito grande (máx 150 MB)");
+
+    // Lê versão direto do AndroidManifest.xml dentro do APK
+    let versionName: string | null = null;
+    let versionCode: number | null = null;
+    try {
+      const info = extractApkVersion(bytes);
+      versionName = info.versionName;
+      versionCode = info.versionCode;
+    } catch (err) {
+      throw new Error(
+        `Não foi possível ler a versão do APK: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+    if (!versionName || !versionCode || versionCode < 1) {
+      throw new Error(
+        "APK não contém versionName/versionCode válidos no AndroidManifest.xml",
+      );
+    }
+
+    // Bloqueia downgrade
+    const { data: current } = await supabaseAdmin
+      .from("app_versions")
+      .select("version_code")
+      .eq("target", "app")
+      .eq("app_id", data.appId)
+      .eq("is_latest", true)
+      .maybeSingle();
+    if (current && versionCode <= current.version_code) {
+      throw new Error(
+        `Código de versão do APK (${versionCode}) deve ser maior que a versão atual (${current.version_code}).`,
+      );
+    }
+
     const safeName = data.fileName.toLowerCase().endsWith(".apk")
       ? data.fileName
       : `${data.fileName}.apk`;
@@ -489,26 +521,30 @@ export const uploadAppApk = createServerFn({ method: "POST" })
     const { data: pub } = supabaseAdmin.storage
       .from("tvapps-updates")
       .getPublicUrl(path);
-    // Se versão informada, registra em app_versions e marca como atual
-    if (data.versionName && data.versionCode) {
-      const sizeMb = Math.round((bytes.byteLength / (1024 * 1024)) * 10) / 10;
-      await supabaseAdmin
-        .from("app_versions")
-        .update({ is_latest: false })
-        .eq("target", "app")
-        .eq("app_id", data.appId);
-      const { error: insErr } = await supabaseAdmin.from("app_versions").insert({
-        target: "app",
-        app_id: data.appId,
-        version_name: data.versionName,
-        version_code: data.versionCode,
-        apk_url: pub.publicUrl,
-        apk_size_mb: sizeMb,
-        is_latest: true,
-      });
-      if (insErr) throw new Error(insErr.message);
-    }
-    return { publicUrl: pub.publicUrl, path };
+    // Registra em app_versions e marca como atual
+    const sizeMb = Math.round((bytes.byteLength / (1024 * 1024)) * 10) / 10;
+    await supabaseAdmin
+      .from("app_versions")
+      .update({ is_latest: false })
+      .eq("target", "app")
+      .eq("app_id", data.appId);
+    const { error: insErr } = await supabaseAdmin.from("app_versions").insert({
+      target: "app",
+      app_id: data.appId,
+      version_name: versionName,
+      version_code: versionCode,
+      apk_url: pub.publicUrl,
+      apk_size_mb: sizeMb,
+      is_latest: true,
+    });
+    if (insErr) throw new Error(insErr.message);
+    return {
+      publicUrl: pub.publicUrl,
+      path,
+      versionName,
+      versionCode,
+      apkSizeMb: sizeMb,
+    };
   });
 
 export const uploadLauncherRaw = createServerFn({ method: "POST" })
