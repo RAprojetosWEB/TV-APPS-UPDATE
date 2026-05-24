@@ -506,6 +506,7 @@ function AppCard({
   onDelete,
   onDuplicate,
   dragHandle,
+  index = 0,
 }: {
   app: AppRow;
   editing: boolean;
@@ -528,6 +529,7 @@ function AppCard({
   onDelete: () => void;
   onDuplicate: () => void;
   dragHandle?: React.ReactNode;
+  index?: number;
 }) {
   const [name, setName] = useState(app.name);
   const [description, setDescription] = useState(app.description ?? "");
@@ -565,40 +567,58 @@ function AppCard({
 
   return (
     <div
-      className={`rounded-2xl border p-5 transition-all ${
-        app.is_blocked
-          ? "border-red-500/30 bg-red-500/5"
-          : "border-white/10 bg-white/[0.03]"
+      className={`admin-surface admin-surface-hover group p-5 ${
+        app.is_blocked ? "!border-[oklch(0.68_0.22_25_/_0.3)]" : ""
       }`}
+      style={{
+        animation: `admin-fade-in-up 400ms var(--ease-out) both`,
+        animationDelay: `${Math.min(index, 8) * 35}ms`,
+      }}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-4 min-w-0 flex-1">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-5 min-w-0 flex-1">
           {dragHandle}
-          {app.icon_url ? (
-            <img
-              src={app.icon_url}
-              alt={app.name}
-              className="h-14 w-14 rounded-xl object-cover bg-white/5"
-            />
-          ) : (
-            <div className="h-14 w-14 rounded-xl bg-white/10 flex items-center justify-center text-white/40">
-              ▣
-            </div>
-          )}
+          <div className="relative shrink-0">
+            {app.icon_url ? (
+              <img
+                src={app.icon_url}
+                alt={app.name}
+                className="h-16 w-16 rounded-2xl object-cover ring-1 ring-[var(--admin-border)] shadow-[0_8px_20px_-8px_oklch(0_0_0_/_0.6)]"
+              />
+            ) : (
+              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[var(--admin-surface-2)] to-[var(--admin-surface-3)] ring-1 ring-[var(--admin-border)] flex items-center justify-center text-[var(--admin-text-subtle)]">
+                <Package size={24} />
+              </div>
+            )}
+          </div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="font-bold truncate">{app.name}</h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-[15px] font-semibold tracking-tight text-[var(--admin-text)] truncate">
+                {app.name}
+              </h3>
               {app.is_blocked && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-semibold text-red-400">
-                  <Lock size={12} /> BLOQUEADO
+                <span className="admin-pill admin-pill-danger">
+                  <Lock size={11} /> Bloqueado
                 </span>
               )}
+              {!app.is_active && !app.is_blocked && (
+                <span className="admin-pill admin-pill-muted">Inativo</span>
+              )}
             </div>
-            <p className="text-sm text-white/50 truncate">
-              {app.description || app.package_name}
+            <p className="mt-0.5 text-[13px] text-[var(--admin-text-muted)] truncate">
+              {app.description || (
+                <span className="font-mono text-[12px] text-[var(--admin-text-subtle)]">
+                  {app.package_name}
+                </span>
+              )}
             </p>
+            {app.description && (
+              <p className="mt-0.5 font-mono text-[11px] text-[var(--admin-text-subtle)] truncate">
+                {app.package_name}
+              </p>
+            )}
             {app.is_blocked && app.block_reason && (
-              <p className="mt-1 text-xs text-red-400/80">
+              <p className="mt-1 text-xs text-[var(--danger)]/80">
                 Motivo: {app.block_reason}
               </p>
             )}
@@ -612,86 +632,86 @@ function AppCard({
                 checked={!app.is_blocked}
                 onChange={(v) => onToggle(!v)}
               />
-              <button
-                onClick={onEditStart}
-                className="rounded-lg border border-white/10 p-2 text-white/60 hover:bg-white/5"
-                aria-label="Editar"
-              >
-                <Pencil size={16} />
-              </button>
-              <button
-                onClick={onDuplicate}
-                className="rounded-lg border border-white/10 p-2 text-white/60 hover:bg-white/5"
-                aria-label="Duplicar"
-                title="Duplicar"
-              >
-                <Copy size={16} />
-              </button>
-              <button
-                onClick={onDelete}
-                className="rounded-lg border border-red-500/30 p-2 text-red-400 hover:bg-red-500/10"
-                aria-label="Excluir"
-                title="Excluir"
-              >
-                <Trash2 size={16} />
-              </button>
+              <div className="flex items-center rounded-xl border border-[var(--admin-border-soft)] bg-[oklch(0_0_0_/_0.2)] p-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={onEditStart}
+                  className="admin-icon-btn"
+                  style={{ width: 32, height: 32 }}
+                  aria-label="Editar"
+                  title="Editar"
+                >
+                  <Pencil size={14} />
+                </button>
+                <button
+                  onClick={onDuplicate}
+                  className="admin-icon-btn"
+                  style={{ width: 32, height: 32 }}
+                  aria-label="Duplicar"
+                  title="Duplicar"
+                >
+                  <Copy size={14} />
+                </button>
+                <button
+                  onClick={onDelete}
+                  className="admin-icon-btn admin-icon-btn-danger"
+                  style={{ width: 32, height: 32 }}
+                  aria-label="Excluir"
+                  title="Excluir"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </>
           )}
         </div>
       </div>
 
       {blocking && (
-        <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-4">
-          <label className="block text-xs font-semibold uppercase tracking-wider text-white/60 mb-2">
+        <div className="mt-5 rounded-xl border border-[oklch(0.68_0.22_25_/_0.25)] bg-[var(--danger-soft)] p-4 admin-anim-scale">
+          <label className="admin-label !text-[var(--danger)]">
             Motivo do bloqueio (opcional)
           </label>
           <input
             type="text"
             value={reason}
             onChange={(e) => onReasonChange(e.target.value)}
-            placeholder='Ex: "Em manutenção" (deixe vazio se quiser)'
+            placeholder='Ex: "Em manutenção"'
             maxLength={200}
-            className="w-full h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-white outline-none focus:border-red-400"
+            className="admin-input"
             autoFocus
           />
           <div className="mt-3 flex gap-2 justify-end">
-            <button
-              onClick={onCancelBlock}
-              className="rounded-lg border border-white/10 px-3 py-2 text-sm text-white/70 hover:bg-white/5"
-            >
+            <button onClick={onCancelBlock} className="admin-btn-ghost">
               Cancelar
             </button>
-            <button
-              onClick={onConfirmBlock}
-              className="rounded-lg bg-red-500 px-3 py-2 text-sm font-semibold text-white hover:bg-red-600"
-            >
-              Bloquear
+            <button onClick={onConfirmBlock} className="admin-btn-danger">
+              <Lock size={14} /> Bloquear
             </button>
           </div>
         </div>
       )}
 
       {editing && (
-        <div className="mt-4 space-y-3 border-t border-white/10 pt-4">
+        <div className="mt-5 admin-surface-2 p-5 space-y-3 admin-anim-scale">
           <Field label="Nome">
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="input"
+              className="admin-input"
             />
           </Field>
           <Field label="Descrição">
             <input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="input"
+              className="admin-input"
             />
           </Field>
           <Field label="URL do APK">
             <input
               value={apkUrl}
               onChange={(e) => setApkUrl(e.target.value)}
-              className="input"
+              className="admin-input"
               placeholder="https://..."
             />
           </Field>
@@ -701,18 +721,18 @@ function AppCard({
                 <img
                   src={iconUrl}
                   alt="preview"
-                  className="h-10 w-10 rounded-lg object-cover bg-white/5 shrink-0"
+                  className="h-10 w-10 rounded-lg object-cover ring-1 ring-[var(--admin-border)] shrink-0"
                 />
               )}
               <input
                 value={iconUrl}
                 onChange={(e) => setIconUrl(e.target.value)}
-                className="input"
+                className="admin-input"
                 placeholder="https://... ou envie um arquivo"
               />
-              <label className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 h-10 text-sm text-white/70 hover:bg-white/5 cursor-pointer shrink-0">
+              <label className="admin-btn-ghost cursor-pointer shrink-0">
                 <Upload size={14} />
-                {uploading ? "..." : "Upload"}
+                {uploading ? "Enviando…" : "Upload"}
                 <input
                   type="file"
                   accept="image/*"
@@ -735,28 +755,21 @@ function AppCard({
                 onChange={(e) =>
                   setDisplayOrder(parseInt(e.target.value) || 0)
                 }
-                className="input"
+                className="admin-input"
               />
             </Field>
             <Field label="Status">
-              <label className="flex items-center gap-2 h-10">
-                <input
-                  type="checkbox"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                />
-                <span className="text-sm text-white/70">
+              <label className="flex items-center gap-3 h-10">
+                <Switch checked={isActive} onChange={setIsActive} />
+                <span className="text-sm text-[var(--admin-text-secondary)]">
                   Ativo (visível na TV)
                 </span>
               </label>
             </Field>
           </div>
           <div className="flex gap-2 justify-end pt-2">
-            <button
-              onClick={onEditCancel}
-              className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-white/70 hover:bg-white/5"
-            >
-              <X size={16} /> Cancelar
+            <button onClick={onEditCancel} className="admin-btn-ghost">
+              <X size={14} /> Cancelar
             </button>
             <button
               onClick={() =>
@@ -769,12 +782,11 @@ function AppCard({
                   is_active: isActive,
                 })
               }
-              className="inline-flex items-center gap-2 rounded-lg bg-[oklch(0.78_0.18_155)] px-3 py-2 text-sm font-bold text-black hover:scale-[1.02]"
+              className="admin-btn-primary"
             >
-              <Save size={16} /> Salvar
+              <Save size={14} /> Salvar
             </button>
           </div>
-          <style>{`.input{width:100%;height:2.5rem;border-radius:.5rem;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);padding:0 .75rem;color:white;outline:none}.input:focus{border-color:oklch(0.78 0.18 155)}`}</style>
         </div>
       )}
     </div>
@@ -790,9 +802,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-xs font-semibold uppercase tracking-wider text-white/50 mb-1">
-        {label}
-      </label>
+      <label className="admin-label">{label}</label>
       {children}
     </div>
   );
@@ -811,39 +821,33 @@ function Switch({
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-        checked ? "bg-[oklch(0.78_0.18_155)]" : "bg-white/15"
-      }`}
-    >
-      <span
-        className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-          checked ? "translate-x-6" : "translate-x-1"
-        }`}
-      />
-    </button>
+      data-checked={checked}
+      className="admin-switch admin-focus-ring"
+    />
   );
 }
 
 function SortableAppCard(
-  props: React.ComponentProps<typeof AppCard> & { app: AppRow },
+  props: React.ComponentProps<typeof AppCard> & { app: AppRow; index: number },
 ) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: props.app.id });
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.6 : 1,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : "auto",
   };
   const handle = (
     <button
       ref={setNodeRef as never}
       {...attributes}
       {...listeners}
-      className="touch-none cursor-grab active:cursor-grabbing text-white/30 hover:text-white/70 -ml-1"
+      className="touch-none cursor-grab active:cursor-grabbing text-[var(--admin-text-subtle)] hover:text-[var(--admin-text)] transition-colors -ml-1"
       aria-label="Reordenar"
       title="Arraste para reordenar"
     >
-      <GripVertical size={18} />
+      <GripVertical size={16} />
     </button>
   );
   // wrapper for transform; handle wires its own ref
@@ -874,8 +878,8 @@ function NewAppForm({
   const [iconUrl, setIconUrl] = useState("");
 
   return (
-    <div className="mb-4 rounded-2xl border border-[oklch(0.78_0.18_155)]/40 bg-[oklch(0.78_0.18_155)]/5 p-5 space-y-3">
-      <h3 className="font-bold flex items-center gap-2">
+    <div className="admin-surface admin-surface-neon p-5 space-y-3 admin-anim-scale">
+      <h3 className="text-[15px] font-semibold tracking-tight flex items-center gap-2 text-[var(--admin-text)]">
         <Plus size={16} /> Novo app
       </h3>
       <div className="grid grid-cols-2 gap-3">
@@ -883,7 +887,7 @@ function NewAppForm({
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="input"
+            className="admin-input"
             placeholder="Ex: AlphaPlay"
           />
         </Field>
@@ -891,19 +895,19 @@ function NewAppForm({
           <input
             value={pkg}
             onChange={(e) => setPkg(e.target.value)}
-            className="input"
+            className="admin-input"
             placeholder="com.exemplo.app"
           />
         </Field>
       </div>
       <Field label="Descrição">
-        <input value={desc} onChange={(e) => setDesc(e.target.value)} className="input" />
+        <input value={desc} onChange={(e) => setDesc(e.target.value)} className="admin-input" />
       </Field>
       <Field label="URL do APK">
         <input
           value={apkUrl}
           onChange={(e) => setApkUrl(e.target.value)}
-          className="input"
+          className="admin-input"
           placeholder="https://..."
         />
       </Field>
@@ -911,16 +915,13 @@ function NewAppForm({
         <input
           value={iconUrl}
           onChange={(e) => setIconUrl(e.target.value)}
-          className="input"
+          className="admin-input"
           placeholder="https://..."
         />
       </Field>
       <div className="flex gap-2 justify-end">
-        <button
-          onClick={onCancel}
-          className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-white/70 hover:bg-white/5"
-        >
-          <X size={16} /> Cancelar
+        <button onClick={onCancel} className="admin-btn-ghost">
+          <X size={14} /> Cancelar
         </button>
         <button
           onClick={() => {
@@ -936,12 +937,11 @@ function NewAppForm({
               icon_url: iconUrl.trim() || undefined,
             });
           }}
-          className="inline-flex items-center gap-2 rounded-lg bg-[oklch(0.78_0.18_155)] px-3 py-2 text-sm font-bold text-black hover:scale-[1.02]"
+          className="admin-btn-primary"
         >
-          <Save size={16} /> Criar
+          <Save size={14} /> Criar app
         </button>
       </div>
-      <style>{`.input{width:100%;height:2.5rem;border-radius:.5rem;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);padding:0 .75rem;color:white;outline:none}.input:focus{border-color:oklch(0.78 0.18 155)}`}</style>
     </div>
   );
 }
