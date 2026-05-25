@@ -32,7 +32,26 @@ private fun loadBuildToken(): String? {
 
 private data class RemoteVersion(val name: String, val code: Int)
 
+private fun shouldBumpVersion(): Boolean {
+    val taskNames = gradle.startParameter.taskNames
+    if (taskNames.isEmpty()) return false
+    val pattern = Regex("(assemble|bundle|install)(Release|Debug)", RegexOption.IGNORE_CASE)
+    return taskNames.any { pattern.containsMatchIn(it) }
+}
+
+private fun loadFallbackVersion(): RemoteVersion {
+    val props = Properties()
+    val file = rootProject.file("version.properties")
+    if (file.exists()) file.inputStream().use { props.load(it) }
+    val base = props.getProperty("versionBase")?.toIntOrNull() ?: 2
+    println("[tvapps] Build sem assemble/bundle/install — usando versão local de dev (sem bump remoto).")
+    return RemoteVersion(name = "$base.0-dev", code = 1)
+}
+
 private fun fetchRemoteVersion(): RemoteVersion {
+    if (!shouldBumpVersion()) {
+        return loadFallbackVersion()
+    }
     val token = loadBuildToken()
         ?: throw GradleException(
             "BUILD_VERSION_TOKEN ausente. Adicione 'BUILD_VERSION_TOKEN=<seu_token>' " +

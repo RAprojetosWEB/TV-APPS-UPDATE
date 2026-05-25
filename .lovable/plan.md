@@ -1,41 +1,31 @@
-## Objetivo
+# Por que a versão pula de 2 em 2
 
-Permitir que você instale `/admin` como app independente no celular/desktop (botão "Adicionar à tela inicial" / "Instalar app"), abrindo direto no painel admin em modo standalone — sem mexer no PWA atual que o launcher TV usa.
+O endpoint `/api/public/bump-version` **incrementa o contador toda vez que é chamado**. No `android/app/build.gradle.kts`, a chamada está amarrada à propriedade `defaultConfig.versionCode = computedVersionCode`, que é avaliada já na **configuration phase** do Gradle — antes de qualquer task rodar.
 
-## Por que um manifest separado
+Resultado prático: qualquer coisa que faça o Gradle **configurar o projeto** dispara um POST de bump, mesmo sem gerar APK. Cenários comuns que causam o "+2":
 
-O `public/manifest.json` atual é do app TV (`start_url: "/"`, `display: "fullscreen"`, orientação landscape). Se eu mexer nele, quebra a experiência da TV. Solução: criar um **segundo manifest** só para o admin e linkar ele apenas na rota `/admin`.
+1. **Android Studio sync** (ou o IDE rodando em background) configura o projeto → POST → +1. Depois você roda `./gradlew assembleRelease` → nova JVM/daemon configura de novo → POST → +1. Total: salta 2.
+2. Rodar `./gradlew clean` e depois `./gradlew assembleRelease` em invocações separadas → 2 fetches.
+3. Qualquer `./gradlew tasks`, `./gradlew help`, ou plugin que force reconfiguração também consome um número.
 
-Também **não vou adicionar service worker** — seguindo a recomendação do Lovable, PWA sem SW já é instalável e evita problemas de cache no preview do editor. Você só não terá modo offline (não precisa pro admin).
+O `by lazy` só evita chamadas duplicadas **dentro da mesma invocação Gradle**, não entre invocações.
 
-## Mudanças
+# Correção proposta
 
-**1. Criar `public/manifest-admin.json`**
-- `name`: "TV.Apps Admin"
-- `short_name`: "Admin"
-- `start_url`: "/admin"
-- `scope`: "/admin"
-- `display`: "standalone" (não fullscreen — admin precisa da barra de status pra digitar)
-- `orientation`: "portrait" (admin é usado no celular)
-- `theme_color` / `background_color`: tons do tema admin
-- Reusa `/icon-512.png` como ícone
+Tornar o fetch **condicional**: só chamar `bump-version` quando o usuário realmente pediu para montar/empacotar o APK. Para qualquer outra task (sync, `tasks`, `help`, `clean` isolado, etc.) usar um placeholder local que **não** consome número.
 
-**2. Sobrescrever o manifest na rota `/admin`**
+Mudanças em `android/app/build.gradle.kts`:
 
-No `src/routes/admin.tsx`, adicionar `head()` que substitui o `<link rel="manifest">` herdado do root, apontando pra `/manifest-admin.json`. Também ajustar `theme-color` e título da aba.
+1. Criar helper `shouldBumpVersion()` que inspeciona `gradle.startParameter.taskNames` e retorna `true` somente se alguma task pedida casar com regex tipo `assemble(Release|Debug)`, `bundle(Release|Debug)`, ou `install*`.
+2. Em `fetchRemoteVersion()`, se `shouldBumpVersion()` for `false`, retornar um fallback local lido de `android/version.properties` (ex.: `versionBase=2` → `name="2.0-dev"`, `code=1`) **sem** fazer POST.
+3. Manter `by lazy` para garantir 1 POST por build mesmo quando `shouldBumpVersion()` for `true` (assemble + finalizer `generateUpdateJson` compartilham o mesmo valor).
 
-**3. Sem mudanças** em: root, manifest.json do TV, service worker (continua não existindo), nem nas funções backend.
+Opcional (defesa extra): adicionar no endpoint `bump-version.ts` um cache por `x-build-id` header (uuid gerado no Gradle) com TTL curto, para que retries do mesmo build retornem o mesmo número. Só vale a pena se ainda observarmos saltos depois do fix acima — começo sem isso.
 
-## Como instalar depois
+# Verificação
 
-- **Android (Chrome)**: abrir `/admin` → menu ⋮ → "Instalar app" / "Adicionar à tela inicial"
-- **iOS (Safari)**: abrir `/admin` → compartilhar → "Adicionar à Tela de Início"
-- **Desktop (Chrome/Edge)**: abrir `/admin` → ícone de instalar na barra de endereço
-
-Importante: a instalação só funciona na **URL publicada** (`sideload-hero.lovable.app`), não no preview do editor.
-
-## O que NÃO entra
-
-- Service worker / modo offline (causa problemas no preview e você não precisa)
-- Push notifications
-- Mudanças no manifest atual da TV
+Depois do fix:
+- `./gradlew tasks` → não muda a versão no banco.
+- Abrir o projeto no Android Studio → não muda.
+- `./gradlew assembleRelease` → incrementa exatamente 1.
+- `update.json` gerado bate com o `versionName`/`versionCode` do APK.
