@@ -115,6 +115,7 @@ function AdminPage() {
 
   const listFn = useServerFn(listAppsForAdmin);
   const toggleFn = useServerFn(toggleAppBlock);
+  const toggleActiveFn = useServerFn(toggleAppActive);
   const updateFn = useServerFn(updateApp);
   const checkFn = useServerFn(checkIsAdmin);
   const getPwdFn = useServerFn(getLoginPassword);
