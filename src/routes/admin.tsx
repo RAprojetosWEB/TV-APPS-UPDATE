@@ -699,10 +699,30 @@ function AppCard({
         <div className="flex items-center gap-3 shrink-0">
           {!editing && (
             <>
-              <Switch
-                checked={!app.is_blocked}
-                onChange={(v) => onToggle(!v)}
-              />
+              <div
+                className="flex items-center gap-2"
+                title={app.is_active ? "Visível na TV (clique para ocultar)" : "Oculto da TV (clique para mostrar)"}
+              >
+                {app.is_active ? (
+                  <Eye size={14} className="text-[var(--admin-text-subtle)]" />
+                ) : (
+                  <EyeOff size={14} className="text-[var(--admin-text-subtle)]" />
+                )}
+                <Switch
+                  checked={app.is_active}
+                  onChange={(v) => onToggleActive(v)}
+                />
+              </div>
+              <div
+                className="flex items-center gap-2"
+                title={app.is_blocked ? "Bloqueado (clique para liberar)" : "Liberado (clique para bloquear)"}
+              >
+                <Lock size={14} className="text-[var(--admin-text-subtle)]" />
+                <Switch
+                  checked={!app.is_blocked}
+                  onChange={(v) => onToggle(!v)}
+                />
+              </div>
               <div className="flex items-center rounded-xl border border-[var(--admin-border-soft)] bg-[oklch(0_0_0_/_0.2)] p-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={onEditStart}
