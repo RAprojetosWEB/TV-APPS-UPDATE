@@ -528,6 +528,7 @@ function AppCard({
   onEditCancel,
   onEditSave,
   onToggle,
+  onToggleActive,
   onConfirmBlock,
   onCancelBlock,
   onDelete,
@@ -551,6 +552,7 @@ function AppCard({
     is_active: boolean;
   }) => void;
   onToggle: (v: boolean) => void;
+  onToggleActive: (v: boolean) => void;
   onConfirmBlock: () => void;
   onCancelBlock: () => void;
   onDelete: () => void;
