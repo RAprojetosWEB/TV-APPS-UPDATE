@@ -124,6 +124,26 @@ export const updateApp = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+export const toggleAppActive = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        appId: z.string().uuid(),
+        isActive: z.boolean(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { error } = await supabaseAdmin
+      .from("apps")
+      .update({ is_active: data.isActive })
+      .eq("id", data.appId);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
 export const getLoginPassword = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
