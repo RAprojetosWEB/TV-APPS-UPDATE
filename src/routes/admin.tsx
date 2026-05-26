@@ -419,6 +419,7 @@ function AdminPage() {
                       }
                     }}
                     onToggle={(v) => handleToggle(app, v)}
+                    onToggleActive={(v) => handleToggleActive(app, v)}
                     onConfirmBlock={() => confirmBlock(app)}
                     onCancelBlock={() => {
                       setBlocking(null);
