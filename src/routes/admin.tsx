@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   listAppsForAdmin,
   toggleAppBlock,
+  toggleAppActive,
   updateApp,
   checkIsAdmin,
   getLoginPassword,
@@ -114,6 +115,7 @@ function AdminPage() {
 
   const listFn = useServerFn(listAppsForAdmin);
   const toggleFn = useServerFn(toggleAppBlock);
+  const toggleActiveFn = useServerFn(toggleAppActive);
   const updateFn = useServerFn(updateApp);
   const checkFn = useServerFn(checkIsAdmin);
   const getPwdFn = useServerFn(getLoginPassword);
@@ -213,6 +215,16 @@ function AdminPage() {
       toast.success(`${app.name} bloqueado`);
       setBlocking(null);
       setReason("");
+      await refresh();
+    } catch (err) {
+      toast.error("Erro", { description: String(err) });
+    }
+  }
+
+  async function handleToggleActive(app: AppRow, nextActive: boolean) {
+    try {
+      await toggleActiveFn({ data: { appId: app.id, isActive: nextActive } });
+      toast.success(`${app.name} ${nextActive ? "visível na TV" : "oculto da TV"}`);
       await refresh();
     } catch (err) {
       toast.error("Erro", { description: String(err) });
@@ -407,6 +419,7 @@ function AdminPage() {
                       }
                     }}
                     onToggle={(v) => handleToggle(app, v)}
+                    onToggleActive={(v) => handleToggleActive(app, v)}
                     onConfirmBlock={() => confirmBlock(app)}
                     onCancelBlock={() => {
                       setBlocking(null);
@@ -515,6 +528,7 @@ function AppCard({
   onEditCancel,
   onEditSave,
   onToggle,
+  onToggleActive,
   onConfirmBlock,
   onCancelBlock,
   onDelete,
@@ -538,6 +552,7 @@ function AppCard({
     is_active: boolean;
   }) => void;
   onToggle: (v: boolean) => void;
+  onToggleActive: (v: boolean) => void;
   onConfirmBlock: () => void;
   onCancelBlock: () => void;
   onDelete: () => void;
@@ -684,10 +699,30 @@ function AppCard({
         <div className="flex items-center gap-3 shrink-0">
           {!editing && (
             <>
-              <Switch
-                checked={!app.is_blocked}
-                onChange={(v) => onToggle(!v)}
-              />
+              <div
+                className="flex items-center gap-2"
+                title={app.is_active ? "Visível na TV (clique para ocultar)" : "Oculto da TV (clique para mostrar)"}
+              >
+                {app.is_active ? (
+                  <Eye size={14} className="text-[var(--admin-text-subtle)]" />
+                ) : (
+                  <EyeOff size={14} className="text-[var(--admin-text-subtle)]" />
+                )}
+                <Switch
+                  checked={app.is_active}
+                  onChange={(v) => onToggleActive(v)}
+                />
+              </div>
+              <div
+                className="flex items-center gap-2"
+                title={app.is_blocked ? "Bloqueado (clique para liberar)" : "Liberado (clique para bloquear)"}
+              >
+                <Lock size={14} className="text-[var(--admin-text-subtle)]" />
+                <Switch
+                  checked={!app.is_blocked}
+                  onChange={(v) => onToggle(!v)}
+                />
+              </div>
               <div className="flex items-center rounded-xl border border-[var(--admin-border-soft)] bg-[oklch(0_0_0_/_0.2)] p-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={onEditStart}

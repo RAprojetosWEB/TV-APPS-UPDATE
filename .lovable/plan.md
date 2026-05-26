@@ -1,31 +1,26 @@
-# Por que a versão pula de 2 em 2
+## O que muda
 
-O endpoint `/api/public/bump-version` **incrementa o contador toda vez que é chamado**. No `android/app/build.gradle.kts`, a chamada está amarrada à propriedade `defaultConfig.versionCode = computedVersionCode`, que é avaliada já na **configuration phase** do Gradle — antes de qualquer task rodar.
+Hoje cada card no admin tem **uma chave** que apenas bloqueia/desbloqueia o app (`is_blocked`). Quando bloqueado, o app continua aparecendo na TV Box, mas como um card neutro "Em breve um novo app aqui".
 
-Resultado prático: qualquer coisa que faça o Gradle **configurar o projeto** dispara um POST de bump, mesmo sem gerar APK. Cenários comuns que causam o "+2":
+Você quer uma **segunda chave**, ao lado da atual, que controle se o app aparece ou não — ou seja, alternar `is_active`. Quando desligada, o app some completamente da TV Box (o `getCatalog` já filtra por `is_active = true`).
 
-1. **Android Studio sync** (ou o IDE rodando em background) configura o projeto → POST → +1. Depois você roda `./gradlew assembleRelease` → nova JVM/daemon configura de novo → POST → +1. Total: salta 2.
-2. Rodar `./gradlew clean` e depois `./gradlew assembleRelease` em invocações separadas → 2 fetches.
-3. Qualquer `./gradlew tasks`, `./gradlew help`, ou plugin que force reconfiguração também consome um número.
+## Mudanças
 
-O `by lazy` só evita chamadas duplicadas **dentro da mesma invocação Gradle**, não entre invocações.
+1. **`src/routes/admin.tsx` — card do app**
+   - Adicionar uma segunda `Switch` antes da chave de bloqueio.
+   - Chave da **esquerda (nova)**: Visível/Oculto → controla `is_active`. Verde = visível na TV, cinza = oculto.
+   - Chave da **direita (existente)**: Liberado/Bloqueado → controla `is_blocked` (sem mudança de comportamento).
+   - Cada switch com `title` no hover deixando claro o que faz ("Mostrar na TV" / "Bloquear app").
+   - Pequeno rótulo/ícone acima ou tooltip pra não confundir as duas chaves.
 
-# Correção proposta
+2. **Handler de toggle**
+   - Hoje existe `handleToggle(app, v)` que faz update do `is_blocked`. Vou adicionar `handleToggleActive(app, v)` análogo que atualiza `is_active` no banco e revalida a lista.
 
-Tornar o fetch **condicional**: só chamar `bump-version` quando o usuário realmente pediu para montar/empacotar o APK. Para qualquer outra task (sync, `tasks`, `help`, `clean` isolado, etc.) usar um placeholder local que **não** consome número.
+3. **Sem mudança no banco** — os campos `is_active` e `is_blocked` já existem e o endpoint público `/api/public/catalog` e o `getCatalog` já filtram por `is_active`, então a TV Box já respeita corretamente.
 
-Mudanças em `android/app/build.gradle.kts`:
+## Resultado
 
-1. Criar helper `shouldBumpVersion()` que inspeciona `gradle.startParameter.taskNames` e retorna `true` somente se alguma task pedida casar com regex tipo `assemble(Release|Debug)`, `bundle(Release|Debug)`, ou `install*`.
-2. Em `fetchRemoteVersion()`, se `shouldBumpVersion()` for `false`, retornar um fallback local lido de `android/version.properties` (ex.: `versionBase=2` → `name="2.0-dev"`, `code=1`) **sem** fazer POST.
-3. Manter `by lazy` para garantir 1 POST por build mesmo quando `shouldBumpVersion()` for `true` (assemble + finalizer `generateUpdateJson` compartilham o mesmo valor).
-
-Opcional (defesa extra): adicionar no endpoint `bump-version.ts` um cache por `x-build-id` header (uuid gerado no Gradle) com TTL curto, para que retries do mesmo build retornem o mesmo número. Só vale a pena se ainda observarmos saltos depois do fix acima — começo sem isso.
-
-# Verificação
-
-Depois do fix:
-- `./gradlew tasks` → não muda a versão no banco.
-- Abrir o projeto no Android Studio → não muda.
-- `./gradlew assembleRelease` → incrementa exatamente 1.
-- `update.json` gerado bate com o `versionName`/`versionCode` do APK.
+No card do AlphaPlay da sua screenshot, você terá duas chaves lado a lado:
+- 1ª chave OFF → o app some completamente da TV Box
+- 2ª chave OFF → o app aparece como card "Em breve" (bloqueado)
+- Ambas ON → app normal na TV
