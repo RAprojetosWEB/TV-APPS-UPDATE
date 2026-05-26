@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   listAppsForAdmin,
   toggleAppBlock,
+  toggleAppActive,
   updateApp,
   checkIsAdmin,
   getLoginPassword,
