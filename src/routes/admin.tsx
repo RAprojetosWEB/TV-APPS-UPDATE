@@ -221,6 +221,16 @@ function AdminPage() {
     }
   }
 
+  async function handleToggleActive(app: AppRow, nextActive: boolean) {
+    try {
+      await toggleActiveFn({ data: { appId: app.id, isActive: nextActive } });
+      toast.success(`${app.name} ${nextActive ? "visível na TV" : "oculto da TV"}`);
+      await refresh();
+    } catch (err) {
+      toast.error("Erro", { description: String(err) });
+    }
+  }
+
   async function handleLogout() {
     await supabase.auth.signOut();
     navigate({ to: "/login" });
