@@ -81,6 +81,7 @@ class MainActivity : Activity() {
     private var networkMonitor: NetworkMonitor? = null
     private var networkStatusIcon: ImageView? = null
     private var loginWifiIcon: ImageView? = null
+    private var lastNetworkState: NetworkMonitor.State = NetworkMonitor.State.OFFLINE
 
     // APK aguardando instalação após usuário conceder permissão "Instalar apps desconhecidos"
     private var pendingInstallApk: File? = null
@@ -350,6 +351,7 @@ class MainActivity : Activity() {
     }
 
     private fun applyNetworkState(state: NetworkMonitor.State) {
+        lastNetworkState = state
         val res = when (state) {
             NetworkMonitor.State.OFFLINE -> R.drawable.ic_wifi_off
             NetworkMonitor.State.WIFI_LEVEL_1 -> R.drawable.ic_wifi_1
@@ -616,7 +618,9 @@ class MainActivity : Activity() {
         // Reaproveita o ImageView interno do botão Wi-Fi para refletir o estado
         // real da rede (mesmos drawables usados pelo ícone de status da home).
         loginWifiIcon = wifiBtn.getChildAt(0) as? ImageView
-        applyNetworkState(NetworkMonitor.State.OFFLINE)
+        // Reaplica o último estado conhecido para o ícone novo
+        // (o monitor só notifica em mudanças, então sem isso o ícone ficaria parado).
+        applyNetworkState(lastNetworkState)
 
         quickActions.addView(settingsBtn)
         quickActions.addView(wifiBtn)
@@ -1832,6 +1836,9 @@ class MainActivity : Activity() {
         networkStatusIcon = netIcon
         otaStatusPill = system
         settingsPill = settings
+        // Reaplica o último estado conhecido ao ícone recém-criado
+        // (o monitor só dispara em mudanças de rede).
+        applyNetworkState(lastNetworkState)
 
         // Navegação D-pad determinística entre as pílulas focáveis,
         // independente da animação de LayoutTransition.
