@@ -74,7 +74,6 @@ class MainActivity : Activity() {
             statusHandler.postDelayed(this, 30 * 60_000L)
         }
     }
-    private var networkCallback: ConnectivityManager.NetworkCallback? = null
     private var packageReceiver: PackageInstallReceiver? = null
 
     // Monitor de rede em tempo real + ícone de status
