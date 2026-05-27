@@ -80,6 +80,7 @@ class MainActivity : Activity() {
     // Monitor de rede em tempo real + ícone de status
     private var networkMonitor: NetworkMonitor? = null
     private var networkStatusIcon: ImageView? = null
+    private var loginWifiIcon: ImageView? = null
 
     // APK aguardando instalação após usuário conceder permissão "Instalar apps desconhecidos"
     private var pendingInstallApk: File? = null
@@ -349,7 +350,6 @@ class MainActivity : Activity() {
     }
 
     private fun applyNetworkState(state: NetworkMonitor.State) {
-        val iv = networkStatusIcon ?: return
         val res = when (state) {
             NetworkMonitor.State.OFFLINE -> R.drawable.ic_wifi_off
             NetworkMonitor.State.WIFI_LEVEL_1 -> R.drawable.ic_wifi_1
@@ -360,7 +360,13 @@ class MainActivity : Activity() {
             NetworkMonitor.State.ETHERNET -> R.drawable.ic_ethernet
             NetworkMonitor.State.ETHERNET_NO_INTERNET -> R.drawable.ic_ethernet_alert
         }
-        iv.setImageResource(res)
+        networkStatusIcon?.setImageResource(res)
+        loginWifiIcon?.let { iv ->
+            // Limpa o tint branco aplicado em makeIconButton para preservar
+            // as cores originais do vetor (ex.: badge amarelo do alerta).
+            iv.clearColorFilter()
+            iv.setImageResource(res)
+        }
     }
 
     private fun buildLoginScreen(): View {
