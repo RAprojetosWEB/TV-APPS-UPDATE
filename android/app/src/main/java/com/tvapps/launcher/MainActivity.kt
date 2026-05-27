@@ -81,6 +81,7 @@ class MainActivity : Activity() {
     private var networkMonitor: NetworkMonitor? = null
     private var networkStatusIcon: ImageView? = null
     private var loginWifiIcon: ImageView? = null
+    private var lastNetworkState: NetworkMonitor.State = NetworkMonitor.State.OFFLINE
 
     // APK aguardando instalação após usuário conceder permissão "Instalar apps desconhecidos"
     private var pendingInstallApk: File? = null
