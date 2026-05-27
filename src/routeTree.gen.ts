@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicVerifyLauncherPasswordRouteImport } from './routes/api/public/verify-launcher-password'
 import { Route as ApiPublicCatalogRouteImport } from './routes/api/public/catalog'
 import { Route as ApiPublicBumpVersionRouteImport } from './routes/api/public/bump-version'
 
@@ -30,6 +31,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicVerifyLauncherPasswordRoute =
+  ApiPublicVerifyLauncherPasswordRouteImport.update({
+    id: '/api/public/verify-launcher-password',
+    path: '/api/public/verify-launcher-password',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCatalogRoute = ApiPublicCatalogRouteImport.update({
   id: '/api/public/catalog',
   path: '/api/public/catalog',
@@ -47,6 +54,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/api/public/bump-version': typeof ApiPublicBumpVersionRoute
   '/api/public/catalog': typeof ApiPublicCatalogRoute
+  '/api/public/verify-launcher-password': typeof ApiPublicVerifyLauncherPasswordRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +62,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/api/public/bump-version': typeof ApiPublicBumpVersionRoute
   '/api/public/catalog': typeof ApiPublicCatalogRoute
+  '/api/public/verify-launcher-password': typeof ApiPublicVerifyLauncherPasswordRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,6 +71,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/api/public/bump-version': typeof ApiPublicBumpVersionRoute
   '/api/public/catalog': typeof ApiPublicCatalogRoute
+  '/api/public/verify-launcher-password': typeof ApiPublicVerifyLauncherPasswordRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -71,6 +81,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/api/public/bump-version'
     | '/api/public/catalog'
+    | '/api/public/verify-launcher-password'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -78,6 +89,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/api/public/bump-version'
     | '/api/public/catalog'
+    | '/api/public/verify-launcher-password'
   id:
     | '__root__'
     | '/'
@@ -85,6 +97,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/api/public/bump-version'
     | '/api/public/catalog'
+    | '/api/public/verify-launcher-password'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -93,6 +106,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ApiPublicBumpVersionRoute: typeof ApiPublicBumpVersionRoute
   ApiPublicCatalogRoute: typeof ApiPublicCatalogRoute
+  ApiPublicVerifyLauncherPasswordRoute: typeof ApiPublicVerifyLauncherPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -118,6 +132,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/verify-launcher-password': {
+      id: '/api/public/verify-launcher-password'
+      path: '/api/public/verify-launcher-password'
+      fullPath: '/api/public/verify-launcher-password'
+      preLoaderRoute: typeof ApiPublicVerifyLauncherPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/catalog': {
       id: '/api/public/catalog'
       path: '/api/public/catalog'
@@ -141,7 +162,18 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ApiPublicBumpVersionRoute: ApiPublicBumpVersionRoute,
   ApiPublicCatalogRoute: ApiPublicCatalogRoute,
+  ApiPublicVerifyLauncherPasswordRoute: ApiPublicVerifyLauncherPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
