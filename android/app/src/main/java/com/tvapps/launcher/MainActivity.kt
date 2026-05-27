@@ -618,7 +618,9 @@ class MainActivity : Activity() {
         // Reaproveita o ImageView interno do botão Wi-Fi para refletir o estado
         // real da rede (mesmos drawables usados pelo ícone de status da home).
         loginWifiIcon = wifiBtn.getChildAt(0) as? ImageView
-        applyNetworkState(NetworkMonitor.State.OFFLINE)
+        // Reaplica o último estado conhecido para o ícone novo
+        // (o monitor só notifica em mudanças, então sem isso o ícone ficaria parado).
+        applyNetworkState(lastNetworkState)
 
         quickActions.addView(settingsBtn)
         quickActions.addView(wifiBtn)
