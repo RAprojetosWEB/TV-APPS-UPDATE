@@ -74,12 +74,10 @@ class MainActivity : Activity() {
             statusHandler.postDelayed(this, 30 * 60_000L)
         }
     }
-    private var networkCallback: ConnectivityManager.NetworkCallback? = null
     private var packageReceiver: PackageInstallReceiver? = null
 
     // Monitor de rede em tempo real + ícone de status
     private var networkMonitor: NetworkMonitor? = null
-    private var networkStatusIcon: ImageView? = null
     private var loginWifiIcon: ImageView? = null
     private var lastNetworkState: NetworkMonitor.State = NetworkMonitor.State.OFFLINE
 
@@ -328,14 +326,12 @@ class MainActivity : Activity() {
             statusHandler.removeCallbacks(weatherTicker)
             statusHandler.post(weatherTicker)
         }
-        registerNetworkCallback()
     }
 
     override fun onPause() {
         super.onPause()
         statusHandler.removeCallbacks(clockTicker)
         statusHandler.removeCallbacks(weatherTicker)
-        unregisterNetworkCallback()
     }
 
     override fun onStart() {
@@ -362,12 +358,39 @@ class MainActivity : Activity() {
             NetworkMonitor.State.ETHERNET -> R.drawable.ic_ethernet
             NetworkMonitor.State.ETHERNET_NO_INTERNET -> R.drawable.ic_ethernet_alert
         }
-        networkStatusIcon?.setImageResource(res)
         loginWifiIcon?.let { iv ->
             // Limpa o tint branco aplicado em makeIconButton para preservar
             // as cores originais do vetor (ex.: badge amarelo do alerta).
             iv.clearColorFilter()
             iv.setImageResource(res)
+        }
+        // Pílula única de Wi-Fi na barra superior (ícone + texto + cor).
+        wifiView?.let { v ->
+            val label = when (state) {
+                NetworkMonitor.State.OFFLINE -> "Sem rede"
+                NetworkMonitor.State.WIFI_NO_INTERNET -> "Sem internet"
+                NetworkMonitor.State.ETHERNET -> "Ethernet"
+                NetworkMonitor.State.ETHERNET_NO_INTERNET -> "Sem internet"
+                else -> "Wi-Fi"
+            }
+            val color = when (state) {
+                NetworkMonitor.State.OFFLINE,
+                NetworkMonitor.State.WIFI_NO_INTERNET,
+                NetworkMonitor.State.ETHERNET_NO_INTERNET -> Color.parseColor("#FF6B6B")
+                else -> Color.parseColor("#5EE6A8")
+            }
+            v.text = label
+            v.setTextColor(color)
+            val icon = androidx.core.content.ContextCompat.getDrawable(this, res)?.mutate()
+            // Mantém cores originais do vetor para alerta/ethernet; nos demais aplica cor da pílula.
+            if (state != NetworkMonitor.State.WIFI_NO_INTERNET &&
+                state != NetworkMonitor.State.ETHERNET_NO_INTERNET) {
+                icon?.setTint(color)
+            }
+            val size = dp(16)
+            icon?.setBounds(0, 0, size, size)
+            v.setCompoundDrawables(icon, null, null, null)
+            v.compoundDrawablePadding = dp(6)
         }
     }
 
@@ -1807,17 +1830,8 @@ class MainActivity : Activity() {
         val weather = makeStatusPill("🌥  --°C", "#FFFFFF", scale)
         val wifi = makeStatusPill("📶  Wi-Fi", "#5EE6A8", scale)
 
-        // Ícone dedicado de status de rede (atualizado pelo NetworkMonitor)
-        val netIconSize = dp((22 * scale).toInt())
-        val netIcon = ImageView(this).apply {
-            setImageResource(R.drawable.ic_wifi_off)
-            layoutParams = LinearLayout.LayoutParams(netIconSize, netIconSize).apply {
-                gravity = Gravity.CENTER_VERTICAL
-            }
-        }
-
         val gap = dp((8 * scale).toInt())
-        listOf<View>(system, settings, clock, date, weather, netIcon, wifi).forEach { pill ->
+        listOf<View>(system, settings, clock, date, weather, wifi).forEach { pill ->
             (pill.layoutParams as LinearLayout.LayoutParams).marginStart = gap
         }
 
@@ -1826,14 +1840,12 @@ class MainActivity : Activity() {
         right.addView(clock)
         right.addView(date)
         right.addView(weather)
-        right.addView(netIcon)
         right.addView(wifi)
 
         clockView = clock
         dateView = date
         weatherView = weather
         wifiView = wifi
-        networkStatusIcon = netIcon
         otaStatusPill = system
         settingsPill = settings
         // Reaplica o último estado conhecido ao ícone recém-criado
@@ -1853,7 +1865,6 @@ class MainActivity : Activity() {
         // Inicializa valores
         updateClockAndDate()
         refreshWeather()
-        updateWifi(isNetworkOnline())
         // checkOtaUpdate removido daqui para desativar verificação automática pós-login
         // Só será possível verificar manualmente via clique no botão.
 
@@ -1913,64 +1924,6 @@ class MainActivity : Activity() {
     }
 
     // ===================== REDE =====================
-
-    private fun isNetworkOnline(): Boolean {
-        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return false
-        val net = cm.activeNetwork ?: return false
-        val caps = cm.getNetworkCapabilities(net) ?: return false
-        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-            caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-    }
-
-    private fun updateWifi(online: Boolean) {
-        wifiView?.post {
-            val v = wifiView ?: return@post
-            val iconRes = if (online) R.drawable.ic_wifi else R.drawable.ic_wifi_off
-            val color = if (online) Color.parseColor("#5EE6A8") else Color.parseColor("#FF6B6B")
-            v.text = if (online) "Wi-Fi" else "Sem rede"
-            v.setTextColor(color)
-            val icon = androidx.core.content.ContextCompat.getDrawable(this, iconRes)?.mutate()
-            icon?.setTint(color)
-            val size = dp(16)
-            icon?.setBounds(0, 0, size, size)
-            v.setCompoundDrawables(icon, null, null, null)
-            v.compoundDrawablePadding = dp(6)
-        }
-    }
-
-    private fun registerNetworkCallback() {
-        if (networkCallback != null) return
-        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return
-        val cb = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) { updateWifi(true) }
-            override fun onLost(network: Network) { updateWifi(false) }
-            override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) {
-                updateWifi(
-                    caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-                        caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-                )
-            }
-        }
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                cm.registerDefaultNetworkCallback(cb)
-            } else {
-                val req = NetworkRequest.Builder()
-                    .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                    .build()
-                cm.registerNetworkCallback(req, cb)
-            }
-            networkCallback = cb
-        } catch (_: Exception) {
-        }
-    }
-
-    private fun unregisterNetworkCallback() {
-        val cb = networkCallback ?: return
-        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
-        try { cm?.unregisterNetworkCallback(cb) } catch (_: Exception) {}
-        networkCallback = null
-    }
 
     // ===================== OTA =====================
 
@@ -2149,7 +2102,6 @@ class MainActivity : Activity() {
         packageReceiver?.let { PackageInstallReceiver.unregister(this, it) }
         scope.cancel()
         statusHandler.removeCallbacksAndMessages(null)
-        unregisterNetworkCallback()
         super.onDestroy()
     }
 
