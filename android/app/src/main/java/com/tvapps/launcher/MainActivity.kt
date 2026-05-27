@@ -79,7 +79,6 @@ class MainActivity : Activity() {
 
     // Monitor de rede em tempo real + ícone de status
     private var networkMonitor: NetworkMonitor? = null
-    private var networkStatusIcon: ImageView? = null
     private var loginWifiIcon: ImageView? = null
     private var lastNetworkState: NetworkMonitor.State = NetworkMonitor.State.OFFLINE
 
@@ -328,14 +327,12 @@ class MainActivity : Activity() {
             statusHandler.removeCallbacks(weatherTicker)
             statusHandler.post(weatherTicker)
         }
-        registerNetworkCallback()
     }
 
     override fun onPause() {
         super.onPause()
         statusHandler.removeCallbacks(clockTicker)
         statusHandler.removeCallbacks(weatherTicker)
-        unregisterNetworkCallback()
     }
 
     override fun onStart() {
@@ -362,12 +359,39 @@ class MainActivity : Activity() {
             NetworkMonitor.State.ETHERNET -> R.drawable.ic_ethernet
             NetworkMonitor.State.ETHERNET_NO_INTERNET -> R.drawable.ic_ethernet_alert
         }
-        networkStatusIcon?.setImageResource(res)
         loginWifiIcon?.let { iv ->
             // Limpa o tint branco aplicado em makeIconButton para preservar
             // as cores originais do vetor (ex.: badge amarelo do alerta).
             iv.clearColorFilter()
             iv.setImageResource(res)
+        }
+        // Pílula única de Wi-Fi na barra superior (ícone + texto + cor).
+        wifiView?.let { v ->
+            val label = when (state) {
+                NetworkMonitor.State.OFFLINE -> "Sem rede"
+                NetworkMonitor.State.WIFI_NO_INTERNET -> "Sem internet"
+                NetworkMonitor.State.ETHERNET -> "Ethernet"
+                NetworkMonitor.State.ETHERNET_NO_INTERNET -> "Sem internet"
+                else -> "Wi-Fi"
+            }
+            val color = when (state) {
+                NetworkMonitor.State.OFFLINE,
+                NetworkMonitor.State.WIFI_NO_INTERNET,
+                NetworkMonitor.State.ETHERNET_NO_INTERNET -> Color.parseColor("#FF6B6B")
+                else -> Color.parseColor("#5EE6A8")
+            }
+            v.text = label
+            v.setTextColor(color)
+            val icon = androidx.core.content.ContextCompat.getDrawable(this, res)?.mutate()
+            // Mantém cores originais do vetor para alerta/ethernet; nos demais aplica cor da pílula.
+            if (state != NetworkMonitor.State.WIFI_NO_INTERNET &&
+                state != NetworkMonitor.State.ETHERNET_NO_INTERNET) {
+                icon?.setTint(color)
+            }
+            val size = dp(16)
+            icon?.setBounds(0, 0, size, size)
+            v.setCompoundDrawables(icon, null, null, null)
+            v.compoundDrawablePadding = dp(6)
         }
     }
 
