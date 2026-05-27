@@ -77,6 +77,10 @@ class MainActivity : Activity() {
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
     private var packageReceiver: PackageInstallReceiver? = null
 
+    // Monitor de rede em tempo real + ícone de status
+    private var networkMonitor: NetworkMonitor? = null
+    private var networkStatusIcon: ImageView? = null
+
     // APK aguardando instalação após usuário conceder permissão "Instalar apps desconhecidos"
     private var pendingInstallApk: File? = null
 
@@ -148,6 +152,9 @@ class MainActivity : Activity() {
         }
 
         setupPackageReceiver()
+
+        // Monitor de rede em tempo real (callback do sistema, sem polling)
+        networkMonitor = NetworkMonitor(this)
     }
 
     private fun buildSplashScreen(): View {
@@ -327,6 +334,33 @@ class MainActivity : Activity() {
         statusHandler.removeCallbacks(clockTicker)
         statusHandler.removeCallbacks(weatherTicker)
         unregisterNetworkCallback()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // Estado inicial conservador antes do primeiro evento real
+        applyNetworkState(NetworkMonitor.State.OFFLINE)
+        networkMonitor?.start { state -> applyNetworkState(state) }
+    }
+
+    override fun onStop() {
+        networkMonitor?.stop()
+        super.onStop()
+    }
+
+    private fun applyNetworkState(state: NetworkMonitor.State) {
+        val iv = networkStatusIcon ?: return
+        val res = when (state) {
+            NetworkMonitor.State.OFFLINE -> R.drawable.ic_wifi_off
+            NetworkMonitor.State.WIFI_LEVEL_1 -> R.drawable.ic_wifi_1
+            NetworkMonitor.State.WIFI_LEVEL_2 -> R.drawable.ic_wifi_2
+            NetworkMonitor.State.WIFI_LEVEL_3 -> R.drawable.ic_wifi_3
+            NetworkMonitor.State.WIFI_LEVEL_4 -> R.drawable.ic_wifi_4
+            NetworkMonitor.State.WIFI_NO_INTERNET -> R.drawable.ic_wifi_alert
+            NetworkMonitor.State.ETHERNET -> R.drawable.ic_ethernet
+            NetworkMonitor.State.ETHERNET_NO_INTERNET -> R.drawable.ic_ethernet_alert
+        }
+        iv.setImageResource(res)
     }
 
     private fun buildLoginScreen(): View {
@@ -1757,8 +1791,17 @@ class MainActivity : Activity() {
         val weather = makeStatusPill("🌥  --°C", "#FFFFFF", scale)
         val wifi = makeStatusPill("📶  Wi-Fi", "#5EE6A8", scale)
 
+        // Ícone dedicado de status de rede (atualizado pelo NetworkMonitor)
+        val netIconSize = dp((22 * scale).toInt())
+        val netIcon = ImageView(this).apply {
+            setImageResource(R.drawable.ic_wifi_off)
+            layoutParams = LinearLayout.LayoutParams(netIconSize, netIconSize).apply {
+                gravity = Gravity.CENTER_VERTICAL
+            }
+        }
+
         val gap = dp((8 * scale).toInt())
-        listOf(system, settings, clock, date, weather, wifi).forEach { pill ->
+        listOf<View>(system, settings, clock, date, weather, netIcon, wifi).forEach { pill ->
             (pill.layoutParams as LinearLayout.LayoutParams).marginStart = gap
         }
 
@@ -1767,12 +1810,14 @@ class MainActivity : Activity() {
         right.addView(clock)
         right.addView(date)
         right.addView(weather)
+        right.addView(netIcon)
         right.addView(wifi)
 
         clockView = clock
         dateView = date
         weatherView = weather
         wifiView = wifi
+        networkStatusIcon = netIcon
         otaStatusPill = system
         settingsPill = settings
 
