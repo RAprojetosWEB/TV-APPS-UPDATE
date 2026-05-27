@@ -351,6 +351,7 @@ class MainActivity : Activity() {
     }
 
     private fun applyNetworkState(state: NetworkMonitor.State) {
+        lastNetworkState = state
         val res = when (state) {
             NetworkMonitor.State.OFFLINE -> R.drawable.ic_wifi_off
             NetworkMonitor.State.WIFI_LEVEL_1 -> R.drawable.ic_wifi_1
