@@ -1523,6 +1523,39 @@ class MainActivity : Activity() {
 
     }
 
+    private fun openSystemSettings() {
+        // 1) Tenta a tela de Settings nativa do Android TV
+        val tvIntent = Intent().apply {
+            component = android.content.ComponentName(
+                "com.android.tv.settings",
+                "com.android.tv.settings.MainSettings"
+            )
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        if (tvIntent.resolveActivity(packageManager) != null) {
+            try { startActivity(tvIntent); return } catch (_: Exception) {}
+        }
+
+        // 2) Fallback: Settings padrão do Android (celular / TV Box genérica)
+        val phoneIntent = Intent().apply {
+            component = android.content.ComponentName(
+                "com.android.settings",
+                "com.android.settings.Settings"
+            )
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        if (phoneIntent.resolveActivity(packageManager) != null) {
+            try { startActivity(phoneIntent); return } catch (_: Exception) {}
+        }
+
+        // 3) Último recurso: ação genérica ACTION_SETTINGS
+        try {
+            startActivity(Intent(android.provider.Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (_: Exception) {
+            // Silencioso por requisito
+        }
+    }
+
     private fun dp(value: Int): Int {
         val d = resources.displayMetrics.density
         return (value * d).toInt()
