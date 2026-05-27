@@ -1791,8 +1791,17 @@ class MainActivity : Activity() {
         val weather = makeStatusPill("🌥  --°C", "#FFFFFF", scale)
         val wifi = makeStatusPill("📶  Wi-Fi", "#5EE6A8", scale)
 
+        // Ícone dedicado de status de rede (atualizado pelo NetworkMonitor)
+        val netIconSize = dp((22 * scale).toInt())
+        val netIcon = ImageView(this).apply {
+            setImageResource(R.drawable.ic_wifi_off)
+            layoutParams = LinearLayout.LayoutParams(netIconSize, netIconSize).apply {
+                gravity = Gravity.CENTER_VERTICAL
+            }
+        }
+
         val gap = dp((8 * scale).toInt())
-        listOf(system, settings, clock, date, weather, wifi).forEach { pill ->
+        listOf<View>(system, settings, clock, date, weather, netIcon, wifi).forEach { pill ->
             (pill.layoutParams as LinearLayout.LayoutParams).marginStart = gap
         }
 
@@ -1801,12 +1810,14 @@ class MainActivity : Activity() {
         right.addView(clock)
         right.addView(date)
         right.addView(weather)
+        right.addView(netIcon)
         right.addView(wifi)
 
         clockView = clock
         dateView = date
         weatherView = weather
         wifiView = wifi
+        networkStatusIcon = netIcon
         otaStatusPill = system
         settingsPill = settings
 
