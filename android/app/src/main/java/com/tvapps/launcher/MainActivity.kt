@@ -1868,6 +1868,12 @@ class MainActivity : Activity() {
         val weather = makeStatusPill("🌥  --°C", "#FFFFFF", scale)
         val wifi = makeStatusPill("📶  Wi-Fi", "#5EE6A8", scale)
 
+        // Pílulas que abrem a configuração correspondente do sistema.
+        wireStatusPillAction(clock) { openDateSettings() }
+        wireStatusPillAction(date) { openDateSettings() }
+        wireStatusPillAction(weather) { openLocationSettings() }
+        wireStatusPillAction(wifi) { openNetworkSettings() }
+
         val gap = dp((8 * scale).toInt())
         listOf<View>(system, settings, clock, date, weather, wifi).forEach { pill ->
             (pill.layoutParams as LinearLayout.LayoutParams).marginStart = gap
