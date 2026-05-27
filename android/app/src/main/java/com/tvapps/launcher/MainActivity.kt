@@ -1552,6 +1552,43 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun openNetworkSettings() {
+        // 1) Tela de rede da Android TV
+        val tvIntent = Intent().apply {
+            component = android.content.ComponentName(
+                "com.android.tv.settings",
+                "com.android.tv.settings.connectivity.NetworkActivity"
+            )
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        if (tvIntent.resolveActivity(packageManager) != null) {
+            try { startActivity(tvIntent); return } catch (_: Exception) {}
+        }
+
+        // 2) Fallback: Wireless Settings do Android padrão
+        val wirelessIntent = Intent().apply {
+            component = android.content.ComponentName(
+                "com.android.settings",
+                "com.android.settings.Settings\$WirelessSettings"
+            )
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        if (wirelessIntent.resolveActivity(packageManager) != null) {
+            try { startActivity(wirelessIntent); return } catch (_: Exception) {}
+        }
+
+        // 3) Fallbacks genéricos
+        try {
+            startActivity(Intent(android.provider.Settings.ACTION_WIFI_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            return
+        } catch (_: Exception) {}
+        try {
+            startActivity(Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (_: Exception) {
+            // Silencioso por requisito
+        }
+    }
+
     private fun dp(value: Int): Int {
         val d = resources.displayMetrics.density
         return (value * d).toInt()
