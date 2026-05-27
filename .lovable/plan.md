@@ -1,19 +1,26 @@
-## O que está acontecendo
+## Problema
 
-O dispositivo está conectado normalmente, mas o app mostra o ícone de Wi-Fi como desconectado porque os ícones da tela de login e da tela principal são criados depois que o monitor de rede já detectou o estado real.
+Na tela principal existem dois indicadores de Wi‑Fi lado a lado:
 
-Como a rede não mudou de novo, o monitor não manda outro aviso, então o ícone novo fica parado no desenho errado.
+- um `ImageView` dedicado (`netIcon`) com o nível real do sinal;
+- uma pílula de texto (`wifi`) com ícone + texto `Wi‑Fi`.
 
-## Correção
+Isso cria a duplicação mostrada na imagem.
 
-1. Guardar na `MainActivity` o último estado de rede conhecido.
-2. Sempre que `applyNetworkState(...)` receber um estado novo, atualizar esse valor guardado.
-3. Quando o ícone Wi-Fi do login for criado, aplicar imediatamente o último estado conhecido nele.
-4. Quando o ícone Wi-Fi da tela principal for criado, aplicar imediatamente o último estado conhecido nele.
+## Solução proposta
+
+1. Manter apenas a pílula `Wi‑Fi`, porque ela já combina ícone e texto no mesmo botão visual.
+2. Fazer o `NetworkMonitor` atualizar essa pílula diretamente:
+   - Wi‑Fi conectado: ícone de nível do sinal + texto `Wi‑Fi` em verde;
+   - Wi‑Fi sem internet: ícone de alerta + texto `Sem internet` em vermelho;
+   - sem rede: ícone desligado + texto `Sem rede` em vermelho;
+   - Ethernet: ícone Ethernet + texto `Ethernet`.
+3. Remover o `ImageView` separado (`netIcon`) da barra superior para eliminar o Wi‑Fi duplicado.
+4. Remover o callback antigo `registerNetworkCallback/updateWifi`, já que ele vira redundante e poderia voltar a causar conflito com o `NetworkMonitor`.
+5. Preservar a correção anterior: quando a tela de login ou principal abrir, o último estado conhecido continua sendo aplicado imediatamente.
 
 ## Resultado esperado
 
-- Ao entrar no login, o ícone já aparece com o estado correto do Wi-Fi.
-- Depois de colocar a senha e entrar na tela principal, o ícone continua correto.
-- Nenhum botão, posição, layout ou elemento novo será adicionado.
-- A mudança é só no comportamento do desenho do ícone.
+- Na barra superior aparece apenas um indicador de rede.
+- O estado continua correto no login e na tela principal.
+- Nenhuma mudança em cards, senha, downloads ou layout geral.
