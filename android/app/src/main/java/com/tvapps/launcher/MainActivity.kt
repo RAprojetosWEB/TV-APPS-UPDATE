@@ -571,15 +571,7 @@ class MainActivity : Activity() {
             openSystemSettings()
         }
         val wifiBtn = makeIconButton("Wi-Fi", R.drawable.ic_wifi) {
-            try {
-                startActivity(Intent(android.provider.Settings.ACTION_WIFI_SETTINGS))
-            } catch (e: Exception) {
-                try {
-                    startActivity(Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS))
-                } catch (_: Exception) {
-                    Toast.makeText(this@MainActivity, "Não foi possível abrir as configurações de rede", Toast.LENGTH_SHORT).show()
-                }
-            }
+            openNetworkSettings()
         }
 
         quickActions.addView(settingsBtn)
