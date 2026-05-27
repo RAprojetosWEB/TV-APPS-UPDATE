@@ -1836,6 +1836,9 @@ class MainActivity : Activity() {
         networkStatusIcon = netIcon
         otaStatusPill = system
         settingsPill = settings
+        // Reaplica o último estado conhecido ao ícone recém-criado
+        // (o monitor só dispara em mudanças de rede).
+        applyNetworkState(lastNetworkState)
 
         // Navegação D-pad determinística entre as pílulas focáveis,
         // independente da animação de LayoutTransition.
