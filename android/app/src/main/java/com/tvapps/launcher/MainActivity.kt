@@ -956,6 +956,8 @@ class MainActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             background = makeRootBackground()
             setPadding(dp((64 * scaleFactor).toInt()), dp((40 * scaleFactor).toInt()), dp((64 * scaleFactor).toInt()), dp((32 * scaleFactor).toInt()))
+            clipChildren = false
+            clipToPadding = false
         }
 
         // Cabeçalho: logo+subtitulo à esquerda, barra de status à direita
@@ -1747,6 +1749,9 @@ class MainActivity : Activity() {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
             )
+            // Espaço extra à direita para o efeito de foco da última pílula (Wi-Fi)
+            // não ser cortado pela borda do container.
+            setPadding(0, 0, dp((12 * scale).toInt()), 0)
         }
 
         // Bloco esquerdo: TV.Apps + subtítulo
