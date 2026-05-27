@@ -613,6 +613,10 @@ class MainActivity : Activity() {
         val wifiBtn = makeIconButton("Wi-Fi", R.drawable.ic_wifi) {
             openNetworkSettings()
         }
+        // Reaproveita o ImageView interno do botão Wi-Fi para refletir o estado
+        // real da rede (mesmos drawables usados pelo ícone de status da home).
+        loginWifiIcon = wifiBtn.getChildAt(0) as? ImageView
+        applyNetworkState(NetworkMonitor.State.OFFLINE)
 
         quickActions.addView(settingsBtn)
         quickActions.addView(wifiBtn)
@@ -911,6 +915,8 @@ class MainActivity : Activity() {
     }
 
     private fun buildRoot(): View {
+        // Tela de login foi descartada — o ImageView de Wi-Fi do login não existe mais.
+        loginWifiIcon = null
         val dm = resources.displayMetrics
         val widthDp = dm.widthPixels / dm.density
         val heightDp = dm.heightPixels / dm.density
