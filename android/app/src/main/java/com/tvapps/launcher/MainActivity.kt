@@ -45,6 +45,44 @@ import android.view.SoundEffectConstants
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import java.net.HttpURLConnection
+import java.net.URL
+import org.json.JSONObject
+
+private const val VERIFY_PASSWORD_ENDPOINT =
+    "https://sideload-hero.lovable.app/api/public/verify-launcher-password"
+// Senha de emergência usada APENAS quando a TV está offline / servidor inacessível.
+// Quando há rede, vale somente a senha definida no admin (banco).
+private const val FALLBACK_LAUNCHER_PASSWORD = "1555"
+
+private enum class VerifyResult { OK, WRONG, NETWORK_ERROR }
+
+private fun verifyLauncherPasswordRemote(password: String): VerifyResult {
+    return try {
+        val conn = (URL(VERIFY_PASSWORD_ENDPOINT).openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            connectTimeout = 5000
+            readTimeout = 5000
+            doOutput = true
+            setRequestProperty("Content-Type", "application/json")
+            setRequestProperty("Accept", "application/json")
+        }
+        val payload = JSONObject().put("password", password).toString()
+        conn.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
+        val code = conn.responseCode
+        if (code !in 200..299) {
+            conn.disconnect()
+            return VerifyResult.NETWORK_ERROR
+        }
+        val body = conn.inputStream.bufferedReader().use { it.readText() }
+        conn.disconnect()
+        val ok = JSONObject(body).optBoolean("ok", false)
+        if (ok) VerifyResult.OK else VerifyResult.WRONG
+    } catch (e: Exception) {
+        android.util.Log.w("MainActivity", "verifyLauncherPasswordRemote failed: ${e.message}")
+        VerifyResult.NETWORK_ERROR
+    }
+}
 
 class MainActivity : Activity() {
 
@@ -559,12 +597,35 @@ class MainActivity : Activity() {
             }
 
             setOnClickListener {
-                if (passwordInput.text.toString() == "1555") {
-                    isUnlocked = true
-                    setContentView(buildRoot())
-                } else {
-                    Toast.makeText(this@MainActivity, "Senha incorreta", Toast.LENGTH_SHORT).show()
-                    passwordInput.text.clear()
+                val typed = passwordInput.text.toString()
+                val btn = this
+                if (typed.isEmpty()) {
+                    Toast.makeText(this@MainActivity, "Digite a senha", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                // Bloqueia clique duplo enquanto verifica e dá feedback visual.
+                val originalText = btn.text
+                btn.isClickable = false
+                btn.text = "VERIFICANDO…"
+                scope.launch {
+                    val result = withContext(Dispatchers.IO) {
+                        verifyLauncherPasswordRemote(typed)
+                    }
+                    btn.isClickable = true
+                    btn.text = originalText
+                    val ok = when (result) {
+                        VerifyResult.OK -> true
+                        VerifyResult.WRONG -> false
+                        // Offline / erro de rede: fallback para a senha de emergência.
+                        VerifyResult.NETWORK_ERROR -> typed == FALLBACK_LAUNCHER_PASSWORD
+                    }
+                    if (ok) {
+                        isUnlocked = true
+                        setContentView(buildRoot())
+                    } else {
+                        Toast.makeText(this@MainActivity, "Senha incorreta", Toast.LENGTH_SHORT).show()
+                        passwordInput.text.clear()
+                    }
                 }
             }
         }
