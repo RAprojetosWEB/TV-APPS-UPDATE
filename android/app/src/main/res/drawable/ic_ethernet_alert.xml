@@ -1,0 +1,31 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M12,3 L12,9"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M6,9 L18,9 L18,16 L15,16 L15,19 L13,19 L13,16 L11,16 L11,19 L9,19 L9,16 L6,16 Z"/>
+    <path
+        android:strokeColor="#0d0820"
+        android:strokeWidth="0.8"
+        android:fillColor="#00000000"
+        android:pathData="M8,10 L8,13 M10,10 L10,13 M12,10 L12,13 M14,10 L14,13 M16,10 L16,13"/>
+    <!-- Triângulo de alerta amarelo no canto inferior direito -->
+    <path
+        android:fillColor="#FFC107"
+        android:pathData="M18,14 L24,24 L12,24 Z"/>
+    <!-- "!" preto -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M17.4,18 L18.6,18 L18.4,21.2 L17.6,21.2 Z"/>
+    <path
+        android:fillColor="#000000"
+        android:pathData="M18,22 m-0.6,0 a0.6,0.6 0,1 1,1.2 0 a0.6,0.6 0,1 1,-1.2 0"/>
+</vector>
