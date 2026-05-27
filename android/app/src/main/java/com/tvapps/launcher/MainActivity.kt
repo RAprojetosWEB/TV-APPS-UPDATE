@@ -568,11 +568,7 @@ class MainActivity : Activity() {
         }
 
         val settingsBtn = makeIconButton("Configurações", R.drawable.ic_settings) {
-            try {
-                startActivity(Intent(android.provider.Settings.ACTION_SETTINGS))
-            } catch (e: Exception) {
-                Toast.makeText(this@MainActivity, "Não foi possível abrir as configurações", Toast.LENGTH_SHORT).show()
-            }
+            openSystemSettings()
         }
         val wifiBtn = makeIconButton("Wi-Fi", R.drawable.ic_wifi) {
             try {
@@ -1708,11 +1704,7 @@ class MainActivity : Activity() {
             compoundDrawablePadding = 0
 
             setOnClickListener {
-                try {
-                    startActivity(Intent(android.provider.Settings.ACTION_SETTINGS))
-                } catch (e: Exception) {
-                    Toast.makeText(this@MainActivity, "Não foi possível abrir as configurações", Toast.LENGTH_SHORT).show()
-                }
+                openSystemSettings()
             }
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
