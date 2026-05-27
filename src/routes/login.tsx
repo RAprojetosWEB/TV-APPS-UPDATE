@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { NetworkIndicator } from "@/components/NetworkIndicator";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -52,6 +53,9 @@ function LoginPage() {
 
   return (
     <div className="min-h-screen w-screen flex items-center justify-center bg-background text-foreground px-6">
+      <div className="absolute top-6 right-6 z-20">
+        <NetworkIndicator compact />
+      </div>
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div
           className="absolute left-1/2 top-1/2 h-[80vmin] w-[80vmin] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[140px]"
