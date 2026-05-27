@@ -559,12 +559,35 @@ class MainActivity : Activity() {
             }
 
             setOnClickListener {
-                if (passwordInput.text.toString() == "1555") {
-                    isUnlocked = true
-                    setContentView(buildRoot())
-                } else {
-                    Toast.makeText(this@MainActivity, "Senha incorreta", Toast.LENGTH_SHORT).show()
-                    passwordInput.text.clear()
+                val typed = passwordInput.text.toString()
+                val btn = this
+                if (typed.isEmpty()) {
+                    Toast.makeText(this@MainActivity, "Digite a senha", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                // Bloqueia clique duplo enquanto verifica e dá feedback visual.
+                val originalText = btn.text
+                btn.isClickable = false
+                btn.text = "VERIFICANDO…"
+                scope.launch {
+                    val result = withContext(Dispatchers.IO) {
+                        verifyLauncherPasswordRemote(typed)
+                    }
+                    btn.isClickable = true
+                    btn.text = originalText
+                    val ok = when (result) {
+                        VerifyResult.OK -> true
+                        VerifyResult.WRONG -> false
+                        // Offline / erro de rede: fallback para a senha de emergência.
+                        VerifyResult.NETWORK_ERROR -> typed == FALLBACK_LAUNCHER_PASSWORD
+                    }
+                    if (ok) {
+                        isUnlocked = true
+                        setContentView(buildRoot())
+                    } else {
+                        Toast.makeText(this@MainActivity, "Senha incorreta", Toast.LENGTH_SHORT).show()
+                        passwordInput.text.clear()
+                    }
                 }
             }
         }
