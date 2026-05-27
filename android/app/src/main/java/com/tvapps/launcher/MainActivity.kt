@@ -956,6 +956,8 @@ class MainActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             background = makeRootBackground()
             setPadding(dp((64 * scaleFactor).toInt()), dp((40 * scaleFactor).toInt()), dp((64 * scaleFactor).toInt()), dp((32 * scaleFactor).toInt()))
+            clipChildren = false
+            clipToPadding = false
         }
 
         // Cabeçalho: logo+subtitulo à esquerda, barra de status à direita
