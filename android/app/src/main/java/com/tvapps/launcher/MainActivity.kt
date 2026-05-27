@@ -1654,6 +1654,44 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun openDateSettings() {
+        try {
+            startActivity(Intent(android.provider.Settings.ACTION_DATE_SETTINGS)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            return
+        } catch (_: Exception) {}
+        openSystemSettings()
+    }
+
+    private fun openLocationSettings() {
+        try {
+            startActivity(Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            return
+        } catch (_: Exception) {}
+        openSystemSettings()
+    }
+
+    /** Torna uma pílula focável (D-pad), clicável e com mesmo realce de foco
+     *  das demais pílulas (borda branca + leve scale). */
+    private fun wireStatusPillAction(pill: TextView, onTap: () -> Unit) {
+        pill.isFocusable = true
+        pill.isClickable = true
+        pill.setOnClickListener { onTap() }
+        pill.setOnFocusChangeListener { v, hasFocus ->
+            val bg = (v.background as? GradientDrawable) ?: return@setOnFocusChangeListener
+            if (hasFocus) {
+                bg.setColor(Color.parseColor("#33FFFFFF"))
+                bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                v.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
+            } else {
+                bg.setColor(Color.parseColor("#1AFFFFFF"))
+                bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                v.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
+            }
+        }
+    }
+
     private fun dp(value: Int): Int {
         val d = resources.displayMetrics.density
         return (value * d).toInt()
