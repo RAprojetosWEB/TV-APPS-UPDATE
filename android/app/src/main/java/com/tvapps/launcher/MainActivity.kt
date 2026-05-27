@@ -342,6 +342,8 @@ class MainActivity : Activity() {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
+            clipChildren = false
+            clipToPadding = false
         }
 
         // Layout para bloquear o login caso haja atualização
@@ -369,6 +371,8 @@ class MainActivity : Activity() {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
+            clipChildren = false
+            clipToPadding = false
         }
 
         // Card wrapper (igual ao card da versão web: fundo translúcido,
@@ -391,6 +395,8 @@ class MainActivity : Activity() {
                 cardWidth,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             ).apply { gravity = Gravity.CENTER }
+            clipChildren = false
+            clipToPadding = false
             // Glow verde discreto (API 28+)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 elevation = dp(24).toFloat()
@@ -514,6 +520,8 @@ class MainActivity : Activity() {
             )
             lp.topMargin = dp((20 * scaleFactor).toInt())
             layoutParams = lp
+            clipChildren = false
+            clipToPadding = false
         }
 
         val iconSize = dp((52 * scaleFactor).toInt())
