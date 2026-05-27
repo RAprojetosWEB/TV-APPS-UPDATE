@@ -571,15 +571,7 @@ class MainActivity : Activity() {
             openSystemSettings()
         }
         val wifiBtn = makeIconButton("Wi-Fi", R.drawable.ic_wifi) {
-            try {
-                startActivity(Intent(android.provider.Settings.ACTION_WIFI_SETTINGS))
-            } catch (e: Exception) {
-                try {
-                    startActivity(Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS))
-                } catch (_: Exception) {
-                    Toast.makeText(this@MainActivity, "Não foi possível abrir as configurações de rede", Toast.LENGTH_SHORT).show()
-                }
-            }
+            openNetworkSettings()
         }
 
         quickActions.addView(settingsBtn)
@@ -1547,6 +1539,43 @@ class MainActivity : Activity() {
         // 3) Último recurso: ação genérica ACTION_SETTINGS
         try {
             startActivity(Intent(android.provider.Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (_: Exception) {
+            // Silencioso por requisito
+        }
+    }
+
+    private fun openNetworkSettings() {
+        // 1) Tela de rede da Android TV
+        val tvIntent = Intent().apply {
+            component = android.content.ComponentName(
+                "com.android.tv.settings",
+                "com.android.tv.settings.connectivity.NetworkActivity"
+            )
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        if (tvIntent.resolveActivity(packageManager) != null) {
+            try { startActivity(tvIntent); return } catch (_: Exception) {}
+        }
+
+        // 2) Fallback: Wireless Settings do Android padrão
+        val wirelessIntent = Intent().apply {
+            component = android.content.ComponentName(
+                "com.android.settings",
+                "com.android.settings.Settings\$WirelessSettings"
+            )
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        if (wirelessIntent.resolveActivity(packageManager) != null) {
+            try { startActivity(wirelessIntent); return } catch (_: Exception) {}
+        }
+
+        // 3) Fallbacks genéricos
+        try {
+            startActivity(Intent(android.provider.Settings.ACTION_WIFI_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            return
+        } catch (_: Exception) {}
+        try {
+            startActivity(Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         } catch (_: Exception) {
             // Silencioso por requisito
         }
