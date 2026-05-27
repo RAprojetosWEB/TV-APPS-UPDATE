@@ -1,0 +1,23 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Cabo -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M12,3 L12,9"/>
+    <!-- Corpo do plug RJ45 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M6,9 L18,9 L18,16 L15,16 L15,19 L13,19 L13,16 L11,16 L11,19 L9,19 L9,16 L6,16 Z"/>
+    <!-- Pinos -->
+    <path
+        android:strokeColor="#0d0820"
+        android:strokeWidth="0.8"
+        android:fillColor="#00000000"
+        android:pathData="M8,10 L8,13 M10,10 L10,13 M12,10 L12,13 M14,10 L14,13 M16,10 L16,13"/>
+</vector>
