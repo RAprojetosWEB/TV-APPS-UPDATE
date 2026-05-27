@@ -1749,6 +1749,9 @@ class MainActivity : Activity() {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
             )
+            // Espaço extra à direita para o efeito de foco da última pílula (Wi-Fi)
+            // não ser cortado pela borda do container.
+            setPadding(0, 0, dp((12 * scale).toInt()), 0)
         }
 
         // Bloco esquerdo: TV.Apps + subtítulo
