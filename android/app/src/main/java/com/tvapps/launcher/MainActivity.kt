@@ -2702,6 +2702,7 @@ class MainActivity : Activity() {
         }
 
         val grid = GridLayout(this).apply {
+            id = View.generateViewId()
             columnCount = 5
             layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
                 gravity = Gravity.CENTER
@@ -2726,13 +2727,20 @@ class MainActivity : Activity() {
             .map { it.activityInfo.applicationInfo }
             .sortedBy { pm.getApplicationLabel(it).toString().lowercase() }
 
-        allApps.forEach { appInfo ->
+        allApps.forEachIndexed { index, appInfo ->
             val pkg = appInfo.packageName
             val item = LinearLayout(this).apply {
+                id = View.generateViewId()
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
                 isFocusable = true
                 isClickable = true
+                
+                // Se estiver na primeira linha, foca no título ao subir
+                if (index < 5) {
+                    nextFocusUpId = title.id
+                }
+
                 val itemWidth = dp(110)
                 layoutParams = GridLayout.LayoutParams().apply {
                     width = itemWidth
