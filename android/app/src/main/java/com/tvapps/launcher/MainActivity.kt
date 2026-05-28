@@ -1250,8 +1250,18 @@ class MainActivity : Activity() {
         val remoteIcon = app.iconUrl
         if (!remoteIcon.isNullOrBlank()) {
             RemoteIconLoader.loadInto(this, iconImage, remoteIcon, app.iconRes)
-        } else {
+        } else if (app.iconRes != 0) {
             iconImage.setImageResource(app.iconRes)
+        } else {
+            // Fallback: carregar ícone do sistema para apps favoritos
+            try {
+                val pm = packageManager
+                val icon = pm.getApplicationIcon(app.packageName)
+                iconImage.setImageDrawable(icon)
+            } catch (e: Exception) {
+                // Fallback final se o pacote não for encontrado
+                iconImage.setImageResource(R.drawable.ic_unitv)
+            }
         }
         iconBadge.addView(iconImage)
 
