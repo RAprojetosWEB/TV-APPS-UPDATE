@@ -366,7 +366,10 @@ class MainActivity : Activity() {
         if (cardViews.isNotEmpty()) {
             AppCatalog.apps.forEachIndexed { index, app ->
                 cardViews.getOrNull(index)?.let { refreshInstalledState(it, app) }
-            }
+        }
+        if (isUnlocked) {
+            setContentView(buildRoot())
+        }
         }
         // Status bar tickers
         if (clockView != null) {
