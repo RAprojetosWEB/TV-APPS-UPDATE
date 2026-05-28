@@ -47,6 +47,11 @@
             android:screenOrientation="landscape"
             android:theme="@style/Theme.TVApps" />
 
+        <activity
+            android:name=".AddToQuickAccessActivity"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

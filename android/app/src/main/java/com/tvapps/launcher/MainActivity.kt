@@ -130,7 +130,9 @@ class MainActivity : Activity() {
     // APK aguardando instalação após usuário conceder permissão "Instalar apps desconhecidos"
     private var pendingInstallApk: File? = null
     private var activeOverlay: View? = null
-    private var pendingFocusAddDock = false
+    companion object {
+        var pendingFocusAddDock = false
+    }
 
 
 
@@ -364,7 +366,10 @@ class MainActivity : Activity() {
         if (cardViews.isNotEmpty()) {
             AppCatalog.apps.forEachIndexed { index, app ->
                 cardViews.getOrNull(index)?.let { refreshInstalledState(it, app) }
-            }
+        }
+        if (isUnlocked) {
+            setContentView(buildRoot())
+        }
         }
         // Status bar tickers
         if (clockView != null) {
@@ -2554,7 +2559,7 @@ class MainActivity : Activity() {
             }
             
             setOnClickListener {
-                showAllAppsForDockOverlay(scale)
+                startActivity(Intent(this@MainActivity, AddToQuickAccessActivity::class.java))
             }
         }
         container.addView(addBtn)
@@ -2646,222 +2651,5 @@ class MainActivity : Activity() {
         return item
     }
 
-    private fun showAllAppsForDockOverlay(scale: Float) {
-        val root = findViewById<ViewGroup>(android.R.id.content)
-        val overlay = FrameLayout(this).apply {
-            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-            setBackgroundColor(Color.parseColor("#E6000000"))
-            isClickable = true
-            isFocusable = true
-            descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
-            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
-        }
-        activeOverlay = overlay
-
-        val container = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            layoutParams = FrameLayout.LayoutParams(
-                (resources.displayMetrics.widthPixels * 0.85f).toInt(),
-                (resources.displayMetrics.heightPixels * 0.85f).toInt(),
-                Gravity.CENTER
-            )
-            val bg = GradientDrawable().apply {
-                setColor(Color.parseColor("#1A1A1A"))
-                cornerRadius = dp(24).toFloat()
-                setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-            }
-            background = bg
-            setPadding(dp(32), dp(32), dp(32), dp(32))
-            isFocusable = true
-            descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
-        }
-
-        val title = TextView(this).apply {
-            id = View.generateViewId()
-            text = "Adicionar ao Acesso Rápido"
-            setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f * scale)
-            setTypeface(null, android.graphics.Typeface.BOLD)
-            gravity = Gravity.CENTER
-            isFocusable = true
-            nextFocusUpId = id
-            nextFocusLeftId = id
-            nextFocusRightId = id
-            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-                bottomMargin = dp(32)
-            }
-        }
-        container.addView(title)
-
-        val scrollView = ScrollView(this).apply {
-            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f)
-            isVerticalScrollBarEnabled = false
-            isFillViewport = true
-            setPadding(dp(24), 0, dp(24), 0)
-            clipToPadding = false
-        }
-
-        val grid = GridLayout(this).apply {
-            id = View.generateViewId()
-            columnCount = 5
-            layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-                gravity = Gravity.CENTER
-            }
-            useDefaultMargins = true
-            alignmentMode = GridLayout.ALIGN_BOUNDS
-        }
-
-        val pm = packageManager
-        
-        // Busca apps de launcher padrão
-        val mainIntent = Intent(Intent.ACTION_MAIN, null).apply { addCategory(Intent.CATEGORY_LAUNCHER) }
-        val standardApps = pm.queryIntentActivities(mainIntent, 0)
-        
-        // Busca apps de launcher de TV (Leanback)
-        val tvIntent = Intent(Intent.ACTION_MAIN, null).apply { addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER) }
-        val tvApps = pm.queryIntentActivities(tvIntent, 0)
-        
-        // Combina, remove duplicados e transforma em AppInfo
-        val allApps = (standardApps + tvApps)
-            .distinctBy { it.activityInfo.packageName }
-            .map { it.activityInfo.applicationInfo }
-            .sortedBy { pm.getApplicationLabel(it).toString().lowercase() }
-
-        allApps.forEachIndexed { index, appInfo ->
-            val pkg = appInfo.packageName
-            val item = LinearLayout(this).apply {
-                id = View.generateViewId()
-                orientation = LinearLayout.VERTICAL
-                gravity = Gravity.CENTER
-                isFocusable = true
-                isClickable = true
-                
-                // Se estiver na primeira linha, foca no título ao subir
-                if (index < 5) {
-                    nextFocusUpId = title.id
-                }
-
-                val itemWidth = dp(110)
-                layoutParams = GridLayout.LayoutParams().apply {
-                    width = itemWidth
-                    height = ViewGroup.LayoutParams.WRAP_CONTENT
-                    setMargins(dp(12), dp(12), dp(12), dp(12))
-                }
-                setPadding(dp(12), dp(16), dp(12), dp(16))
-                
-                val bg = GradientDrawable().apply {
-                    cornerRadius = dp(12).toFloat()
-                    setColor(Color.TRANSPARENT)
-                }
-                background = bg
-                
-                val icon = ImageView(this@MainActivity).apply {
-                    val s = dp(56)
-                    layoutParams = LinearLayout.LayoutParams(s, s)
-                    setImageDrawable(appInfo.loadIcon(pm))
-                }
-                
-                val name = TextView(this@MainActivity).apply {
-                    text = appInfo.loadLabel(pm)
-                    setTextColor(Color.WHITE)
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f * scale)
-                    gravity = Gravity.CENTER
-                    maxLines = 1
-                    ellipsize = android.text.TextUtils.TruncateAt.END
-                    layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-                        topMargin = dp(6)
-                    }
-                }
-                
-                addView(icon)
-                addView(name)
-                
-                setOnFocusChangeListener { v, hasFocus ->
-                    if (hasFocus) {
-                        bg.setColor(Color.parseColor("#33FFFFFF"))
-                        bg.setStroke(dp(2), Color.WHITE)
-                        v.scaleX = 1.1f
-                        v.scaleY = 1.1f
-                    } else {
-                        bg.setColor(Color.TRANSPARENT)
-                        bg.setStroke(0, Color.TRANSPARENT)
-                        v.scaleX = 1f
-                        v.scaleY = 1f
-                    }
-                }
-                
-                setOnClickListener {
-                    LauncherSettings.addToDock(this@MainActivity, pkg)
-                    root.removeView(overlay)
-                    activeOverlay = null
-                    pendingFocusAddDock = true
-                    setContentView(buildRoot())
-                }
-            }
-            grid.addView(item)
-        }
-
-        scrollView.addView(grid)
-        container.addView(scrollView)
-
-        val closeBtn = TextView(this).apply {
-            id = View.generateViewId()
-            text = "VOLTAR"
-            setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f * scale)
-            gravity = Gravity.CENTER
-            isFocusable = true
-            isClickable = true
-            nextFocusDownId = id
-            nextFocusLeftId = id
-            nextFocusRightId = id
-            val bg = GradientDrawable().apply {
-                cornerRadius = dp(8).toFloat()
-                setColor(Color.parseColor("#33FFFFFF"))
-            }
-            background = bg
-            setPadding(dp(20), dp(10), dp(20), dp(10))
-            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-                gravity = Gravity.END
-                topMargin = dp(16)
-            }
-            
-            setOnFocusChangeListener { v, hasFocus ->
-                if (hasFocus) {
-                    bg.setColor(Color.parseColor("#66FFFFFF"))
-                    bg.setStroke(dp(2), Color.WHITE)
-                } else {
-                    bg.setColor(Color.parseColor("#33FFFFFF"))
-                    bg.setStroke(0, Color.TRANSPARENT)
-                }
-            }
-            
-            setOnClickListener {
-                root.removeView(overlay)
-                activeOverlay = null
-            }
-        }
-        container.addView(closeBtn)
-
-        overlay.addView(container)
-        root.addView(overlay)
-        
-        if (grid.childCount > 0) {
-            title.nextFocusDownId = grid.getChildAt(0).id
-            // Define que os itens da grade apontam para o botão voltar ao descer
-            for (i in 0 until grid.childCount) {
-                val child = grid.getChildAt(i)
-                child.nextFocusDownId = closeBtn.id
-            }
-        } else {
-            title.nextFocusDownId = closeBtn.id
-        }
-
-        if (grid.childCount > 0) {
-            grid.getChildAt(0).requestFocus()
-        } else {
-            closeBtn.requestFocus()
-        }
-    }
 
 }
