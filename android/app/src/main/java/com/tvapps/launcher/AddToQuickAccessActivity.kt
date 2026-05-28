@@ -160,11 +160,42 @@ class AddToQuickAccessActivity : Activity() {
             selectionCounter.text = "${selectedApps.size} selecionados"
             btnMultiAdd.visibility = View.VISIBLE
             btnMultiAdd.text = "Adicionar (${selectedApps.size})"
+            btnMultiUninstall.visibility = View.VISIBLE
+            btnMultiUninstall.text = "Desinstalar (${selectedApps.size})"
             btnCancel.text = "Cancelar"
         } else {
             selectionCounter.visibility = View.GONE
             btnMultiAdd.visibility = View.GONE
+            btnMultiUninstall.visibility = View.GONE
             btnCancel.text = "Voltar"
+        }
+    }
+
+    private fun uninstallApp(packageName: String) {
+        try {
+            // Tentativa 1: URI padrão — funciona em Android comum
+            val intent = Intent(Intent.ACTION_DELETE).apply {
+                data = Uri.parse("package:$packageName")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            try {
+                // Tentativa 2: ACTION_UNINSTALL_PACKAGE — funciona no Android TV/Leanback
+                val intent = Intent(Intent.ACTION_UNINSTALL_PACKAGE).apply {
+                    data = Uri.parse("package:$packageName")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    putExtra(Intent.EXTRA_RETURN_RESULT, true)
+                }
+                startActivity(intent)
+            } catch (e2: Exception) {
+                // Tentativa 3: abrir detalhes do app nas configurações
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.parse("package:$packageName")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                startActivity(intent)
+            }
         }
     }
 
