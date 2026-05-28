@@ -6,7 +6,9 @@ import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
@@ -31,6 +33,7 @@ class AddToQuickAccessActivity : Activity() {
     
     private lateinit var btnCancel: Button
     private lateinit var btnMultiAdd: Button
+    private lateinit var btnMultiUninstall: Button
     private lateinit var selectionCounter: TextView
     private lateinit var recyclerView: RecyclerView
 
@@ -73,6 +76,17 @@ class AddToQuickAccessActivity : Activity() {
             LauncherSettings.addMultipleToDock(this, packageNames)
             MainActivity.pendingFocusAddDock = true
             finish()
+        }
+        
+        btnMultiUninstall = findViewById(R.id.btn_multi_uninstall)
+        setupButton(btnMultiUninstall, "#F44336") // Red for Uninstall
+        btnMultiUninstall.setOnClickListener {
+            val appsToUninstall = selectedApps.toList()
+            appsToUninstall.forEach { app ->
+                uninstallApp(app.activityInfo.packageName)
+            }
+            // Saímos do modo de seleção após disparar as desinstalações
+            exitMultiSelectMode()
         }
 
         btnCancel = findViewById(R.id.btn_cancel)
@@ -146,11 +160,42 @@ class AddToQuickAccessActivity : Activity() {
             selectionCounter.text = "${selectedApps.size} selecionados"
             btnMultiAdd.visibility = View.VISIBLE
             btnMultiAdd.text = "Adicionar (${selectedApps.size})"
+            btnMultiUninstall.visibility = View.VISIBLE
+            btnMultiUninstall.text = "Desinstalar (${selectedApps.size})"
             btnCancel.text = "Cancelar"
         } else {
             selectionCounter.visibility = View.GONE
             btnMultiAdd.visibility = View.GONE
+            btnMultiUninstall.visibility = View.GONE
             btnCancel.text = "Voltar"
+        }
+    }
+
+    private fun uninstallApp(packageName: String) {
+        try {
+            // Tentativa 1: URI padrão — funciona em Android comum
+            val intent = Intent(Intent.ACTION_DELETE).apply {
+                data = Uri.parse("package:$packageName")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            try {
+                // Tentativa 2: ACTION_UNINSTALL_PACKAGE — funciona no Android TV/Leanback
+                val intent = Intent(Intent.ACTION_UNINSTALL_PACKAGE).apply {
+                    data = Uri.parse("package:$packageName")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    putExtra(Intent.EXTRA_RETURN_RESULT, true)
+                }
+                startActivity(intent)
+            } catch (e2: Exception) {
+                // Tentativa 3: abrir detalhes do app nas configurações
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.parse("package:$packageName")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                startActivity(intent)
+            }
         }
     }
 
