@@ -1,12 +1,14 @@
 package com.tvapps.launcher
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.net.Uri
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.Gravity
@@ -166,6 +168,42 @@ class AllAppsActivity : Activity() {
         }
     }
 
+    private fun showAppOptions(app: ResolveInfo) {
+        val packageName = app.activityInfo.packageName
+        val appName = app.loadLabel(packageManager).toString()
+        
+        val options = arrayOf(
+            "Abrir",
+            "Informações do aplicativo",
+            "Desinstalar"
+        )
+        
+        AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+            .setTitle(appName)
+            .setItems(options) { dialog, which ->
+                when (which) {
+                    0 -> { // Abrir
+                        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+                        if (launchIntent != null) startActivity(launchIntent)
+                    }
+                    1 -> { // Informações
+                        val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.fromParts("package", packageName, null)
+                        }
+                        startActivity(intent)
+                    }
+                    2 -> { // Desinstalar
+                        val intent = Intent(Intent.ACTION_DELETE).apply {
+                            data = Uri.fromParts("package", packageName, null)
+                        }
+                        startActivity(intent)
+                    }
+                }
+                dialog.dismiss()
+            }
+            .show()
+    }
+
     private inner class AllAppsAdapter(
         private val apps: List<ResolveInfo>,
         private val pm: PackageManager
@@ -248,6 +286,11 @@ class AllAppsActivity : Activity() {
                 if (launchIntent != null) {
                     startActivity(launchIntent)
                 }
+            }
+
+            container.setOnLongClickListener {
+                showAppOptions(app)
+                true
             }
         }
 
