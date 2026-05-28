@@ -1984,11 +1984,12 @@ class MainActivity : Activity() {
         wireStatusPillAction(wifi) { openNetworkSettings() }
 
         val gap = dp((8 * scale).toInt())
-        listOf<View>(system, settings, clock, date, weather, wifi).forEach { pill ->
+        listOf<View>(system, allApps, settings, clock, date, weather, wifi).forEach { pill ->
             (pill.layoutParams as LinearLayout.LayoutParams).marginStart = gap
         }
 
         right.addView(system)
+        right.addView(allApps)
         right.addView(settings)
         right.addView(clock)
         right.addView(date)
