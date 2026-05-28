@@ -1875,12 +1875,12 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
             clipChildren = false
             clipToPadding = false
+            isFocusable = false
+            isFocusableInTouchMode = false
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
             )
-            // Espaço extra à direita para o efeito de foco da última pílula (Wi-Fi)
-            // não ser cortado pela borda do container.
             setPadding(0, 0, dp((12 * scale).toInt()), 0)
         }
 
