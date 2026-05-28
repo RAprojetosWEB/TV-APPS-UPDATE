@@ -1737,12 +1737,12 @@ class MainActivity : Activity() {
             if (hasFocus) {
                 bg?.setColor(Color.parseColor("#33FFFFFF"))
                 bg?.setStroke(dp(2), Color.parseColor("#FFFFFF"))
-                tv.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
+                // Removida animação de escala para evitar sobreposição dos vizinhos no LinearLayout
                 animateButtonExpand(tv, st.iconRes, st.compact, st.expanded, true)
             } else {
                 bg?.setColor(Color.parseColor("#1AFFFFFF"))
                 bg?.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                tv.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
+                // Removida animação de escala para manter o fluxo do layout estável
                 animateButtonExpand(tv, st.iconRes, st.compact, st.expanded, false)
             }
         }
@@ -2120,11 +2120,10 @@ class MainActivity : Activity() {
         val right = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            clipChildren = false
-            clipToPadding = false
+            clipChildren = true
+            clipToPadding = true
             isFocusable = false
             isFocusableInTouchMode = false
-            // Animações de transição de layout removidas para evitar deslocamento de foco no Android TV
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -2252,17 +2251,18 @@ class MainActivity : Activity() {
                 setStroke(dp(1), Color.parseColor("#33FFFFFF"))
             }
             background = bg
-            val px = dp((14 * scale).toInt())
+            val px = dp((10 * scale).toInt()) // Padding horizontal reduzido de 14 para 10
             val py = dp((10 * scale).toInt())
             setPadding(px, py, px, py)
             
-            // Layout animável
+            // Layout animável com margens para evitar toque/sobreposição
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-            
-            // Animações de layout removidas para manter tamanho fixo
+            ).apply {
+                leftMargin = dp(6)
+                rightMargin = dp(6)
+            }
         }
     }
 
