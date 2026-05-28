@@ -1831,20 +1831,28 @@ class MainActivity : Activity() {
 
     /** Torna uma pílula focável (D-pad), clicável e com mesmo realce de foco
      *  das demais pílulas (borda branca + leve scale). */
-    private fun wireStatusPillAction(pill: TextView, onTap: () -> Unit) {
+    private fun wireStatusPillAction(pill: TextView, iconRes: Int, onTap: () -> Unit) {
         pill.isFocusable = true
         pill.isClickable = true
         pill.setOnClickListener { onTap() }
         pill.setOnFocusChangeListener { v, hasFocus ->
-            val bg = (v.background as? GradientDrawable) ?: return@setOnFocusChangeListener
+            val tv = v as TextView
+            val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
             if (hasFocus) {
                 bg.setColor(Color.parseColor("#33FFFFFF"))
                 bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
                 v.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
+                
+                // Expande o texto ao ganhar foco
+                val currentText = v.tag as? String ?: ""
+                setPillContent(tv, iconRes, currentText)
             } else {
                 bg.setColor(Color.parseColor("#1AFFFFFF"))
                 bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
                 v.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
+                
+                // Recolhe o texto ao perder foco
+                setPillContent(tv, iconRes, "")
             }
         }
     }
