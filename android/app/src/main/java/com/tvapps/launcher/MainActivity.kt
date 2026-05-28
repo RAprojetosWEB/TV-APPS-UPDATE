@@ -1675,9 +1675,12 @@ class MainActivity : Activity() {
             button.width.coerceAtLeast(if (expand) compactWidth else expandedWidth),
             if (expand) expandedWidth else compactWidth
         ).apply {
-            duration = 350 // Ligeiramente mais lento para ser mais suave
-            // Interpolador de sistema para movimento orgânico (Empurra os vizinhos suavemente)
-            interpolator = DecelerateInterpolator(1.5f)
+            // Recolhimento um pouco mais longo para terminar de forma suave,
+            // sem corte abrupto no final da animação.
+            duration = if (expand) 350L else 420L
+            // Curva ease-in-out (material standard) — começa e TERMINA suave,
+            // evitando a sensação de "corte seco" no final do recolhimento.
+            interpolator = android.view.animation.PathInterpolator(0.4f, 0.0f, 0.2f, 1.0f)
             
             addUpdateListener { anim ->
                 val width = anim.animatedValue as Int
@@ -1699,12 +1702,16 @@ class MainActivity : Activity() {
             addListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator) {
                     if (!expand) {
+                        // Garante que o texto já está totalmente transparente antes
+                        // de trocar o conteúdo, evitando "pop" visual no final.
+                        button.setTextColor(baseColor and 0x00FFFFFF)
                         setPillContent(button, iconRes, compactText)
                         button.layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
+                        button.setTextColor(baseColor or (0xFF shl 24))
                     } else {
                         button.layoutParams.width = expandedWidth
+                        button.setTextColor(baseColor or (0xFF shl 24))
                     }
-                    button.setTextColor(baseColor or (0xFF shl 24))
                     button.requestLayout()
                     button.tag = null
                 }
