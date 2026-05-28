@@ -62,6 +62,16 @@
             android:padding="32dp">
 
             <Button
+                android:id="@+id/btn_multi_uninstall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="16dp"
+                android:text="Desinstalar"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:visibility="gone" />
+
+            <Button
                 android:id="@+id/btn_multi_add"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
