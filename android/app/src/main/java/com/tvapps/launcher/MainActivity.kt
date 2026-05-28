@@ -1248,6 +1248,8 @@ class MainActivity : Activity() {
             val lp = LinearLayout.LayoutParams(dp(size), dp(size))
             lp.bottomMargin = dp((20 * scale).toInt())
             layoutParams = lp
+            clipChildren = false
+            clipToPadding = false
         }
         val iconImage = ImageView(this).apply {
             scaleType = ImageView.ScaleType.FIT_CENTER
@@ -2588,11 +2590,22 @@ class MainActivity : Activity() {
             }
             background = bg
             
+            val iconContainer = FrameLayout(this@MainActivity).apply {
+                val s = dp((52 * scale).toInt())
+                layoutParams = LinearLayout.LayoutParams(s, s).apply {
+                    gravity = Gravity.CENTER
+                }
+                clipChildren = false
+                clipToPadding = false
+            }
             val iv = ImageView(this@MainActivity).apply {
                 val s = dp((44 * scale).toInt())
-                layoutParams = LinearLayout.LayoutParams(s, s)
+                layoutParams = FrameLayout.LayoutParams(s, s).apply {
+                    gravity = Gravity.CENTER
+                }
                 setImageDrawable(icon)
             }
+            iconContainer.addView(iv)
             
             val tv = TextView(this@MainActivity).apply {
                 text = label
@@ -2607,7 +2620,7 @@ class MainActivity : Activity() {
                 ).apply { topMargin = dp((4 * scale).toInt()) }
             }
             
-            addView(iv)
+            addView(iconContainer)
             addView(tv)
             
             setOnFocusChangeListener { v, hasFocus ->
