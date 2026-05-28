@@ -39,10 +39,11 @@
             android:id="@+id/btn_cancel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
+            android:layout_gravity="end"
+            android:layout_marginEnd="32dp"
             android:layout_marginBottom="32dp"
-            android:backgroundTint="#33FFFFFF"
-            android:text="Cancelar"
+            android:text="Voltar"
+            android:textAllCaps="false"
             android:textColor="#FFFFFF" />
 
     </LinearLayout>
