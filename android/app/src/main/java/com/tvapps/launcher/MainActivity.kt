@@ -2029,80 +2029,25 @@ class MainActivity : Activity() {
             )
         }
 
-        val system = makeStatusPill("", "#E8A85C", scale).apply {
-            isFocusable = true
-            isClickable = true
-            maxLines = 1
-            ellipsize = TextUtils.TruncateAt.END
-            gravity = Gravity.CENTER
-            setOnClickListener { checkOtaUpdate(this, true) }
-            tag = "Atualizações"
-            setOnFocusChangeListener { v, hasFocus ->
-                val tv = v as TextView
-                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
-                if (hasFocus) {
-                    bg.setColor(Color.parseColor("#335EE6A8"))
-                    bg.setStroke(dp(2), Color.parseColor("#5EE6A8"))
-                    showTopBarTooltip(v)
-                } else {
-                    bg.setColor(Color.parseColor("#1AFFFFFF"))
-                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                    hideTopBarTooltip()
-                }
-            }
-            // Estado inicial fixo (ícone + texto)
-            setPillContent(this, R.drawable.ic_rotate_ccw, "")
-        }
+        val system = makeStatusPill("", "#E8A85C", scale)
+        val allApps = makeStatusPill("", "#FFFFFF", scale)
+        val settings = makeStatusPill("", "#FFFFFF", scale)
 
-        val allApps = makeStatusPill("", "#FFFFFF", scale).apply {
-            isFocusable = true
-            isClickable = true
-            maxLines = 1
-            ellipsize = TextUtils.TruncateAt.END
-            gravity = Gravity.CENTER
-            setOnClickListener { showAllAppsOverlay(scale) }
-            tag = "Aplicativos"
-            setOnFocusChangeListener { v, hasFocus ->
-                val tv = v as TextView
-                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
-                if (hasFocus) {
-                    bg.setColor(Color.parseColor("#33FFFFFF"))
-                    bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
-                    showTopBarTooltip(v)
-                } else {
-                    bg.setColor(Color.parseColor("#1AFFFFFF"))
-                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                    hideTopBarTooltip()
-                }
-            }
-            // Estado inicial fixo (ícone + texto)
-            setPillContent(this, R.drawable.ic_grid, "")
-        }
+        wireStatusPillAction(system, R.drawable.ic_rotate_ccw) { checkOtaUpdate(system, true) }
+        system.tag = "Atualizações"
+        // Sobrescreve o listener específico para as cores de OTA se necessário, 
+        // mas o wireStatusPillAction já cuida da expansão de texto.
+        
+        wireStatusPillAction(allApps, R.drawable.ic_grid) { showAllAppsOverlay(scale) }
+        allApps.tag = "Aplicativos"
 
-        val settings = makeStatusPill("", "#FFFFFF", scale).apply {
-            isFocusable = true
-            isClickable = true
-            maxLines = 1
-            ellipsize = TextUtils.TruncateAt.END
-            gravity = Gravity.CENTER
-            setOnClickListener { openSystemSettings() }
-            tag = "Configurações"
-            setOnFocusChangeListener { v, hasFocus ->
-                val tv = v as TextView
-                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
-                if (hasFocus) {
-                    bg.setColor(Color.parseColor("#33FFFFFF"))
-                    bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
-                    showTopBarTooltip(v)
-                } else {
-                    bg.setColor(Color.parseColor("#1AFFFFFF"))
-                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                    hideTopBarTooltip()
-                }
-            }
-            // Estado inicial fixo (ícone + texto)
-            setPillContent(this, R.drawable.ic_settings, "")
-        }
+        wireStatusPillAction(settings, R.drawable.ic_settings) { openSystemSettings() }
+        settings.tag = "Configurações"
+
+        // Estado inicial (ícones sem texto)
+        setPillContent(system, R.drawable.ic_rotate_ccw, "")
+        setPillContent(allApps, R.drawable.ic_grid, "")
+        setPillContent(settings, R.drawable.ic_settings, "")
 
         val clock = makeStatusPill("", "#FFFFFF", scale)
         val date = makeStatusPill("", "#FFFFFF", scale)
