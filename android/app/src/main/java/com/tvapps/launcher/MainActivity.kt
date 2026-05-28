@@ -2735,17 +2735,24 @@ class MainActivity : Activity() {
             addView(tv)
             
             setOnFocusChangeListener { v, hasFocus ->
+                v.animate().cancel()
+                val duration = if (hasFocus) 300L else 200L
+                val interpolator = if (hasFocus) android.view.animation.DecelerateInterpolator(1.2f) else android.view.animation.AccelerateInterpolator(1.2f)
+                
                 if (hasFocus) {
-                    bg.setColor(Color.parseColor("#33FFFFFF"))
+                    bg.setColor(Color.parseColor("#4DFFFFFF"))
                     bg.setStroke(dp(2), Color.WHITE)
-                    v.scaleX = 1.1f
-                    v.scaleY = 1.1f
                 } else {
                     bg.setColor(Color.TRANSPARENT)
                     bg.setStroke(0, Color.TRANSPARENT)
-                    v.scaleX = 1f
-                    v.scaleY = 1f
                 }
+                
+                v.animate()
+                    .scaleX(if (hasFocus) 1.15f else 1f)
+                    .scaleY(if (hasFocus) 1.15f else 1f)
+                    .setDuration(duration)
+                    .setInterpolator(interpolator)
+                    .start()
             }
             
             setOnClickListener {
