@@ -2000,7 +2000,7 @@ class MainActivity : Activity() {
                 }
             }
             // Estado inicial recolhido
-            setPillContent(this, R.drawable.ic_rotate_ccw, "Procurar atualizações")
+            setPillContent(this, R.drawable.ic_rotate_ccw, "")
         }
 
         val allApps = makeStatusPill("", "#FFFFFF", scale).apply {
@@ -2024,7 +2024,7 @@ class MainActivity : Activity() {
                 }
             }
             // Estado inicial recolhido
-            setPillContent(this, R.drawable.ic_grid, "Todos os aplicativos")
+            setPillContent(this, R.drawable.ic_grid, "")
         }
 
         val settings = makeStatusPill("", "#FFFFFF", scale).apply {
@@ -2048,7 +2048,7 @@ class MainActivity : Activity() {
                 }
             }
             // Estado inicial recolhido
-            setPillContent(this, R.drawable.ic_settings, "Configurações")
+            setPillContent(this, R.drawable.ic_settings, "")
         }
 
         val clock = makeStatusPill("", "#FFFFFF", scale)
