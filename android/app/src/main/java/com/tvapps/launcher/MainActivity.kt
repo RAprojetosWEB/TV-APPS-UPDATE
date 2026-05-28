@@ -1875,12 +1875,12 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
             clipChildren = false
             clipToPadding = false
+            isFocusable = false
+            isFocusableInTouchMode = false
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
             )
-            // Espaço extra à direita para o efeito de foco da última pílula (Wi-Fi)
-            // não ser cortado pela borda do container.
             setPadding(0, 0, dp((12 * scale).toInt()), 0)
         }
 
@@ -1916,6 +1916,8 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
             clipChildren = false
             clipToPadding = false
+            isFocusable = false
+            isFocusableInTouchMode = false
             // Habilita animações de transição de layout (expansão suave)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
                 layoutTransition = android.animation.LayoutTransition().apply {
@@ -2047,6 +2049,8 @@ class MainActivity : Activity() {
 
         val gap = dp((8 * scale).toInt())
         listOf<View>(system, allApps, settings, clock, date, weather, wifi).forEach { pill ->
+            pill.isFocusable = true
+            pill.isFocusableInTouchMode = false
             (pill.layoutParams as LinearLayout.LayoutParams).marginStart = gap
         }
 
@@ -2077,6 +2081,7 @@ class MainActivity : Activity() {
         weather.id = View.generateViewId()
         wifi.id = View.generateViewId()
         
+        system.nextFocusLeftId = View.NO_ID
         system.nextFocusRightId = allApps.id
         
         allApps.nextFocusLeftId = system.id
