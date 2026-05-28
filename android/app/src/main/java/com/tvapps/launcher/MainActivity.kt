@@ -446,20 +446,9 @@ class MainActivity : Activity() {
             iv.clearColorFilter()
             iv.setImageResource(res)
         }
-        // Pílula única de Wi-Fi na barra superior (ícone + texto + cor).
+        // Pílula única de Wi-Fi na barra superior (atualiza ícone + cor mantendo
+        // o comportamento de expansão por foco definido em setupPill).
         wifiView?.let { v ->
-            val label = when (state) {
-                NetworkMonitor.State.OFFLINE -> "Sem rede"
-                NetworkMonitor.State.WIFI_LEVEL_1,
-                NetworkMonitor.State.WIFI_LEVEL_2,
-                NetworkMonitor.State.WIFI_LEVEL_3,
-                NetworkMonitor.State.WIFI_LEVEL_4 -> "Wi-Fi Conectado"
-                NetworkMonitor.State.WIFI_NO_INTERNET -> "Wi-Fi sem internet"
-                NetworkMonitor.State.ETHERNET -> "Cabo Conectado"
-                NetworkMonitor.State.ETHERNET_NO_INTERNET -> "Cabo sem internet"
-            }
-            v.tag = label
-            
             val color = when (state) {
                 NetworkMonitor.State.OFFLINE,
                 NetworkMonitor.State.WIFI_NO_INTERNET,
@@ -467,23 +456,7 @@ class MainActivity : Activity() {
                 else -> Color.parseColor("#5EE6A8")
             }
             v.setTextColor(color)
-
-            // Mantém texto vazio para manter tamanho fixo e evitar saltos de foco
-            val textToSet = "" 
-
-            val icon = androidx.core.content.ContextCompat.getDrawable(this, res)?.mutate()
-            // Mantém cores originais do vetor para alerta/ethernet; nos demais aplica cor da pílula.
-            if (state != NetworkMonitor.State.WIFI_NO_INTERNET &&
-                state != NetworkMonitor.State.ETHERNET_NO_INTERNET) {
-                icon?.setTint(color)
-            }
-            val size = dp(16)
-            icon?.setBounds(0, 0, size, size)
-            v.setCompoundDrawables(icon, null, null, null)
-            v.compoundDrawablePadding = 0
-            v.text = textToSet
-            
-            // O listener de foco já é gerenciado por wireStatusPillAction em buildRoot
+            updatePillCompact(v, res, "")
         }
     }
 
