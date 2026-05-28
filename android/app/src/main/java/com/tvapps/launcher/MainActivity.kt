@@ -2021,7 +2021,7 @@ class MainActivity : Activity() {
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
             setOnClickListener { checkOtaUpdate(this, true) }
-            tag = "Update"
+            tag = "Verificar se há novas atualizações"
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
                 val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
@@ -2046,7 +2046,7 @@ class MainActivity : Activity() {
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
             setOnClickListener { showAllAppsOverlay(scale) }
-            tag = "Todos os Apps"
+            tag = "Todos os aplicativos instalados"
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
                 val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
@@ -2208,9 +2208,9 @@ class MainActivity : Activity() {
         val dateStr = capitalizeWords(dateRaw)
         
         updatePillTextAndIcon(clockView, R.drawable.ic_clock, timeStr)
-        clockView?.tag = timeStr
+        clockView?.tag = "Configurar hora"
         updatePillTextAndIcon(dateView, R.drawable.ic_calendar, dateStr)
-        dateView?.tag = dateStr
+        dateView?.tag = "Configurar data"
     }
 
     private fun capitalizeWords(s: String): String =
@@ -2225,13 +2225,15 @@ class MainActivity : Activity() {
                 val w = StatusInfo.fetchWeather()
                 if (w != null) {
                     updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "${w.tempC}°C")
-                    weatherView?.tag = "${w.tempC}°C - Clima"
+                    weatherView?.tag = "Configurar clima"
                 } else {
                     updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "--°")
+                    weatherView?.tag = "Configurar clima"
                 }
             } catch (e: Exception) {
                 // Em caso de falha na requisição ou lógica, exibe fallback
                 updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "--°")
+                weatherView?.tag = "Configurar clima"
             }
         }
     }
