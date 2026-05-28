@@ -1664,53 +1664,61 @@ class MainActivity : Activity() {
             null
         }
 
-        // Para evitar o reflow e saltos, vamos:
-        // 1. Manter a largura do componente fixa (compacta)
-        // 2. Não mudar layoutParams.width
-        // 3. O texto expandedText só aparecerá se houver espaço? Não, o usuário quer que "expanda visualmente".
-        // Se não mudarmos a largura real, o texto será cortado se o wrap_content não permitir.
+        // Para evitar o reflow e saltos:
+        // 1. O pai (wrapper FrameLayout) mantém largura fixa (compactWidth).
+        // 2. Animamos a largura do botão (TextView) livremente dentro do pai sem clip.
+        // 3. O texto aparece com fade + slide (animando compoundDrawablePadding).
         
-        // CORREÇÃO: Vamos mudar a largura mas SEM chamar requestLayout() agressivamente ou forçar o pai.
-        // E vamos usar um interpolador suave.
-        
-        val animator = ValueAnimator.ofInt(
-            button.width.coerceAtLeast(if (expand) compactWidth else expandedWidth),
-            if (expand) expandedWidth else compactWidth
-        ).apply {
-            duration = if (expand) 350L else 420L
-            interpolator = android.view.animation.PathInterpolator(0.4f, 0.0f, 0.2f, 1.0f)
+        val animator = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = if (expand) 300L else 350L
+            interpolator = android.view.animation.PathInterpolator(0.2f, 1.0f, 0.2f, 1.0f) // Deceleration suave
             
+            val startWidth = if (button.width > 0) button.width else compactWidth
+            val targetWidth = if (expand) expandedWidth else compactWidth
+            val startPadding = button.compoundDrawablePadding
+            val targetPadding = if (expand) dp(10) else 0
+
             addUpdateListener { anim ->
-                val width = anim.animatedValue as Int
-                val params = button.layoutParams
-                if (params != null) {
-                    // Atualiza a largura sem forçar um ciclo completo de layout no pai
-                    params.width = width
-                    button.layoutParams = params
-                    // NOTA: Removido (button.parent as? View)?.requestLayout() que causava os saltos nos vizinhos
+                val fraction = anim.animatedFraction
+                val eased = if (expand) fraction else (1f - fraction)
+                
+                // Anima largura do background
+                val currentWidth = (startWidth + (targetWidth - startWidth) * fraction).toInt()
+                button.layoutParams?.let {
+                    it.width = currentWidth
+                    button.layoutParams = it
                 }
                 
-                val fraction = anim.animatedFraction
-                val alphaValue = if (expand) fraction else (1f - fraction)
-                val alpha = (alphaValue * 255).toInt()
+                // Anima padding do ícone (slide leve do texto)
+                button.compoundDrawablePadding = (startPadding + (targetPadding - startPadding) * fraction).toInt()
+                
+                // Anima alpha do texto (mantendo ícone opaco via setPillContent)
+                val alpha = (eased * 255).toInt()
                 button.setTextColor(baseColor or (alpha shl 24))
+                
+                // Força apenas o desenho, sem disparar layout no pai da top bar
+                button.invalidate()
             }
             
             addListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationStart(animation: Animator) {
-                    if (expand) setPillContent(button, iconRes, fullExpandedText)
+                    // Prepara o conteúdo antes de expandir
+                    if (expand) {
+                        setPillContent(button, iconRes, fullExpandedText)
+                        button.setTextColor(baseColor and 0x00FFFFFF)
+                    }
                 }
                 override fun onAnimationEnd(animation: Animator) {
                     if (!expand) {
-                        button.setTextColor(baseColor and 0x00FFFFFF)
                         setPillContent(button, iconRes, compactText)
-                        button.layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
+                        button.layoutParams.width = compactWidth
                         button.setTextColor(baseColor or (0xFF shl 24))
+                        button.compoundDrawablePadding = 0
                     } else {
                         button.layoutParams.width = expandedWidth
                         button.setTextColor(baseColor or (0xFF shl 24))
+                        button.compoundDrawablePadding = dp(10)
                     }
-                    // Apenas um requestLayout ao final da animação
                     button.requestLayout()
                     button.tag = null
                 }
