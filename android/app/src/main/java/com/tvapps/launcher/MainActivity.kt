@@ -1869,7 +1869,7 @@ class MainActivity : Activity() {
                 // Expande o texto (copiando lógica do "Configurar hora")
                 val expandedText = tv.tag?.toString() ?: ""
                 if (expandedText.isNotEmpty()) {
-                    tv.text = expandedText
+                    setPillContent(tv, iconRes, expandedText)
                 }
                 
                 showTopBarTooltip(v)
