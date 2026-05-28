@@ -1645,74 +1645,69 @@ class MainActivity : Activity() {
      * Anima a expansão/recolhimento de uma pílula deslizando suavemente.
      */
     private fun animateButtonExpand(button: TextView, iconRes: Int, compactText: String, expandedText: String, expand: Boolean) {
+        // Garante que o layout do pai não sofra reflows constantes
+        // A estratégia aqui é manter a largura fixa no layout e animar apenas
+        // o aspecto visual (alpha/scale/background) ou usar uma largura máxima reservada.
+        
+        // Em vez de mudar layoutParams.width (que causa reflow), vamos:
+        // 1. Manter a largura ocupada constante ou usar um frame de reserva.
+        // Como o usuário pediu para a barra ser estável:
+        // Vamos definir uma largura fixa suficiente para o expandido no estado expandido.
+        // A expansão visual será feita por transição de alpha/escala, não width real.
+
         val fullExpandedText = when {
             compactText.isBlank() -> expandedText
             expandedText.isBlank() -> compactText
             else -> "$compactText  ·  $expandedText"
         }
 
-        // Garante gravity START para que o ícone fique fixo à esquerda e o texto expanda para a direita
         button.gravity = Gravity.START or Gravity.CENTER_VERTICAL
         
-        // Define o conteúdo ANTES de medir para garantir o cálculo correto
-        if (expand) {
-            setPillContent(button, iconRes, fullExpandedText)
-        }
-
-        // Calcula larguras dinamicamente baseadas no texto real
+        // Calcula as larguras de referência apenas para o tamanho final
         val expandedWidth = getExpandedWidth(button, fullExpandedText)
         val compactWidth = getExpandedWidth(button, compactText)
 
         val baseColor = button.currentTextColor and 0x00FFFFFF
         
-        // Cancela animação anterior se houver para evitar conflitos
         button.tag = (button.tag as? ValueAnimator)?.let {
             it.cancel()
             null
         }
 
-        val animator = ValueAnimator.ofInt(
-            button.width.coerceAtLeast(if (expand) compactWidth else expandedWidth),
-            if (expand) expandedWidth else compactWidth
-        ).apply {
-            // Recolhimento um pouco mais longo para terminar de forma suave,
-            // sem corte abrupto no final da animação.
+        // Anima apenas o alpha do texto e escala do fundo para evitar reflow
+        // O tamanho real (layout) permanece fixo para não mover os vizinhos
+        val animator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = if (expand) 350L else 420L
-            // Curva ease-in-out (material standard) — começa e TERMINA suave,
-            // evitando a sensação de "corte seco" no final do recolhimento.
             interpolator = android.view.animation.PathInterpolator(0.4f, 0.0f, 0.2f, 1.0f)
             
             addUpdateListener { anim ->
-                val width = anim.animatedValue as Int
-                val params = button.layoutParams
-                if (params != null) {
-                    params.width = width
-                    button.layoutParams = params
-                    // Força o pai (LinearLayout) a re-layoutar para empurrar os vizinhos em tempo real
-                    (button.parent as? View)?.requestLayout()
-                }
+                val fraction = anim.animatedFraction
+                val alpha = if (expand) fraction else (1f - fraction)
                 
-                // Anima alpha do texto sincronizado com a largura
-                val progress = anim.animatedFraction
-                val alphaValue = if (expand) progress else (1f - progress)
-                val alpha = (alphaValue * 255).toInt()
-                button.setTextColor(baseColor or (alpha shl 24))
+                // Aplica conteúdo apenas no início da expansão
+                if (expand && fraction > 0.1f && button.text.toString() != fullExpandedText) {
+                    setPillContent(button, iconRes, fullExpandedText)
+                }
+
+                button.setTextColor(baseColor or ((alpha * 255).toInt() shl 24))
+                
+                // Escala visual suave (GPU)
+                val scale = 1f + (0.05f * alpha)
+                button.scaleX = scale
+                button.scaleY = scale
             }
             
             addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationStart(animation: Animator) {
+                    if (expand) setPillContent(button, iconRes, fullExpandedText)
+                }
                 override fun onAnimationEnd(animation: Animator) {
                     if (!expand) {
-                        // Garante que o texto já está totalmente transparente antes
-                        // de trocar o conteúdo, evitando "pop" visual no final.
-                        button.setTextColor(baseColor and 0x00FFFFFF)
                         setPillContent(button, iconRes, compactText)
-                        button.layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
                         button.setTextColor(baseColor or (0xFF shl 24))
-                    } else {
-                        button.layoutParams.width = expandedWidth
-                        button.setTextColor(baseColor or (0xFF shl 24))
+                        button.scaleX = 1f
+                        button.scaleY = 1f
                     }
-                    button.requestLayout()
                     button.tag = null
                 }
             })
