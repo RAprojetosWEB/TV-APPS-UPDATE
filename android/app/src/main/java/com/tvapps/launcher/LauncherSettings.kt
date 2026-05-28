@@ -92,6 +92,20 @@ object LauncherSettings {
         }
     }
 
+    fun addMultipleToDock(context: Context, packageNames: List<String>) {
+        val dock = getDockApps(context).toMutableList()
+        var changed = false
+        packageNames.forEach { pkg ->
+            if (!dock.contains(pkg)) {
+                dock.add(pkg)
+                changed = true
+            }
+        }
+        if (changed) {
+            saveDockApps(context, dock)
+        }
+    }
+
     fun removeFromDock(context: Context, packageName: String) {
         val dock = getDockApps(context).toMutableList()
         if (dock.remove(packageName)) {
