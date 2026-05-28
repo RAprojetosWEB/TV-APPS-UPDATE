@@ -2846,8 +2846,9 @@ class MainActivity : Activity() {
             setTextColor(Color.WHITE)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f * scale)
             setTypeface(null, android.graphics.Typeface.BOLD)
-            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-                bottomMargin = dp(24)
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                bottomMargin = dp(32)
             }
         }
         container.addView(title)
@@ -2855,12 +2856,18 @@ class MainActivity : Activity() {
         val scrollView = ScrollView(this).apply {
             layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f)
             isVerticalScrollBarEnabled = false
+            isFillViewport = true
+            setPadding(dp(24), 0, dp(24), 0)
+            clipToPadding = false
         }
 
         val grid = GridLayout(this).apply {
-            columnCount = 6
-            layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            orientation = GridLayout.HORIZONTAL
+            columnCount = 5
+            layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                gravity = Gravity.CENTER
+            }
+            useDefaultMargins = true
+            alignmentMode = GridLayout.ALIGN_BOUNDS
         }
 
         val pm = packageManager
@@ -2886,7 +2893,13 @@ class MainActivity : Activity() {
                 gravity = Gravity.CENTER
                 isFocusable = true
                 isClickable = true
-                setPadding(dp(12), dp(12), dp(12), dp(12))
+                val itemWidth = dp(110)
+                layoutParams = GridLayout.LayoutParams().apply {
+                    width = itemWidth
+                    height = ViewGroup.LayoutParams.WRAP_CONTENT
+                    setMargins(dp(12), dp(12), dp(12), dp(12))
+                }
+                setPadding(dp(12), dp(16), dp(12), dp(16))
                 
                 val bg = GradientDrawable().apply {
                     cornerRadius = dp(12).toFloat()
