@@ -1,9 +1,6 @@
 package com.tvapps.launcher
 
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
 import android.animation.LayoutTransition
-import android.animation.ValueAnimator
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
@@ -34,10 +31,8 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.view.animation.AccelerateInterpolator
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
-import android.view.animation.DecelerateInterpolator
 import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import android.widget.GridLayout
@@ -451,9 +446,20 @@ class MainActivity : Activity() {
             iv.clearColorFilter()
             iv.setImageResource(res)
         }
-        // Pílula única de Wi-Fi na barra superior (atualiza ícone + cor mantendo
-        // o comportamento de expansão por foco definido em setupPill).
+        // Pílula única de Wi-Fi na barra superior (ícone + texto + cor).
         wifiView?.let { v ->
+            val label = when (state) {
+                NetworkMonitor.State.OFFLINE -> "Sem rede"
+                NetworkMonitor.State.WIFI_LEVEL_1,
+                NetworkMonitor.State.WIFI_LEVEL_2,
+                NetworkMonitor.State.WIFI_LEVEL_3,
+                NetworkMonitor.State.WIFI_LEVEL_4 -> "Wi-Fi Conectado"
+                NetworkMonitor.State.WIFI_NO_INTERNET -> "Wi-Fi sem internet"
+                NetworkMonitor.State.ETHERNET -> "Cabo Conectado"
+                NetworkMonitor.State.ETHERNET_NO_INTERNET -> "Cabo sem internet"
+            }
+            v.tag = label
+            
             val color = when (state) {
                 NetworkMonitor.State.OFFLINE,
                 NetworkMonitor.State.WIFI_NO_INTERNET,
@@ -461,7 +467,23 @@ class MainActivity : Activity() {
                 else -> Color.parseColor("#5EE6A8")
             }
             v.setTextColor(color)
-            updatePillCompact(v, res, "")
+
+            // Mantém texto vazio para manter tamanho fixo e evitar saltos de foco
+            val textToSet = "" 
+
+            val icon = androidx.core.content.ContextCompat.getDrawable(this, res)?.mutate()
+            // Mantém cores originais do vetor para alerta/ethernet; nos demais aplica cor da pílula.
+            if (state != NetworkMonitor.State.WIFI_NO_INTERNET &&
+                state != NetworkMonitor.State.ETHERNET_NO_INTERNET) {
+                icon?.setTint(color)
+            }
+            val size = dp(16)
+            icon?.setBounds(0, 0, size, size)
+            v.setCompoundDrawables(icon, null, null, null)
+            v.compoundDrawablePadding = 0
+            v.text = textToSet
+            
+            // O listener de foco já é gerenciado por wireStatusPillAction em buildRoot
         }
     }
 
@@ -1002,9 +1024,6 @@ class MainActivity : Activity() {
                 fun openApp(packageName: String) = this@MainActivity.openApp(packageName)
 
                 @JavascriptInterface
-                fun uninstallApp(packageName: String) = this@MainActivity.uninstallApp(packageName)
-
-                @JavascriptInterface
                 fun openSettings() {
                     try {
                         startActivity(Intent(android.provider.Settings.ACTION_SETTINGS))
@@ -1378,16 +1397,23 @@ class MainActivity : Activity() {
                 if (hasFocus) Color.parseColor("#15102A") else Color.WHITE,
             )
             v.animate().cancel()
-            val interpolator = if (hasFocus) android.view.animation.OvershootInterpolator(0.8f) else android.view.animation.DecelerateInterpolator(1.2f)
-            val duration = if (hasFocus) 350L else 250L
-            
-            v.animate()
-                .scaleX(if (hasFocus) 1.05f else 1f)
-                .scaleY(if (hasFocus) 1.05f else 1f)
-                .translationZ(if (hasFocus) dp(8).toFloat() else 0f)
-                .setDuration(duration)
-                .setInterpolator(interpolator)
-                .start()
+            if (hasFocus) {
+                v.animate()
+                    .scaleX(1.07f)
+                    .scaleY(1.07f)
+                    .translationZ(dp(10).toFloat())
+                    .setDuration(260)
+                    .setInterpolator(android.view.animation.OvershootInterpolator(1.1f))
+                    .start()
+            } else {
+                v.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .translationZ(0f)
+                    .setDuration(220)
+                    .setInterpolator(android.view.animation.DecelerateInterpolator(1.5f))
+                    .start()
+            }
         }
         container.setOnClickListener { 
             it.playSoundEffect(SoundEffectConstants.CLICK)
@@ -1612,205 +1638,11 @@ class MainActivity : Activity() {
         val icon = androidx.core.content.ContextCompat.getDrawable(this, iconRes)
         val size = (pill.textSize * 1.1f).toInt()
         icon?.setBounds(0, 0, size, size)
-        
-        // BUG 1 FIX: Garante que o ícone sempre tenha 100% de opacidade,
-        // mesmo que o texto esteja em fade (alpha animado).
-        val baseColor = pill.currentTextColor and 0x00FFFFFF
-        icon?.setTint(baseColor or (0xFF shl 24))
-        
+        icon?.setTint(pill.currentTextColor)
         pill.setCompoundDrawables(icon, null, null, null)
         // Sem padding quando só ícone, evita deslocar o ícone para a esquerda
         pill.compoundDrawablePadding = if (label.isEmpty()) 0 else dp(8)
         pill.text = label
-    }
-
-    // ===== Expansão por foco das pílulas da top bar =====
-    private data class PillState(var iconRes: Int, var compact: String, val expanded: String)
-    private val pillStates = mutableMapOf<TextView, PillState>()
-
-    /**
-     * Calcula a largura total necessária para o botão expandido ou compacto.
-     */
-    private fun getExpandedWidth(button: TextView, text: String): Int {
-        val paint = button.paint
-        val textWidth = if (text.isEmpty()) 0f else paint.measureText(text)
-        val iconSize = (button.textSize * 1.1f).toInt()
-        val drawablePadding = if (text.isEmpty()) 0 else dp(8)
-        val padding = button.paddingStart + button.paddingEnd
-        // Reduzido o extra de 32dp para 12dp para evitar que fiquem grandes demais e sobreponham
-        return (textWidth + iconSize + drawablePadding + padding + dp(12)).toInt()
-    }
-
-    /**
-     * Anima a expansão/recolhimento de uma pílula deslizando suavemente.
-     */
-    private fun animateButtonExpand(button: TextView, iconRes: Int, compactText: String, expandedText: String, expand: Boolean) {
-        val fullExpandedText = when {
-            compactText.isBlank() -> expandedText
-            expandedText.isBlank() -> compactText
-            else -> "$compactText  ·  $expandedText"
-        }
-
-        button.gravity = Gravity.START or Gravity.CENTER_VERTICAL
-        
-        // Calcula as larguras de referência
-        val expandedWidth = getExpandedWidth(button, fullExpandedText)
-        val compactWidth = getExpandedWidth(button, compactText)
-
-        val baseColor = button.currentTextColor and 0x00FFFFFF
-        
-        button.tag = (button.tag as? ValueAnimator)?.let {
-            it.cancel()
-            null
-        }
-
-        // Para evitar o reflow e saltos:
-        // 1. O pai (wrapper FrameLayout) mantém largura fixa (compactWidth).
-        // 2. Animamos a largura do botão (TextView) livremente dentro do pai sem clip.
-        // 3. O texto aparece com fade + slide (animando compoundDrawablePadding).
-        
-        val animator = ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = if (expand) 300L else 350L
-            interpolator = android.view.animation.PathInterpolator(0.2f, 1.0f, 0.2f, 1.0f) // Deceleration suave
-            
-            val startWidth = if (button.width > 0) button.width else compactWidth
-            val targetWidth = if (expand) expandedWidth else compactWidth
-            val startPadding = button.compoundDrawablePadding
-            val targetPadding = if (expand) dp(10) else 0
-
-            addUpdateListener { anim ->
-                val fraction = anim.animatedFraction
-                val eased = if (expand) fraction else (1f - fraction)
-                
-                // Anima largura do background
-                val currentWidth = (startWidth + (targetWidth - startWidth) * fraction).toInt()
-                button.layoutParams?.let {
-                    it.width = currentWidth
-                    button.layoutParams = it
-                }
-                
-                // Anima padding do ícone (slide leve do texto)
-                button.compoundDrawablePadding = (startPadding + (targetPadding - startPadding) * fraction).toInt()
-                
-                // Anima alpha do texto (mantendo ícone opaco via setPillContent)
-                val alpha = (eased * 255).toInt()
-                button.setTextColor(baseColor or (alpha shl 24))
-                
-                // Força apenas o desenho, sem disparar layout no pai da top bar
-                button.invalidate()
-            }
-            
-            addListener(object : AnimatorListenerAdapter() {
-                override fun onAnimationStart(animation: Animator) {
-                    // Prepara o conteúdo antes de expandir
-                    if (expand) {
-                        setPillContent(button, iconRes, fullExpandedText)
-                        button.setTextColor(baseColor and 0x00FFFFFF)
-                    }
-                }
-                override fun onAnimationEnd(animation: Animator) {
-                    if (!expand) {
-                        setPillContent(button, iconRes, compactText)
-                        button.layoutParams.width = compactWidth
-                        button.setTextColor(baseColor or (0xFF shl 24))
-                        button.compoundDrawablePadding = 0
-                    } else {
-                        button.layoutParams.width = expandedWidth
-                        button.setTextColor(baseColor or (0xFF shl 24))
-                        button.compoundDrawablePadding = dp(10)
-                    }
-                    button.requestLayout()
-                    button.tag = null
-                }
-            })
-        }
-        button.tag = animator
-        animator.start()
-    }
-
-    /**
-     * Configura uma pílula da barra superior para começar compacta (só ícone
-     * ou valor curto) e expandir o texto completo quando receber foco pelo
-     * D-pad, voltando ao estado compacto ao perder o foco. Também aplica o
-     * realce de borda/fundo e animação de escala já usados nas demais.
-     */
-    private fun setupPill(
-        pill: TextView,
-        iconRes: Int,
-        compact: String,
-        expanded: String,
-        onTap: () -> Unit,
-    ) {
-        pill.isFocusable = true
-        pill.isFocusableInTouchMode = false
-        pill.isClickable = true
-        pill.setOnClickListener { onTap() }
-        
-        pill.maxLines = 1
-        pill.setSingleLine(true)
-        pill.gravity = Gravity.START or Gravity.CENTER_VERTICAL
-        pill.ellipsize = TextUtils.TruncateAt.END
-        pillStates[pill] = PillState(iconRes, compact, expanded)
-        setPillContent(pill, iconRes, compact)
-        
-        // Fixa a largura inicial baseada no conteúdo compacto
-        val compactWidth = getExpandedWidth(pill, compact)
-        pill.layoutParams?.let {
-            it.width = compactWidth
-            pill.layoutParams = it
-        }
-        
-        // Garante que o wrapper tenha a largura fixa para não empurrar vizinhos
-        pill.post {
-            (pill.parent as? FrameLayout)?.let { wrapper ->
-                val lp = wrapper.layoutParams
-                lp.width = compactWidth
-                wrapper.layoutParams = lp
-            }
-        }
-
-        pill.setOnFocusChangeListener { v, hasFocus ->
-            val tv = v as TextView
-            val st = pillStates[tv] ?: return@setOnFocusChangeListener
-            val bg = tv.background as? GradientDrawable
-            if (hasFocus) {
-                bg?.setColor(Color.parseColor("#4DFFFFFF")) // Mais brilho no foco
-                bg?.setStroke(dp(2), Color.parseColor("#FFFFFF"))
-                animateButtonExpand(tv, st.iconRes, st.compact, st.expanded, true)
-            } else {
-                bg?.setColor(Color.parseColor("#1AFFFFFF"))
-                bg?.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                animateButtonExpand(tv, st.iconRes, st.compact, st.expanded, false)
-            }
-        }
-    }
-
-    /** Atualiza o conteúdo compacto/ícone de uma pílula sem perder o
-     *  comportamento de expansão por foco. */
-    private fun updatePillCompact(pill: TextView?, iconRes: Int, compact: String) {
-        if (pill == null) return
-        val st = pillStates[pill] ?: run {
-            setPillContent(pill, iconRes, compact)
-            return
-        }
-        st.iconRes = iconRes
-        st.compact = compact
-        if (!pill.isFocused) {
-            setPillContent(pill, iconRes, compact)
-            // Atualiza a largura do wrapper se o conteúdo compacto mudou
-            val newWidth = getExpandedWidth(pill, compact)
-            pill.layoutParams?.let {
-                it.width = newWidth
-                pill.layoutParams = it
-            }
-            (pill.parent as? FrameLayout)?.let { wrapper ->
-                val lp = wrapper.layoutParams
-                if (lp.width != newWidth) {
-                    lp.width = newWidth
-                    wrapper.layoutParams = lp
-                }
-            }
-        }
     }
 
     private fun updatePillTextAndIcon(pill: TextView?, iconRes: Int, text: String) {
@@ -1828,7 +1660,6 @@ class MainActivity : Activity() {
             Toast.makeText(this, "Não foi possível abrir o aplicativo", Toast.LENGTH_SHORT).show()
         }
     }
-
 
     private fun showAlreadyInstalledDialog(app: CatalogApp) {
         // Estilo customizado para o Dialog ficaria melhor com um layout XML, 
@@ -2176,6 +2007,7 @@ class MainActivity : Activity() {
             clipToPadding = false
             isFocusable = false
             isFocusableInTouchMode = false
+            // Animações de transição de layout removidas para evitar deslocamento de foco no Android TV
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -2183,30 +2015,78 @@ class MainActivity : Activity() {
         }
 
         val system = makeStatusPill("", "#E8A85C", scale).apply {
+            isFocusable = true
+            isClickable = true
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
-            gravity = Gravity.START or Gravity.CENTER_VERTICAL
-        }
-        setupPill(system, R.drawable.ic_rotate_ccw, "", "Atualização") {
-            checkOtaUpdate(system, true)
+            gravity = Gravity.CENTER
+            setOnClickListener { checkOtaUpdate(this, true) }
+            tag = "Update"
+            setOnFocusChangeListener { v, hasFocus ->
+                val tv = v as TextView
+                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
+                if (hasFocus) {
+                    bg.setColor(Color.parseColor("#335EE6A8"))
+                    bg.setStroke(dp(2), Color.parseColor("#5EE6A8"))
+                    showTopBarTooltip(v)
+                } else {
+                    bg.setColor(Color.parseColor("#1AFFFFFF"))
+                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    hideTopBarTooltip()
+                }
+            }
+            // Estado inicial fixo (ícone + texto)
+            setPillContent(this, R.drawable.ic_rotate_ccw, "")
         }
 
         val allApps = makeStatusPill("", "#FFFFFF", scale).apply {
+            isFocusable = true
+            isClickable = true
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
-            gravity = Gravity.START or Gravity.CENTER_VERTICAL
-        }
-        setupPill(allApps, R.drawable.ic_grid, "", "Todos os aplicativos") {
-            showAllAppsOverlay(scale)
+            gravity = Gravity.CENTER
+            setOnClickListener { showAllAppsOverlay(scale) }
+            tag = "Todos os Apps"
+            setOnFocusChangeListener { v, hasFocus ->
+                val tv = v as TextView
+                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
+                if (hasFocus) {
+                    bg.setColor(Color.parseColor("#33FFFFFF"))
+                    bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                    showTopBarTooltip(v)
+                } else {
+                    bg.setColor(Color.parseColor("#1AFFFFFF"))
+                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    hideTopBarTooltip()
+                }
+            }
+            // Estado inicial fixo (ícone + texto)
+            setPillContent(this, R.drawable.ic_grid, "")
         }
 
         val settings = makeStatusPill("", "#FFFFFF", scale).apply {
+            isFocusable = true
+            isClickable = true
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
-            gravity = Gravity.START or Gravity.CENTER_VERTICAL
-        }
-        setupPill(settings, R.drawable.ic_settings, "", "Configurações") {
-            openSystemSettings()
+            gravity = Gravity.CENTER
+            setOnClickListener { openSystemSettings() }
+            tag = "Configurações"
+            setOnFocusChangeListener { v, hasFocus ->
+                val tv = v as TextView
+                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
+                if (hasFocus) {
+                    bg.setColor(Color.parseColor("#33FFFFFF"))
+                    bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                    showTopBarTooltip(v)
+                } else {
+                    bg.setColor(Color.parseColor("#1AFFFFFF"))
+                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    hideTopBarTooltip()
+                }
+            }
+            // Estado inicial fixo (ícone + texto)
+            setPillContent(this, R.drawable.ic_settings, "")
         }
 
         val clock = makeStatusPill("", "#FFFFFF", scale)
@@ -2214,40 +2094,31 @@ class MainActivity : Activity() {
         val weather = makeStatusPill("", "#FFFFFF", scale)
         val wifi = makeStatusPill("", "#5EE6A8", scale)
 
-        setupPill(clock, R.drawable.ic_clock, "", "Configurar hora") { openDateSettings() }
-        setupPill(date, R.drawable.ic_calendar, "", "Configurar data") { openDateSettings() }
-        setupPill(weather, R.drawable.ic_cloud, "--°", "Configurar clima") {
-            try { openLocationSettings() } catch (_: Exception) {}
+        wireStatusPillAction(clock, R.drawable.ic_clock) { openDateSettings() }
+        wireStatusPillAction(date, R.drawable.ic_calendar) { openDateSettings() }
+        wireStatusPillAction(weather, R.drawable.ic_cloud) {
+            try {
+                openLocationSettings()
+            } catch (_: Exception) {
+                // Erro ignorado silenciosamente conforme solicitado
+            }
         }
-        setupPill(wifi, R.drawable.ic_wifi, "", "Wi-Fi") { openNetworkSettings() }
+        wireStatusPillAction(wifi, R.drawable.ic_wifi) { openNetworkSettings() }
 
         val gap = dp((8 * scale).toInt())
         listOf<View>(system, allApps, settings, clock, date, weather, wifi).forEach { pill ->
             pill.isFocusable = true
             pill.isFocusableInTouchMode = false
+            (pill.layoutParams as LinearLayout.LayoutParams).marginStart = gap
         }
 
-        fun wrap(v: TextView): FrameLayout {
-            return FrameLayout(this).apply {
-                layoutParams = LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                ).apply {
-                    marginStart = dp((8 * scale).toInt())
-                }
-                clipChildren = false
-                clipToPadding = false
-                addView(v)
-            }
-        }
-
-        right.addView(wrap(system))
-        right.addView(wrap(allApps))
-        right.addView(wrap(settings))
-        right.addView(wrap(clock))
-        right.addView(wrap(date))
-        right.addView(wrap(weather))
-        right.addView(wrap(wifi))
+        right.addView(system)
+        right.addView(allApps)
+        right.addView(settings)
+        right.addView(clock)
+        right.addView(date)
+        right.addView(weather)
+        right.addView(wifi)
 
         clockView = clock
         dateView = date
@@ -2308,7 +2179,7 @@ class MainActivity : Activity() {
             setTextColor(Color.parseColor(accentHex))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
-            gravity = Gravity.START or Gravity.CENTER_VERTICAL
+            gravity = Gravity.CENTER
             
             val bg = GradientDrawable().apply {
                 setColor(Color.parseColor("#1AFFFFFF"))
@@ -2316,15 +2187,17 @@ class MainActivity : Activity() {
                 setStroke(dp(1), Color.parseColor("#33FFFFFF"))
             }
             background = bg
-            val px = dp((10 * scale).toInt()) // Padding horizontal reduzido de 14 para 10
+            val px = dp((14 * scale).toInt())
             val py = dp((10 * scale).toInt())
             setPadding(px, py, px, py)
             
-            // Layout animável com margens para evitar toque/sobreposição
-            layoutParams = FrameLayout.LayoutParams(
+            // Layout animável
+            layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
+            
+            // Animações de layout removidas para manter tamanho fixo
         }
     }
 
@@ -2334,8 +2207,10 @@ class MainActivity : Activity() {
         val dateRaw = SimpleDateFormat("EEE, dd 'De' MMM.", Locale("pt", "BR")).format(now)
         val dateStr = capitalizeWords(dateRaw)
         
-        updatePillCompact(clockView, R.drawable.ic_clock, timeStr)
-        updatePillCompact(dateView, R.drawable.ic_calendar, dateStr)
+        updatePillTextAndIcon(clockView, R.drawable.ic_clock, timeStr)
+        clockView?.tag = timeStr
+        updatePillTextAndIcon(dateView, R.drawable.ic_calendar, dateStr)
+        dateView?.tag = dateStr
     }
 
     private fun capitalizeWords(s: String): String =
@@ -2349,12 +2224,14 @@ class MainActivity : Activity() {
             try {
                 val w = StatusInfo.fetchWeather()
                 if (w != null) {
-                    updatePillCompact(weatherView, R.drawable.ic_cloud, "${w.tempC}°C")
+                    updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "${w.tempC}°C")
+                    weatherView?.tag = "${w.tempC}°C - Clima"
                 } else {
-                    updatePillCompact(weatherView, R.drawable.ic_cloud, "--°")
+                    updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "--°")
                 }
             } catch (e: Exception) {
-                updatePillCompact(weatherView, R.drawable.ic_cloud, "--°")
+                // Em caso de falha na requisição ou lógica, exibe fallback
+                updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "--°")
             }
         }
     }
@@ -2635,7 +2512,10 @@ class MainActivity : Activity() {
                 onBackPressed()
             },
             "Desinstalar" to {
-                uninstallApp(pkg)
+                val intent = Intent(Intent.ACTION_DELETE).apply {
+                    data = Uri.fromParts("package", pkg, null)
+                }
+                startActivity(intent)
                 onBackPressed()
             }
         )
@@ -2819,24 +2699,17 @@ class MainActivity : Activity() {
             addView(tv)
             
             setOnFocusChangeListener { v, hasFocus ->
-                v.animate().cancel()
-                val duration = if (hasFocus) 300L else 200L
-                val interpolator = if (hasFocus) android.view.animation.DecelerateInterpolator(1.2f) else android.view.animation.AccelerateInterpolator(1.2f)
-                
                 if (hasFocus) {
-                    bg.setColor(Color.parseColor("#4DFFFFFF"))
+                    bg.setColor(Color.parseColor("#33FFFFFF"))
                     bg.setStroke(dp(2), Color.WHITE)
+                    v.scaleX = 1.1f
+                    v.scaleY = 1.1f
                 } else {
                     bg.setColor(Color.TRANSPARENT)
                     bg.setStroke(0, Color.TRANSPARENT)
+                    v.scaleX = 1f
+                    v.scaleY = 1f
                 }
-                
-                v.animate()
-                    .scaleX(if (hasFocus) 1.15f else 1f)
-                    .scaleY(if (hasFocus) 1.15f else 1f)
-                    .setDuration(duration)
-                    .setInterpolator(interpolator)
-                    .start()
             }
             
             setOnClickListener {
@@ -2941,28 +2814,29 @@ class MainActivity : Activity() {
 
 
     private fun uninstallApp(packageName: String) {
-        runOnUiThread {
-            val packageUri = Uri.fromParts("package", packageName, null)
-            val uninstallIntents = listOf(
-                Intent(Intent.ACTION_UNINSTALL_PACKAGE, packageUri).apply {
-                    putExtra(Intent.EXTRA_RETURN_RESULT, false)
-                },
-                Intent(Intent.ACTION_DELETE, packageUri)
-            )
-
-            for (intent in uninstallIntents) {
-                try {
-                    startActivity(intent)
-                    return@runOnUiThread
-                } catch (_: Exception) {
-                }
+        try {
+            // Tentativa 1: URI padrão — funciona em Android comum
+            val intent = Intent(Intent.ACTION_DELETE).apply {
+                data = Uri.parse("package:$packageName")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-
+            startActivity(intent)
+        } catch (e: Exception) {
             try {
-                startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, packageUri))
-                Toast.makeText(this, "Abra Desinstalar nas informações do app", Toast.LENGTH_LONG).show()
-            } catch (_: Exception) {
-                Toast.makeText(this, "Erro ao tentar desinstalar o aplicativo", Toast.LENGTH_SHORT).show()
+                // Tentativa 2: ACTION_UNINSTALL_PACKAGE — funciona no Android TV/Leanback
+                val intent = Intent(Intent.ACTION_UNINSTALL_PACKAGE).apply {
+                    data = Uri.parse("package:$packageName")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    putExtra(Intent.EXTRA_RETURN_RESULT, true)
+                }
+                startActivity(intent)
+            } catch (e2: Exception) {
+                // Tentativa 3: abrir detalhes do app nas configurações
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.parse("package:$packageName")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                startActivity(intent)
             }
         }
     }
