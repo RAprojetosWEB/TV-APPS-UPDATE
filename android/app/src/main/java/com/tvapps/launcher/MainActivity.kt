@@ -2049,6 +2049,8 @@ class MainActivity : Activity() {
 
         val gap = dp((8 * scale).toInt())
         listOf<View>(system, allApps, settings, clock, date, weather, wifi).forEach { pill ->
+            pill.isFocusable = true
+            pill.isFocusableInTouchMode = false
             (pill.layoutParams as LinearLayout.LayoutParams).marginStart = gap
         }
 
