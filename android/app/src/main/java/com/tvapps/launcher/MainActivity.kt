@@ -460,8 +460,12 @@ class MainActivity : Activity() {
                 NetworkMonitor.State.ETHERNET_NO_INTERNET -> Color.parseColor("#FF6B6B")
                 else -> Color.parseColor("#5EE6A8")
             }
-            v.text = label
+            v.tag = label
             v.setTextColor(color)
+
+            val showText = v.hasFocus()
+            val textToSet = if (showText) label else ""
+
             val icon = androidx.core.content.ContextCompat.getDrawable(this, res)?.mutate()
             // Mantém cores originais do vetor para alerta/ethernet; nos demais aplica cor da pílula.
             if (state != NetworkMonitor.State.WIFI_NO_INTERNET &&
@@ -471,7 +475,30 @@ class MainActivity : Activity() {
             val size = dp(16)
             icon?.setBounds(0, 0, size, size)
             v.setCompoundDrawables(icon, null, null, null)
-            v.compoundDrawablePadding = dp(6)
+            v.compoundDrawablePadding = if (textToSet.isEmpty()) 0 else dp(6)
+            v.text = textToSet
+            
+            // Atualiza o listener para usar o ícone correto de rede ao mudar o foco
+            v.setOnFocusChangeListener { view, hasFocus ->
+                val tv = view as TextView
+                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
+                if (hasFocus) {
+                    bg.setColor(Color.parseColor("#33FFFFFF"))
+                    bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                    view.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
+                    
+                    val currentLabel = tv.tag as? String ?: ""
+                    tv.text = currentLabel
+                    tv.compoundDrawablePadding = dp(6)
+                } else {
+                    bg.setColor(Color.parseColor("#1AFFFFFF"))
+                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    view.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
+                    
+                    tv.text = ""
+                    tv.compoundDrawablePadding = 0
+                }
+            }
         }
     }
 
@@ -1633,6 +1660,17 @@ class MainActivity : Activity() {
         pill.text = label
     }
 
+    private fun updatePillTextAndIcon(pill: TextView?, iconRes: Int, text: String) {
+        pill?.apply {
+            tag = text
+            if (hasFocus()) {
+                setPillContent(this, iconRes, text)
+            } else {
+                setPillContent(this, iconRes, "")
+            }
+        }
+    }
+
     private fun openApp(packageName: String) {
         val intent = packageManager.getLaunchIntentForPackage(packageName)
         if (intent != null) {
@@ -1831,20 +1869,28 @@ class MainActivity : Activity() {
 
     /** Torna uma pílula focável (D-pad), clicável e com mesmo realce de foco
      *  das demais pílulas (borda branca + leve scale). */
-    private fun wireStatusPillAction(pill: TextView, onTap: () -> Unit) {
+    private fun wireStatusPillAction(pill: TextView, iconRes: Int, onTap: () -> Unit) {
         pill.isFocusable = true
         pill.isClickable = true
         pill.setOnClickListener { onTap() }
         pill.setOnFocusChangeListener { v, hasFocus ->
-            val bg = (v.background as? GradientDrawable) ?: return@setOnFocusChangeListener
+            val tv = v as TextView
+            val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
             if (hasFocus) {
                 bg.setColor(Color.parseColor("#33FFFFFF"))
                 bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
                 v.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
+                
+                // Expande o texto ao ganhar foco
+                val currentText = v.tag as? String ?: ""
+                setPillContent(tv, iconRes, currentText)
             } else {
                 bg.setColor(Color.parseColor("#1AFFFFFF"))
                 bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
                 v.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
+                
+                // Recolhe o texto ao perder foco
+                setPillContent(tv, iconRes, "")
             }
         }
     }
@@ -1962,12 +2008,6 @@ class MainActivity : Activity() {
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
-            val icon = ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_rotate_ccw)
-            val rs = dp((16 * scale).toInt())
-            icon?.setBounds(0, 0, rs, rs)
-            icon?.setTint(Color.parseColor("#E8A85C"))
-            setCompoundDrawables(icon, null, null, null)
-            compoundDrawablePadding = 0
             setOnClickListener { checkOtaUpdate(this, true) }
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
@@ -1975,16 +2015,16 @@ class MainActivity : Activity() {
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#335EE6A8"))
                     bg.setStroke(dp(2), Color.parseColor("#5EE6A8"))
-                    tv.compoundDrawablePadding = dp((6 * scale).toInt())
-                    tv.text = "Procurar atualizações"
+                    setPillContent(tv, R.drawable.ic_rotate_ccw, "Procurar atualizações")
                     tv.animate().alpha(1f).setDuration(200).start()
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                    tv.compoundDrawablePadding = 0
-                    tv.text = ""
+                    setPillContent(tv, R.drawable.ic_rotate_ccw, "")
                 }
             }
+            // Estado inicial recolhido
+            setPillContent(this, R.drawable.ic_rotate_ccw, "")
         }
 
         val allApps = makeStatusPill("", "#FFFFFF", scale).apply {
@@ -1993,12 +2033,6 @@ class MainActivity : Activity() {
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
-            val icon = ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_grid)
-            val rs = dp((16 * scale).toInt())
-            icon?.setBounds(0, 0, rs, rs)
-            icon?.setTint(Color.WHITE)
-            setCompoundDrawables(icon, null, null, null)
-            compoundDrawablePadding = 0
             setOnClickListener { showAllAppsOverlay(scale) }
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
@@ -2006,15 +2040,15 @@ class MainActivity : Activity() {
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#33FFFFFF"))
                     bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
-                    tv.compoundDrawablePadding = dp((6 * scale).toInt())
-                    tv.text = "Todos os aplicativos"
+                    setPillContent(tv, R.drawable.ic_grid, "Todos os aplicativos")
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                    tv.compoundDrawablePadding = 0
-                    tv.text = ""
+                    setPillContent(tv, R.drawable.ic_grid, "")
                 }
             }
+            // Estado inicial recolhido
+            setPillContent(this, R.drawable.ic_grid, "")
         }
 
         val settings = makeStatusPill("", "#FFFFFF", scale).apply {
@@ -2023,12 +2057,6 @@ class MainActivity : Activity() {
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
-            val icon = ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_settings)
-            val rs = dp((16 * scale).toInt())
-            icon?.setBounds(0, 0, rs, rs)
-            icon?.setTint(Color.WHITE)
-            setCompoundDrawables(icon, null, null, null)
-            compoundDrawablePadding = 0
             setOnClickListener { openSystemSettings() }
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
@@ -2036,26 +2064,26 @@ class MainActivity : Activity() {
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#33FFFFFF"))
                     bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
-                    tv.compoundDrawablePadding = dp((6 * scale).toInt())
-                    tv.text = "Configurações"
+                    setPillContent(tv, R.drawable.ic_settings, "Configurações")
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                    tv.compoundDrawablePadding = 0
-                    tv.text = ""
+                    setPillContent(tv, R.drawable.ic_settings, "")
                 }
             }
+            // Estado inicial recolhido
+            setPillContent(this, R.drawable.ic_settings, "")
         }
 
-        val clock = makeStatusPill("🕐  --:--", "#FFFFFF", scale)
-        val date = makeStatusPill("📅  ---", "#FFFFFF", scale)
-        val weather = makeStatusPill("🌥  --°C", "#FFFFFF", scale)
-        val wifi = makeStatusPill("📶  Wi-Fi", "#5EE6A8", scale)
+        val clock = makeStatusPill("", "#FFFFFF", scale)
+        val date = makeStatusPill("", "#FFFFFF", scale)
+        val weather = makeStatusPill("", "#FFFFFF", scale)
+        val wifi = makeStatusPill("", "#5EE6A8", scale)
 
-        wireStatusPillAction(clock) { openDateSettings() }
-        wireStatusPillAction(date) { openDateSettings() }
-        wireStatusPillAction(weather) { openLocationSettings() }
-        wireStatusPillAction(wifi) { openNetworkSettings() }
+        wireStatusPillAction(clock, R.drawable.ic_clock) { openDateSettings() }
+        wireStatusPillAction(date, R.drawable.ic_calendar) { openDateSettings() }
+        wireStatusPillAction(weather, R.drawable.ic_cloud) { openLocationSettings() }
+        wireStatusPillAction(wifi, R.drawable.ic_wifi) { openNetworkSettings() }
 
         val gap = dp((8 * scale).toInt())
         listOf<View>(system, allApps, settings, clock, date, weather, wifi).forEach { pill ->
@@ -2127,9 +2155,12 @@ class MainActivity : Activity() {
     private fun makeStatusPill(text: String, accentHex: String, scale: Float): TextView {
         return TextView(this).apply {
             this.text = text
+            this.tag = text // Armazena o texto completo para expansão
             setTextColor(Color.parseColor(accentHex))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
+            gravity = Gravity.CENTER
+            minWidth = dp((52 * scale).toInt())
             val bg = GradientDrawable().apply {
                 setColor(Color.parseColor("#1AFFFFFF"))
                 cornerRadius = dp((12 * scale).toInt()).toFloat()
@@ -2156,9 +2187,12 @@ class MainActivity : Activity() {
 
     private fun updateClockAndDate() {
         val now = Date()
-        clockView?.text = "🕐  " + SimpleDateFormat("HH:mm", Locale("pt", "BR")).format(now)
-        val raw = SimpleDateFormat("EEE, dd 'De' MMM.", Locale("pt", "BR")).format(now)
-        dateView?.text = "📅  " + capitalizeWords(raw)
+        val timeStr = SimpleDateFormat("HH:mm", Locale("pt", "BR")).format(now)
+        val dateRaw = SimpleDateFormat("EEE, dd 'De' MMM.", Locale("pt", "BR")).format(now)
+        val dateStr = capitalizeWords(dateRaw)
+        
+        updatePillTextAndIcon(clockView, R.drawable.ic_clock, timeStr)
+        updatePillTextAndIcon(dateView, R.drawable.ic_calendar, dateStr)
     }
 
     private fun capitalizeWords(s: String): String =
@@ -2171,7 +2205,7 @@ class MainActivity : Activity() {
         scope.launch {
             val w = StatusInfo.fetchWeather()
             if (w != null) {
-                weatherView?.text = "${w.emoji}  ${w.tempC}°C"
+                updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "${w.tempC}°C")
             }
         }
     }
