@@ -50,6 +50,8 @@ export const Route = createFileRoute("/api/public/verify-launcher-password")({
             { status: 500, headers: CORS },
           );
         }
+        
+        console.log(`DB data: ${JSON.stringify(data)}`);
 
         const expected = (data?.login_password ?? "1555").trim();
         const received = parsed.data.password.trim();
