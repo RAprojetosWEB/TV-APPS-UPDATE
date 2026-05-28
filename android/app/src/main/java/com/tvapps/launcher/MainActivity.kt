@@ -1970,13 +1970,7 @@ class MainActivity : Activity() {
             clipToPadding = false
             isFocusable = false
             isFocusableInTouchMode = false
-            // Habilita animações de transição de layout (expansão suave)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                layoutTransition = android.animation.LayoutTransition().apply {
-                    setDuration(250)
-                    enableTransitionType(android.animation.LayoutTransition.CHANGING)
-                }
-            }
+            // Animações de transição de layout removidas para evitar deslocamento de foco no Android TV
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -1996,16 +1990,13 @@ class MainActivity : Activity() {
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#335EE6A8"))
                     bg.setStroke(dp(2), Color.parseColor("#5EE6A8"))
-                    setPillContent(tv, R.drawable.ic_rotate_ccw, "Procurar atualizações")
-                    tv.animate().alpha(1f).setDuration(200).start()
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                    setPillContent(tv, R.drawable.ic_rotate_ccw, "")
                 }
             }
-            // Estado inicial recolhido
-            setPillContent(this, R.drawable.ic_rotate_ccw, "")
+            // Estado inicial fixo (ícone + texto)
+            setPillContent(this, R.drawable.ic_rotate_ccw, "Procurar atualizações")
         }
 
         val allApps = makeStatusPill("", "#FFFFFF", scale).apply {
@@ -2021,15 +2012,13 @@ class MainActivity : Activity() {
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#33FFFFFF"))
                     bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
-                    setPillContent(tv, R.drawable.ic_grid, "Todos os aplicativos")
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                    setPillContent(tv, R.drawable.ic_grid, "")
                 }
             }
-            // Estado inicial recolhido
-            setPillContent(this, R.drawable.ic_grid, "")
+            // Estado inicial fixo (ícone + texto)
+            setPillContent(this, R.drawable.ic_grid, "Todos os aplicativos")
         }
 
         val settings = makeStatusPill("", "#FFFFFF", scale).apply {
@@ -2045,15 +2034,13 @@ class MainActivity : Activity() {
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#33FFFFFF"))
                     bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
-                    setPillContent(tv, R.drawable.ic_settings, "Configurações")
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                    setPillContent(tv, R.drawable.ic_settings, "")
                 }
             }
-            // Estado inicial recolhido
-            setPillContent(this, R.drawable.ic_settings, "")
+            // Estado inicial fixo (ícone + texto)
+            setPillContent(this, R.drawable.ic_settings, "Configurações")
         }
 
         val clock = makeStatusPill("", "#FFFFFF", scale)
@@ -2158,11 +2145,7 @@ class MainActivity : Activity() {
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
             
-            // Ativa animações de layout automáticas no container pai se possível
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                // Configuração para permitir que o texto apareça suavemente
-                animate().duration = 200
-            }
+            // Animações de layout removidas para manter tamanho fixo
         }
     }
 
@@ -2232,7 +2215,7 @@ class MainActivity : Activity() {
             } catch (_: Exception) { null }
 
             if (otaInfo == null) {
-                setPillContent(systemPill, R.drawable.ic_rotate_ccw, if (systemPill.hasFocus()) "Procurar atualizações" else "")
+                setPillContent(systemPill, R.drawable.ic_rotate_ccw, "Procurar atualizações")
                 systemPill.setTextColor(Color.parseColor("#FF6B6B"))
                 if (manual) {
                     Toast.makeText(this@MainActivity, "Falha ao verificar atualizações (sem conexão)", Toast.LENGTH_SHORT).show()
@@ -2253,7 +2236,7 @@ class MainActivity : Activity() {
                     }
                 }
             } else {
-                setPillContent(systemPill, R.drawable.ic_rotate_ccw, if (systemPill.hasFocus()) "Procurar atualizações" else "")
+                setPillContent(systemPill, R.drawable.ic_rotate_ccw, "Procurar atualizações")
                 systemPill.setTextColor(Color.parseColor("#5EE6A8"))
                 if (manual) {
                     Toast.makeText(this@MainActivity, "Você já está na versão mais recente", Toast.LENGTH_SHORT).show()
@@ -2348,7 +2331,7 @@ class MainActivity : Activity() {
                         }
                         systemPill?.text = "⚠  Erro no download"
                         Toast.makeText(this@MainActivity, "Erro ao baixar atualização: ${p.message}", Toast.LENGTH_LONG).show()
-                        systemPill?.postDelayed({ systemPill.text = if (systemPill.hasFocus()) "🔍  Procurar atualizações" else "🔍" }, 3000)
+                        systemPill?.postDelayed({ setPillContent(systemPill, R.drawable.ic_rotate_ccw, "Procurar atualizações") }, 3000)
                     }
                 }
             }
