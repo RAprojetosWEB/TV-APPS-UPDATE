@@ -395,10 +395,19 @@ class MainActivity : Activity() {
     }
 
     override fun onBackPressed() {
-        val overlay = activeOverlay
-        if (overlay != null) {
-            (overlay.parent as? ViewGroup)?.removeView(overlay)
-            activeOverlay = null
+        val root = findViewById<ViewGroup>(android.R.id.content)
+        val lastChild = if (root.childCount > 0) root.getChildAt(root.childCount - 1) else null
+        
+        // Verifica se o topo é um overlay (nossos overlays são FrameLayout clicáveis)
+        if (lastChild is FrameLayout && lastChild.isClickable && lastChild != findViewById(android.R.id.content)) {
+            root.removeView(lastChild)
+            val newLast = if (root.childCount > 0) root.getChildAt(root.childCount - 1) else null
+            activeOverlay = if (newLast is FrameLayout && newLast.isClickable) newLast else null
+            
+            // Se voltamos para a tela principal, recarrega para mostrar favoritos novos
+            if (activeOverlay == null) {
+                setContentView(buildRoot())
+            }
         } else {
             super.onBackPressed()
         }
