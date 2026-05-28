@@ -2233,6 +2233,7 @@ class MainActivity : Activity() {
             } catch (e: Exception) {
                 // Em caso de falha na requisição ou lógica, exibe fallback
                 updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "--°")
+                weatherView?.tag = "Configurar clima"
             }
         }
     }
