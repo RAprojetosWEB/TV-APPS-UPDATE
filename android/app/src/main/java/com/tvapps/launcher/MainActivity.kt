@@ -1024,7 +1024,7 @@ class MainActivity : Activity() {
                 fun openApp(packageName: String) = this@MainActivity.openApp(packageName)
 
                 @JavascriptInterface
-                fun uninstallApp(packageName: String) = this@MainActivity.desinstalarApp(packageName)
+                fun uninstallApp(packageName: String) = this@MainActivity.uninstallApp(packageName)
 
                 @JavascriptInterface
                 fun openSettings() {
@@ -1664,44 +1664,6 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun desinstalarApp(packageName: String) {
-        // Tentativa 1: ACTION_UNINSTALL_PACKAGE (melhor para Android TV)
-        try {
-            val intent = Intent(Intent.ACTION_UNINSTALL_PACKAGE).apply {
-                data = Uri.parse("package:$packageName")
-                putExtra(Intent.EXTRA_RETURN_RESULT, false)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            }
-            startActivity(intent)
-            return
-        } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "Erro ao desinstalar (ACTION_UNINSTALL_PACKAGE): ${e.message}")
-        }
-
-        // Tentativa 2: ACTION_DELETE
-        try {
-            val intent = Intent(Intent.ACTION_DELETE).apply {
-                data = Uri.parse("package:$packageName")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            startActivity(intent)
-            return
-        } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "Erro ao desinstalar (ACTION_DELETE): ${e.message}")
-        }
-
-        // Tentativa 3: Abre detalhes do app nas configurações do sistema
-        try {
-            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.parse("package:$packageName")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            startActivity(intent)
-        } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "Erro ao abrir detalhes para desinstalação: ${e.message}")
-        }
-    }
 
     private fun showAlreadyInstalledDialog(app: CatalogApp) {
         // Estilo customizado para o Dialog ficaria melhor com um layout XML, 
@@ -2556,10 +2518,7 @@ class MainActivity : Activity() {
                 onBackPressed()
             },
             "Desinstalar" to {
-                val intent = Intent(Intent.ACTION_DELETE).apply {
-                    data = Uri.fromParts("package", pkg, null)
-                }
-                startActivity(intent)
+                uninstallApp(pkg)
                 onBackPressed()
             }
         )
@@ -2858,29 +2817,34 @@ class MainActivity : Activity() {
 
 
     private fun uninstallApp(packageName: String) {
-        try {
-            // Tentativa 1: URI padrão — funciona em Android comum
-            val intent = Intent(Intent.ACTION_DELETE).apply {
-                data = Uri.parse("package:$packageName")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            startActivity(intent)
-        } catch (e: Exception) {
+        runOnUiThread {
             try {
-                // Tentativa 2: ACTION_UNINSTALL_PACKAGE — funciona no Android TV/Leanback
-                val intent = Intent(Intent.ACTION_UNINSTALL_PACKAGE).apply {
-                    data = Uri.parse("package:$packageName")
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    putExtra(Intent.EXTRA_RETURN_RESULT, true)
-                }
-                startActivity(intent)
-            } catch (e2: Exception) {
-                // Tentativa 3: abrir detalhes do app nas configurações
-                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                    data = Uri.parse("package:$packageName")
+                // Tenta o método moderno e mais compatível primeiro
+                val intent = Intent(Intent.ACTION_DELETE).apply {
+                    data = Uri.fromParts("package", packageName, null)
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 startActivity(intent)
+            } catch (e: Exception) {
+                try {
+                    // Fallback para o método específico de Android TV legado
+                    val intent = Intent(Intent.ACTION_UNINSTALL_PACKAGE).apply {
+                        data = Uri.parse("package:$packageName")
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    startActivity(intent)
+                } catch (e2: Exception) {
+                    try {
+                        // Fallback final: abre as configurações de detalhes do app para desinstalação manual
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.fromParts("package", packageName, null)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        startActivity(intent)
+                    } catch (e3: Exception) {
+                        Toast.makeText(this, "Erro ao tentar desinstalar o aplicativo", Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
         }
     }
