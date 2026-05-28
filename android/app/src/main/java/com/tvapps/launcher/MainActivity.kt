@@ -2586,6 +2586,9 @@ class MainActivity : Activity() {
             clipChildren = false
             clipToPadding = false
             isFillViewport = true
+            isFocusable = false
+            isFocusableInTouchMode = false
+            descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
                 // Largura máxima de aproximadamente 80% da tela para não encostar nas bordas
                 val maxW = (resources.displayMetrics.widthPixels * 0.8f).toInt()
@@ -2659,6 +2662,7 @@ class MainActivity : Activity() {
                 gravity = Gravity.CENTER_VERTICAL
             }
             isFocusable = true
+            isFocusableInTouchMode = false
             isClickable = true
             val bg = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
@@ -2696,7 +2700,19 @@ class MainActivity : Activity() {
             }
         }
         addBtnContainer.addView(addBtn)
-        
+
+        // Trava o foco do botão "+": direita fica nele mesmo,
+        // esquerda volta para o último app da dock (se houver).
+        addBtn.nextFocusRightId = addBtn.id
+        val lastAppItem = if (appsLayout.childCount > 0) appsLayout.getChildAt(appsLayout.childCount - 1) else null
+        if (lastAppItem != null) {
+            if (lastAppItem.id == View.NO_ID) lastAppItem.id = View.generateViewId()
+            addBtn.nextFocusLeftId = lastAppItem.id
+            lastAppItem.nextFocusRightId = addBtn.id
+        } else {
+            addBtn.nextFocusLeftId = addBtn.id
+        }
+
         if (pendingFocusAddDock) {
             addBtn.post { addBtn.requestFocus() }
             pendingFocusAddDock = false
