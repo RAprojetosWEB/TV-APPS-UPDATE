@@ -79,7 +79,7 @@ private fun verifyLauncherPasswordRemote(password: String): VerifyResult {
         val ok = JSONObject(body).optBoolean("ok", false)
         if (ok) VerifyResult.OK else VerifyResult.WRONG
     } catch (e: Exception) {
-        android.util.Log.w("MainActivity", "verifyLauncherPasswordRemote failed: ${e.message}")
+        android.util.Log.e("MainActivity", "verifyLauncherPasswordRemote failed: ${e.message}", e)
         VerifyResult.NETWORK_ERROR
     }
 }
@@ -625,7 +625,7 @@ class MainActivity : Activity() {
                     } else {
                         val message = when (result) {
                             VerifyResult.WRONG -> "Senha incorreta"
-                            VerifyResult.NETWORK_ERROR -> "Erro de rede / Senha incorreta"
+                            VerifyResult.NETWORK_ERROR -> "Erro de conexão com o servidor"
                             else -> "Erro desconhecido"
                         }
                         Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
