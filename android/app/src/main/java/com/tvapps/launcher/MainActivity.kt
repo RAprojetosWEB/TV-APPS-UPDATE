@@ -2117,9 +2117,12 @@ class MainActivity : Activity() {
     private fun makeStatusPill(text: String, accentHex: String, scale: Float): TextView {
         return TextView(this).apply {
             this.text = text
+            this.tag = text // Armazena o texto completo para expansão
             setTextColor(Color.parseColor(accentHex))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
+            gravity = Gravity.CENTER
+            minWidth = dp((52 * scale).toInt())
             val bg = GradientDrawable().apply {
                 setColor(Color.parseColor("#1AFFFFFF"))
                 cornerRadius = dp((12 * scale).toInt()).toFloat()
