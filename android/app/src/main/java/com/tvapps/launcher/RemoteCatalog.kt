@@ -17,7 +17,7 @@ import java.net.URL
  */
 object RemoteCatalog {
     private const val TAG = "RemoteCatalog"
-    private const val ENDPOINT = "https://sideload-hero.lovable.app/api/public/catalog"
+    private const val ENDPOINT = "https://tv-apps-update.lovable.app/api/public/catalog"
     private const val PREFS = "remote_catalog"
     private const val KEY_PAYLOAD = "payload"
     private const val KEY_TIMESTAMP = "timestamp"
