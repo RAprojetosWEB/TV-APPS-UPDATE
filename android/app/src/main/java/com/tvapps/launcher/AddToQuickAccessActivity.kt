@@ -33,6 +33,7 @@ class AddToQuickAccessActivity : Activity() {
     
     private lateinit var btnCancel: Button
     private lateinit var btnMultiAdd: Button
+    private lateinit var btnMultiUninstall: Button
     private lateinit var selectionCounter: TextView
     private lateinit var recyclerView: RecyclerView
 
