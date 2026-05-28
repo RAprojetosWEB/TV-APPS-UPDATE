@@ -126,7 +126,7 @@ export function NetworkIndicator({ compact = false }: { compact?: boolean } = {}
           }`}
         >
           <div className="shrink-0">{getIcon()}</div>
-          <span className="max-w-0 overflow-hidden whitespace-nowrap text-lg font-bold text-white/90 transition-all duration-300 group-focus:max-w-xs group-focus:ml-2">
+          <span className="max-w-0 overflow-hidden opacity-0 whitespace-nowrap text-lg font-bold text-white/90 transition-all duration-300 group-focus:max-w-xs group-focus:opacity-100 group-focus:ml-2">
             Wi-Fi
           </span>
         </button>
