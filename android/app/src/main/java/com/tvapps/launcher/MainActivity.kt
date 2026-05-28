@@ -2678,24 +2678,89 @@ class MainActivity : Activity() {
                 }
             }
             
-            setOnLongClickListener {
-                val options = arrayOf("Remover este", "Remover vários")
-                AlertDialog.Builder(this@MainActivity, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                    .setTitle("Opções de Acesso Rápido")
-                    .setItems(options) { _, which ->
-                        when (which) {
-                            0 -> { // Remover este
-                                LauncherSettings.removeFromDock(this@MainActivity, packageName)
-                                MainActivity.pendingFocusAddDock = true
-                                setContentView(buildRoot())
-                            }
-                            1 -> { // Remover vários
-                                startActivity(Intent(this@MainActivity, BatchRemoveQuickAccessActivity::class.java))
-                            }
+            setOnLongClickListener { v ->
+                val popupView = LinearLayout(this@MainActivity).apply {
+                    orientation = LinearLayout.VERTICAL
+                    val p = dp(8)
+                    setPadding(p, p, p, p)
+                    background = GradientDrawable().apply {
+                        setColor(Color.parseColor("#F2121212")) // Escuro semitransparente quase opaco
+                        cornerRadius = dp(12).toFloat()
+                        setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    }
+                }
+
+                fun createItem(text: String, icon: String, action: () -> Unit) = LinearLayout(this@MainActivity).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = Gravity.CENTER_VERTICAL
+                    isFocusable = true
+                    isClickable = true
+                    val hp = dp(16)
+                    val vp = dp(10)
+                    setPadding(hp, vp, hp, vp)
+                    
+                    val itemBg = GradientDrawable().apply {
+                        setColor(Color.TRANSPARENT)
+                        cornerRadius = dp(8).toFloat()
+                    }
+                    background = itemBg
+                    
+                    setOnFocusChangeListener { _, hasFocus ->
+                        if (hasFocus) {
+                            itemBg.setColor(Color.parseColor("#33FFFFFF"))
+                            this.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
+                        } else {
+                            itemBg.setColor(Color.TRANSPARENT)
+                            this.animate().scaleX(1.0f).scaleY(1.0f).setDuration(150).start()
                         }
                     }
-                    .setNegativeButton("Cancelar", null)
-                    .show()
+                    
+                    setOnClickListener {
+                        action()
+                    }
+
+                    addView(TextView(this@MainActivity).apply {
+                        this.text = icon
+                        textSize = 18f
+                        setTextColor(Color.WHITE)
+                    })
+                    
+                    addView(TextView(this@MainActivity).apply {
+                        this.text = text
+                        textSize = 15f
+                        setTextColor(Color.WHITE)
+                        setPadding(dp(12), 0, 0, 0)
+                        maxLines = 1
+                        ellipsize = TextUtils.TruncateAt.END
+                    })
+                }
+
+                val popupWidth = dp(240)
+                val popup = PopupWindow(popupView, popupWidth, ViewGroup.LayoutParams.WRAP_CONTENT, true)
+                
+                popupView.addView(createItem("Remover este", "🗑") {
+                    popup.dismiss()
+                    LauncherSettings.removeFromDock(this@MainActivity, packageName)
+                    MainActivity.pendingFocusAddDock = true
+                    setContentView(buildRoot())
+                })
+                
+                popupView.addView(createItem("Remover vários", "☑") {
+                    popup.dismiss()
+                    startActivity(Intent(this@MainActivity, BatchRemoveQuickAccessActivity::class.java))
+                })
+
+                val location = IntArray(2)
+                v.getLocationOnScreen(location)
+                
+                popupView.measure(View.MeasureSpec.makeMeasureSpec(popupWidth, View.MeasureSpec.EXACTLY), 
+                                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
+                
+                val popupHeight = popupView.measuredHeight
+                val x = location[0] + (v.width / 2) - (popupWidth / 2)
+                val y = location[1] - popupHeight - dp(8)
+                
+                popup.showAtLocation(v, Gravity.NO_GRAVITY, x, y)
                 true
             }
         }
