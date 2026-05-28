@@ -1653,7 +1653,7 @@ class MainActivity : Activity() {
 
         // Define o texto ANTES de medir e iniciar a animação para o layout já conhecer o conteúdo
         // Garante gravity START para que o ícone fique fixo à esquerda e o texto expanda para a direita
-        button.gravity = android.view.Gravity.START or android.view.Gravity.CENTER_VERTICAL
+        button.gravity = Gravity.START or Gravity.CENTER_VERTICAL
         if (expand) {
             setPillContent(button, iconRes, fullExpandedText)
         }
