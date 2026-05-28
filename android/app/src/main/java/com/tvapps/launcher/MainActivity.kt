@@ -2146,9 +2146,8 @@ class MainActivity : Activity() {
                 setStroke(dp(1), Color.parseColor("#22FFFFFF")) // Subtle stroke
             }
             background = bg
-            val px = dp((14 * scale).toInt())
-            val py = dp((10 * scale).toInt())
-            setPadding(px, py, px, py)
+            val p = dp((11 * scale).toInt())
+            setPadding(p, p, p, p)
             
             // Layout animável
             layoutParams = LinearLayout.LayoutParams(
