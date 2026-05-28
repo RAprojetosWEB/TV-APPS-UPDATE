@@ -8,6 +8,7 @@ object LauncherSettings {
     private const val PREFS_NAME = "launcher_settings"
     private const val KEY_FAVORITES = "favorites"
     private const val KEY_HIDDEN_APPS = "hidden_apps"
+    private const val KEY_DOCK_APPS = "dock_apps"
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -71,5 +72,36 @@ object LauncherSettings {
         val array = JSONArray()
         hidden.forEach { array.put(it) }
         getPrefs(context).edit().putString(KEY_HIDDEN_APPS, array.toString()).apply()
+    }
+
+    fun getDockApps(context: Context): List<String> {
+        val json = getPrefs(context).getString(KEY_DOCK_APPS, "[]") ?: "[]"
+        val array = JSONArray(json)
+        val list = mutableListOf<String>()
+        for (i in 0 until array.length()) {
+            list.add(array.getString(i))
+        }
+        return list
+    }
+
+    fun addToDock(context: Context, packageName: String) {
+        val dock = getDockApps(context).toMutableList()
+        if (!dock.contains(packageName)) {
+            dock.add(packageName)
+            saveDockApps(context, dock)
+        }
+    }
+
+    fun removeFromDock(context: Context, packageName: String) {
+        val dock = getDockApps(context).toMutableList()
+        if (dock.remove(packageName)) {
+            saveDockApps(context, dock)
+        }
+    }
+
+    private fun saveDockApps(context: Context, dock: List<String>) {
+        val array = JSONArray()
+        dock.forEach { array.put(it) }
+        getPrefs(context).edit().putString(KEY_DOCK_APPS, array.toString()).apply()
     }
 }
