@@ -2320,6 +2320,146 @@ class MainActivity : Activity() {
         super.onDestroy()
     }
 
+    private fun showContextMenu(app: ResolveInfo, scale: Float) {
+        val root = findViewById<ViewGroup>(android.R.id.content)
+        val pm = packageManager
+        val pkg = app.activityInfo.packageName
+        
+        val overlay = FrameLayout(this).apply {
+            layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            setBackgroundColor(Color.parseColor("#CC000000"))
+            isClickable = true
+            isFocusable = true
+            setOnClickListener { onBackPressed() }
+        }
+        activeOverlay = overlay
+        
+        val card = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = GradientDrawable().apply {
+                setColor(Color.parseColor("#1A1A2E"))
+                cornerRadius = dp((16 * scale).toInt()).toFloat()
+                setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+            }
+            val w = dp((320 * scale).toInt())
+            layoutParams = FrameLayout.LayoutParams(w, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER)
+            val p = dp((24 * scale).toInt())
+            setPadding(p, p, p, p)
+            isClickable = true
+        }
+        
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { 
+                bottomMargin = dp((20 * scale).toInt()) 
+            }
+        }
+        
+        val icon = ImageView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(dp((48 * scale).toInt()), dp((48 * scale).toInt()))
+            setImageDrawable(app.loadIcon(pm))
+        }
+        
+        val nameLabel = TextView(this).apply {
+            text = app.loadLabel(pm)
+            setTextColor(Color.WHITE)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f * scale)
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { 
+                marginStart = dp((12 * scale).toInt()) 
+            }
+        }
+        
+        header.addView(icon)
+        header.addView(nameLabel)
+        card.addView(header)
+        
+        val isFav = LauncherSettings.getFavorites(this).contains(pkg)
+        val options = listOf(
+            "Abrir" to { 
+                val intent = pm.getLaunchIntentForPackage(pkg)
+                if (intent != null) startActivity(intent)
+                onBackPressed()
+            },
+            (if (isFav) "Remover dos favoritos" else "Adicionar aos favoritos") to {
+                if (isFav) {
+                    LauncherSettings.removeFavorite(this, pkg)
+                    Toast.makeText(this, "Removido dos favoritos", Toast.LENGTH_SHORT).show()
+                } else {
+                    LauncherSettings.addFavorite(this, pkg)
+                    Toast.makeText(this, "Adicionado aos favoritos", Toast.LENGTH_SHORT).show()
+                }
+                onBackPressed()
+            },
+            "Ocultar app" to {
+                LauncherSettings.hideApp(this, pkg)
+                Toast.makeText(this, "App ocultado", Toast.LENGTH_SHORT).show()
+                onBackPressed() // Fecha menu
+                onBackPressed() // Fecha All Apps
+                showAllAppsOverlay(scale) // Reabre atualizado
+            },
+            "Informações do app" to {
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.fromParts("package", pkg, null)
+                }
+                startActivity(intent)
+                onBackPressed()
+            },
+            "Desativar" to {
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.fromParts("package", pkg, null)
+                }
+                startActivity(intent)
+                onBackPressed()
+            },
+            "Desinstalar" to {
+                val intent = Intent(Intent.ACTION_DELETE).apply {
+                    data = Uri.fromParts("package", pkg, null)
+                }
+                startActivity(intent)
+                onBackPressed()
+            }
+        )
+        
+        options.forEach { (label, action) ->
+            val btn = TextView(this).apply {
+                text = label
+                setTextColor(Color.parseColor("#B3FFFFFF"))
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f * scale)
+                isFocusable = true
+                isClickable = true
+                val p2 = dp((12 * scale).toInt())
+                setPadding(p2, p2, p2, p2)
+                
+                val btnBg = GradientDrawable().apply {
+                    cornerRadius = dp((8 * scale).toInt()).toFloat()
+                }
+                background = btnBg
+                
+                layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { 
+                    bottomMargin = dp((4 * scale).toInt()) 
+                }
+                
+                setOnClickListener { action() }
+                setOnFocusChangeListener { v, hasFocus ->
+                    if (hasFocus) {
+                        btnBg.setColor(Color.parseColor("#33FFFFFF"))
+                        setTextColor(Color.WHITE)
+                    } else {
+                        btnBg.setColor(Color.TRANSPARENT)
+                        setTextColor(Color.parseColor("#B3FFFFFF"))
+                    }
+                }
+            }
+            card.addView(btn)
+        }
+        
+        overlay.addView(card)
+        root.addView(overlay)
+        if (card.childCount > 1) card.getChildAt(1).requestFocus()
+    }
+
     private fun showAllAppsOverlay(scale: Float) {
         val root = findViewById<ViewGroup>(android.R.id.content)
         
