@@ -2862,7 +2862,7 @@ class MainActivity : Activity() {
         }
 
         val grid = GridLayout(this).apply {
-            columnCount = 5 // Reduzi para 5 para ícones maiores e melhor distribuição
+            columnCount = 5
             layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
                 gravity = Gravity.CENTER
             }
@@ -2893,13 +2893,13 @@ class MainActivity : Activity() {
                 gravity = Gravity.CENTER
                 isFocusable = true
                 isClickable = true
-                val itemWidth = dp(120)
+                val itemWidth = dp(110)
                 layoutParams = GridLayout.LayoutParams().apply {
                     width = itemWidth
                     height = ViewGroup.LayoutParams.WRAP_CONTENT
-                    setMargins(dp(16), dp(16), dp(16), dp(16))
+                    setMargins(dp(12), dp(12), dp(12), dp(12))
                 }
-                setPadding(dp(16), dp(16), dp(16), dp(16))
+                setPadding(dp(12), dp(16), dp(12), dp(16))
                 
                 val bg = GradientDrawable().apply {
                     cornerRadius = dp(12).toFloat()
