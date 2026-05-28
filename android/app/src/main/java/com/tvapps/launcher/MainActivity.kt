@@ -2857,6 +2857,8 @@ class MainActivity : Activity() {
             layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f)
             isVerticalScrollBarEnabled = false
             isFillViewport = true
+            setPadding(dp(24), 0, dp(24), 0)
+            clipToPadding = false
         }
 
         val grid = GridLayout(this).apply {
