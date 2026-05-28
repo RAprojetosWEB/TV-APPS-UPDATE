@@ -460,8 +460,12 @@ class MainActivity : Activity() {
                 NetworkMonitor.State.ETHERNET_NO_INTERNET -> Color.parseColor("#FF6B6B")
                 else -> Color.parseColor("#5EE6A8")
             }
-            v.text = label
+            v.tag = label
             v.setTextColor(color)
+
+            val showText = v.hasFocus()
+            val textToSet = if (showText) label else ""
+
             val icon = androidx.core.content.ContextCompat.getDrawable(this, res)?.mutate()
             // Mantém cores originais do vetor para alerta/ethernet; nos demais aplica cor da pílula.
             if (state != NetworkMonitor.State.WIFI_NO_INTERNET &&
@@ -471,7 +475,30 @@ class MainActivity : Activity() {
             val size = dp(16)
             icon?.setBounds(0, 0, size, size)
             v.setCompoundDrawables(icon, null, null, null)
-            v.compoundDrawablePadding = dp(6)
+            v.compoundDrawablePadding = if (textToSet.isEmpty()) 0 else dp(6)
+            v.text = textToSet
+            
+            // Atualiza o listener para usar o ícone correto de rede ao mudar o foco
+            v.setOnFocusChangeListener { view, hasFocus ->
+                val tv = view as TextView
+                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
+                if (hasFocus) {
+                    bg.setColor(Color.parseColor("#33FFFFFF"))
+                    bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                    view.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
+                    
+                    val currentLabel = tv.tag as? String ?: ""
+                    tv.text = currentLabel
+                    tv.compoundDrawablePadding = dp(6)
+                } else {
+                    bg.setColor(Color.parseColor("#1AFFFFFF"))
+                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    view.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
+                    
+                    tv.text = ""
+                    tv.compoundDrawablePadding = 0
+                }
+            }
         }
     }
 
