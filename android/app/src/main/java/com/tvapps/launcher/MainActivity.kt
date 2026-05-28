@@ -2076,11 +2076,30 @@ class MainActivity : Activity() {
         system.id = View.generateViewId()
         allApps.id = View.generateViewId()
         settings.id = View.generateViewId()
+        clock.id = View.generateViewId()
+        date.id = View.generateViewId()
+        weather.id = View.generateViewId()
+        wifi.id = View.generateViewId()
         
         system.nextFocusRightId = allApps.id
+        
         allApps.nextFocusLeftId = system.id
         allApps.nextFocusRightId = settings.id
+        
         settings.nextFocusLeftId = allApps.id
+        settings.nextFocusRightId = clock.id
+        
+        clock.nextFocusLeftId = settings.id
+        clock.nextFocusRightId = date.id
+        
+        date.nextFocusLeftId = clock.id
+        date.nextFocusRightId = weather.id
+        
+        weather.nextFocusLeftId = date.id
+        weather.nextFocusRightId = wifi.id
+        
+        wifi.nextFocusLeftId = weather.id
+        wifi.nextFocusRightId = View.NO_ID
 
         row.addView(left)
         row.addView(right)
