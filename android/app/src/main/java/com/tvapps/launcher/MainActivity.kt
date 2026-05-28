@@ -1851,6 +1851,7 @@ class MainActivity : Activity() {
     /** Torna uma pílula focável (D-pad), clicável e com mesmo realce de foco
      *  das demais pílulas (borda branca + leve scale). */
     private fun wireStatusPillAction(pill: TextView, iconRes: Int, onTap: () -> Unit) {
+        val originalIcon = iconRes
         pill.isFocusable = true
         pill.isClickable = true
         pill.setOnClickListener { onTap() }
