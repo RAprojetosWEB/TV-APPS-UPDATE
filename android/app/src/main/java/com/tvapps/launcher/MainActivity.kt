@@ -1612,7 +1612,12 @@ class MainActivity : Activity() {
         val icon = androidx.core.content.ContextCompat.getDrawable(this, iconRes)
         val size = (pill.textSize * 1.1f).toInt()
         icon?.setBounds(0, 0, size, size)
-        icon?.setTint(pill.currentTextColor)
+        
+        // BUG 1 FIX: Garante que o ícone sempre tenha 100% de opacidade,
+        // mesmo que o texto esteja em fade (alpha animado).
+        val baseColor = pill.currentTextColor and 0x00FFFFFF
+        icon?.setTint(baseColor or (0xFF shl 24))
+        
         pill.setCompoundDrawables(icon, null, null, null)
         // Sem padding quando só ícone, evita deslocar o ícone para a esquerda
         pill.compoundDrawablePadding = if (label.isEmpty()) 0 else dp(8)
@@ -1642,7 +1647,13 @@ class MainActivity : Activity() {
         val compactWidth = iconSize + compactTextWidth + padding
 
         val expandedTextWidth = button.paint.measureText(fullExpandedText).toInt()
-        val expandedWidth = iconSize + button.compoundDrawablePadding + expandedTextWidth + padding
+        var expandedWidth = iconSize + button.compoundDrawablePadding + expandedTextWidth + padding
+        
+        // BUG 2 FIX: Define largura fixa para botões do topo para evitar que o texto 
+        // tente quebrar em duas linhas durante a animação (tremor).
+        if (expandedText.contains("Configurar") || expandedText.length > 12) {
+            expandedWidth = dp(250) 
+        }
         
         val baseColor = button.currentTextColor and 0x00FFFFFF
         
@@ -1706,6 +1717,11 @@ class MainActivity : Activity() {
         pill.isFocusableInTouchMode = false
         pill.isClickable = true
         pill.setOnClickListener { onTap() }
+        
+        // BUG 2 FIX: Previne que o texto quebre em duas linhas causando tremor
+        pill.maxLines = 1
+        pill.setSingleLine(true)
+        pill.ellipsize = android.text.TextUtils.TruncateAt.END
         pillStates[pill] = PillState(iconRes, compact, expanded)
         setPillContent(pill, iconRes, compact)
         pill.setOnFocusChangeListener { v, hasFocus ->
