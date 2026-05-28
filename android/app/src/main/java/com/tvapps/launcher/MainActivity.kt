@@ -2545,11 +2545,14 @@ class MainActivity : Activity() {
 
         val pm = packageManager
         val mainIntent = Intent(Intent.ACTION_MAIN, null).apply { addCategory(Intent.CATEGORY_LAUNCHER) }
-        val apps = pm.queryIntentActivities(mainIntent, 0)
+        val hidden = LauncherSettings.getHiddenApps(this)
+        val apps = pm.queryIntentActivities(mainIntent, 0).filter { 
+            !hidden.contains(it.activityInfo.packageName) 
+        }
         
-        apps.sortBy { it.loadLabel(pm).toString().lowercase() }
+        val sortedApps = apps.sortedBy { it.loadLabel(pm).toString().lowercase() }
 
-        apps.forEach { app ->
+        sortedApps.forEach { app ->
             val item = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
