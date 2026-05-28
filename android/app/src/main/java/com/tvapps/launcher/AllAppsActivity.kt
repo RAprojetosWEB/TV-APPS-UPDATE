@@ -24,6 +24,7 @@ class AllAppsActivity : Activity() {
 
     private val density by lazy { resources.displayMetrics.density }
     private fun dp(v: Int) = (v * density).toInt()
+    private var scaleFactor = 1.0f
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,12 +35,14 @@ class AllAppsActivity : Activity() {
             WindowManager.LayoutParams.FLAG_FULLSCREEN
         )
         
-        val scale = 1.0f // Standard scale for the new activity
+        val dm = resources.displayMetrics
+        val widthDp = dm.widthPixels / dm.density
+        scaleFactor = (widthDp / 1280f).coerceIn(0.85f, 1.1f)
         
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(Color.parseColor("#0d0820")) // Opaque background
-            val p = dp(40)
+            val p = dp((40 * scaleFactor).toInt())
             setPadding(p, p, p, p)
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -59,12 +62,12 @@ class AllAppsActivity : Activity() {
         val title = TextView(this).apply {
             text = "Todos os aplicativos"
             setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 28f)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 28f * scaleFactor)
             setTypeface(null, android.graphics.Typeface.BOLD)
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
         }
 
-        val closeBtn = makeStatusPill("Fechar", "#FFFFFF", scale).apply {
+        val closeBtn = makeStatusPill("Fechar", "#FFFFFF", scaleFactor).apply {
             isFocusable = true
             isClickable = true
             setOnClickListener { 
@@ -87,42 +90,54 @@ class AllAppsActivity : Activity() {
         root.addView(topRow)
 
         val recyclerView = RecyclerView(this).apply {
-            id = View.generateViewId()
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 0,
                 1f
-            ).apply { topMargin = dp(24) }
+            ).apply { topMargin = dp((24 * scaleFactor).toInt()) }
             layoutManager = GridLayoutManager(this@AllAppsActivity, 6)
+            // Melhora performance
+            setHasFixedSize(true)
         }
         
         root.addView(recyclerView)
         setContentView(root)
 
         loadApps(recyclerView)
+        
+        // Foca no primeiro item da lista após um pequeno delay para garantir que o layout aconteceu
+        recyclerView.post {
+            if (recyclerView.childCount > 0) {
+                recyclerView.getChildAt(0).requestFocus()
+            } else {
+                closeBtn.requestFocus()
+            }
+        }
     }
 
     private fun loadApps(recyclerView: RecyclerView) {
         val pm = packageManager
+        
+        // 1. Busca apps com a intent correta solicitada pelo usuário
         val intent = Intent(Intent.ACTION_MAIN, null).apply {
             addCategory(Intent.CATEGORY_LAUNCHER)
         }
+        val standardApps = pm.queryIntentActivities(intent, 0)
         
-        // Use user's requested query
-        val apps = pm.queryIntentActivities(intent, 0)
-        
-        // Also consider TV launcher apps as before if relevant, 
-        // but user specifically gave a snippet, so I'll follow it closely.
-        // However, usually on TV we want LEANBACK_LAUNCHER too.
-        // Let's include both to be safe and avoid regression.
+        // 2. Busca também apps de TV (Leanback) para garantir que apareçam
         val tvIntent = Intent(Intent.ACTION_MAIN, null).apply { 
             addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER) 
         }
         val tvApps = pm.queryIntentActivities(tvIntent, 0)
         
-        val combinedApps = (apps + tvApps).distinctBy { it.activityInfo.packageName }
+        // Combina e remove duplicados
+        val combinedApps = (standardApps + tvApps).distinctBy { it.activityInfo.packageName }
+        
+        // Filtra apps ocultos
         val hidden = LauncherSettings.getHiddenApps(this)
         val filteredApps = combinedApps.filter { !hidden.contains(it.activityInfo.packageName) }
+        
+        // Ordena por nome
         val sortedApps = filteredApps.sortedBy { it.loadLabel(pm).toString().lowercase() }
 
         recyclerView.adapter = AllAppsAdapter(sortedApps, pm)
@@ -164,18 +179,21 @@ class AllAppsActivity : Activity() {
                 gravity = Gravity.CENTER
                 isFocusable = true
                 isClickable = true
-                val p = dp(16)
+                val p = dp((16 * scaleFactor).toInt())
                 setPadding(p, p, p, p)
                 
                 val bg = GradientDrawable().apply {
-                    cornerRadius = dp(12).toFloat()
+                    cornerRadius = dp((12 * scaleFactor).toInt()).toFloat()
                 }
                 background = bg
                 
+                val m = dp((8 * scaleFactor).toInt())
                 layoutParams = RecyclerView.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
-                )
+                ).apply {
+                    setMargins(m, m, m, m)
+                }
 
                 setOnFocusChangeListener { v, hasFocus ->
                     val background = (v.background as? GradientDrawable) ?: return@setOnFocusChangeListener
@@ -194,19 +212,20 @@ class AllAppsActivity : Activity() {
             }
 
             val icon = ImageView(this@AllAppsActivity).apply {
-                layoutParams = LinearLayout.LayoutParams(dp(64), dp(64))
+                val s = dp((64 * scaleFactor).toInt())
+                layoutParams = LinearLayout.LayoutParams(s, s)
             }
 
             val label = TextView(this@AllAppsActivity).apply {
                 setTextColor(Color.WHITE)
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f * scaleFactor)
                 gravity = Gravity.CENTER
                 maxLines = 2
                 ellipsize = android.text.TextUtils.TruncateAt.END
                 layoutParams = LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
-                ).apply { topMargin = dp(8) }
+                ).apply { topMargin = dp((8 * scaleFactor).toInt()) }
             }
 
             item.addView(icon)
