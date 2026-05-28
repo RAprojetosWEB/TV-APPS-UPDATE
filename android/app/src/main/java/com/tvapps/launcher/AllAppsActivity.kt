@@ -197,15 +197,40 @@ class AllAppsActivity : Activity() {
                         startActivity(intent)
                     }
                     2 -> { // Desinstalar
-                        val intent = Intent(Intent.ACTION_DELETE).apply {
-                            data = Uri.fromParts("package", packageName, null)
-                        }
-                        startActivity(intent)
+                        uninstallApp(packageName)
                     }
                 }
                 dialog.dismiss()
             }
             .show()
+    }
+
+    private fun uninstallApp(packageName: String) {
+        try {
+            // Tentativa 1: URI padrão — funciona em Android comum
+            val intent = Intent(Intent.ACTION_DELETE).apply {
+                data = Uri.parse("package:$packageName")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            try {
+                // Tentativa 2: ACTION_UNINSTALL_PACKAGE — funciona no Android TV/Leanback
+                val intent = Intent(Intent.ACTION_UNINSTALL_PACKAGE).apply {
+                    data = Uri.parse("package:$packageName")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    putExtra(Intent.EXTRA_RETURN_RESULT, true)
+                }
+                startActivity(intent)
+            } catch (e2: Exception) {
+                // Tentativa 3: abrir detalhes do app nas configurações
+                val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.parse("package:$packageName")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                startActivity(intent)
+            }
+        }
     }
 
     private inner class AllAppsAdapter(
