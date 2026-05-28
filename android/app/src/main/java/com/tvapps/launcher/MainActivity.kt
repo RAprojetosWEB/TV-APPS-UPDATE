@@ -1636,13 +1636,22 @@ class MainActivity : Activity() {
     private fun animateButtonExpand(button: TextView, iconRes: Int, compactText: String, expandedText: String, expand: Boolean) {
         val iconSize = (button.textSize * 1.1f).toInt()
         val padding = button.paddingLeft + button.paddingRight
-        
+
+        // Texto final expandido: mantém o valor compacto e adiciona o rótulo,
+        // para que o usuário não perca a informação (hora, data, temperatura)
+        // ao focar a pílula.
+        val fullExpandedText = when {
+            compactText.isBlank() -> expandedText
+            expandedText.isBlank() -> compactText
+            else -> "$compactText  ·  $expandedText"
+        }
+
         // Largura compacta: ícone + texto compacto (se houver) + padding
         val compactTextWidth = if (compactText.isEmpty()) 0 else (button.paint.measureText(compactText).toInt() + button.compoundDrawablePadding)
         val compactWidth = iconSize + compactTextWidth + padding
-        
-        // Largura expandida: ícone + texto completo + padding
-        val expandedWidth = iconSize + button.compoundDrawablePadding + button.paint.measureText(expandedText).toInt() + padding
+
+        // Largura expandida: ícone + texto completo (valor + rótulo) + padding
+        val expandedWidth = iconSize + button.compoundDrawablePadding + button.paint.measureText(fullExpandedText).toInt() + padding
         
         val baseColor = button.currentTextColor and 0x00FFFFFF
         
@@ -1669,7 +1678,7 @@ class MainActivity : Activity() {
             addListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationStart(animation: Animator) {
                     if (expand) {
-                        setPillContent(button, iconRes, expandedText)
+                        setPillContent(button, iconRes, fullExpandedText)
                         button.setTextColor(baseColor) // Começa invisível
                     }
                 }
