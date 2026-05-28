@@ -1186,11 +1186,18 @@ class MainActivity : Activity() {
             settingsPill?.nextFocusDownId = firstCard.id
         }
 
+        // Barra de acesso rápido (Dock)
+        root.addView(buildDock(scaleFactor))
+
         val footer = TextView(this).apply {
             text = "Selecione um aplicativo e pressione OK para instalar ou abrir"
             setTextColor(Color.parseColor("#66FFFFFF"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f * scaleFactor)
             gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { topMargin = dp((16 * scaleFactor).toInt()) }
         }
         root.addView(footer)
 
