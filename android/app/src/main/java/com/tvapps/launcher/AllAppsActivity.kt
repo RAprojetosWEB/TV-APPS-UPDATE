@@ -206,31 +206,29 @@ class AllAppsActivity : Activity() {
     }
 
     private fun uninstallApp(packageName: String) {
-        try {
-            // Tentativa 1: URI padrão — funciona em Android comum
-            val intent = Intent(Intent.ACTION_DELETE).apply {
-                data = Uri.parse("package:$packageName")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            startActivity(intent)
-        } catch (e: Exception) {
+        val uri = Uri.fromParts("package", packageName, null)
+        val attempts = listOf(
+            Intent(Intent.ACTION_DELETE, uri),
+            @Suppress("DEPRECATION")
+            Intent(Intent.ACTION_UNINSTALL_PACKAGE, uri).apply {
+                putExtra(Intent.EXTRA_RETURN_RESULT, true)
+            },
+            Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, uri)
+        )
+        for (intent in attempts) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             try {
-                // Tentativa 2: ACTION_UNINSTALL_PACKAGE — funciona no Android TV/Leanback
-                val intent = Intent(Intent.ACTION_UNINSTALL_PACKAGE).apply {
-                    data = Uri.parse("package:$packageName")
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    putExtra(Intent.EXTRA_RETURN_RESULT, true)
+                if (intent.resolveActivity(packageManager) != null) {
+                    startActivity(intent)
+                    return
                 }
-                startActivity(intent)
-            } catch (e2: Exception) {
-                // Tentativa 3: abrir detalhes do app nas configurações
-                val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                    data = Uri.parse("package:$packageName")
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-                startActivity(intent)
-            }
+            } catch (_: Exception) {}
         }
+        android.widget.Toast.makeText(
+            this,
+            "Não foi possível abrir o desinstalador neste dispositivo",
+            android.widget.Toast.LENGTH_LONG
+        ).show()
     }
 
     private inner class AllAppsAdapter(
