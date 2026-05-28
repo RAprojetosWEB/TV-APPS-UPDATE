@@ -2050,7 +2050,13 @@ class MainActivity : Activity() {
 
         wireStatusPillAction(clock, R.drawable.ic_clock) { openDateSettings() }
         wireStatusPillAction(date, R.drawable.ic_calendar) { openDateSettings() }
-        wireStatusPillAction(weather, R.drawable.ic_cloud) { openLocationSettings() }
+        wireStatusPillAction(weather, R.drawable.ic_cloud) {
+            try {
+                openLocationSettings()
+            } catch (_: Exception) {
+                // Erro ignorado silenciosamente conforme solicitado
+            }
+        }
         wireStatusPillAction(wifi, R.drawable.ic_wifi) { openNetworkSettings() }
 
         val gap = dp((8 * scale).toInt())
