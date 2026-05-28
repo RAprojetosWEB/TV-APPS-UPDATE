@@ -2021,7 +2021,7 @@ class MainActivity : Activity() {
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
             setOnClickListener { checkOtaUpdate(this, true) }
-            tag = "Verificar se há novas atualizações"
+            tag = "Verificar se há novas\natualizações"
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
                 val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
@@ -2046,7 +2046,7 @@ class MainActivity : Activity() {
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
             setOnClickListener { showAllAppsOverlay(scale) }
-            tag = "Todos os aplicativos instalados"
+            tag = "Todos os aplicativos\ninstalados"
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
                 val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
