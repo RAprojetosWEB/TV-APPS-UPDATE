@@ -2225,7 +2225,7 @@ class MainActivity : Activity() {
                 val w = StatusInfo.fetchWeather()
                 if (w != null) {
                     updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "${w.tempC}°C")
-                    weatherView?.tag = "${w.tempC}°C - ${w.condition}"
+                    weatherView?.tag = "${w.tempC}°C - Clima"
                 } else {
                     updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "--°")
                 }
