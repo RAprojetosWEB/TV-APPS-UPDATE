@@ -43,7 +43,7 @@ class AllAppsActivity : Activity() {
         
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(Color.parseColor("#0d0820")) // Opaque background
+            setBackgroundColor(Color.parseColor("#0D0D1A")) // Dark background
             val p = dp((40 * scaleFactor).toInt())
             setPadding(p, p, p, p)
             clipChildren = false
@@ -83,8 +83,8 @@ class AllAppsActivity : Activity() {
                     bg.setColor(Color.parseColor("#33FFFFFF"))
                     bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
                 } else {
-                    bg.setColor(Color.parseColor("#1AFFFFFF"))
-                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    bg.setColor(Color.TRANSPARENT)
+                    bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
                 }
             }
         }
@@ -156,9 +156,9 @@ class AllAppsActivity : Activity() {
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f * scale)
             setTypeface(null, android.graphics.Typeface.BOLD)
             val bg = GradientDrawable().apply {
-                setColor(Color.parseColor("#1AFFFFFF"))
+                setColor(Color.TRANSPARENT)
                 cornerRadius = dp((12 * scale).toInt()).toFloat()
-                setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                setStroke(dp(2), Color.parseColor(accentHex))
             }
             background = bg
             val px = dp((14 * scale).toInt())
@@ -225,6 +225,7 @@ class AllAppsActivity : Activity() {
                 setPadding(p, p, p, p)
                 
                 val bg = GradientDrawable().apply {
+                    setColor(Color.parseColor("#1A1A2E"))
                     cornerRadius = dp((12 * scaleFactor).toInt()).toFloat()
                 }
                 background = bg
@@ -240,12 +241,12 @@ class AllAppsActivity : Activity() {
                 setOnFocusChangeListener { v, hasFocus ->
                     val background = (v.background as? GradientDrawable) ?: return@setOnFocusChangeListener
                     if (hasFocus) {
-                        background.setColor(Color.parseColor("#33FFFFFF"))
+                        background.setColor(Color.parseColor("#2A2A4A"))
                         background.setStroke(dp(2), Color.parseColor("#FFFFFF"))
                         v.scaleX = 1.05f
                         v.scaleY = 1.05f
                     } else {
-                        background.setColor(Color.TRANSPARENT)
+                        background.setColor(Color.parseColor("#1A1A2E"))
                         background.setStroke(0, Color.TRANSPARENT)
                         v.scaleX = 1.0f
                         v.scaleY = 1.0f

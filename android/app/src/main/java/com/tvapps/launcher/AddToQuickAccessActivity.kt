@@ -40,6 +40,13 @@ class AddToQuickAccessActivity : Activity() {
         
         setContentView(R.layout.activity_add_to_quick_access)
 
+        val root = findViewById<View>(R.id.root_layout)
+        val gradient = GradientDrawable(
+            GradientDrawable.Orientation.TOP_BOTTOM,
+            intArrayOf(Color.parseColor("#1A237E"), Color.parseColor("#0D0D1A"))
+        )
+        root.background = gradient
+
         val title = findViewById<TextView>(R.id.title)
         title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 24f * scaleFactor)
 
@@ -48,14 +55,26 @@ class AddToQuickAccessActivity : Activity() {
         recyclerView.setHasFixedSize(true)
 
         val btnCancel = findViewById<Button>(R.id.btn_cancel)
-        btnCancel.setOnClickListener {
-            finish()
-        }
-        btnCancel.setOnFocusChangeListener { v, hasFocus ->
-            if (hasFocus) {
-                v.setBackgroundColor(Color.parseColor("#4DFFFFFF"))
-            } else {
-                v.setBackgroundColor(Color.parseColor("#33FFFFFF"))
+        btnCancel.apply {
+            val bg = GradientDrawable().apply {
+                setColor(Color.parseColor("#1A237E"))
+                cornerRadius = dp(8).toFloat()
+            }
+            background = bg
+            setOnClickListener {
+                finish()
+            }
+            setOnFocusChangeListener { v, hasFocus ->
+                val drawable = v.background as? GradientDrawable ?: return@setOnFocusChangeListener
+                if (hasFocus) {
+                    drawable.setColor(Color.parseColor("#3F51B5"))
+                    v.scaleX = 1.05f
+                    v.scaleY = 1.05f
+                } else {
+                    drawable.setColor(Color.parseColor("#1A237E"))
+                    v.scaleX = 1.0f
+                    v.scaleY = 1.0f
+                }
             }
         }
 
@@ -106,7 +125,9 @@ class AddToQuickAccessActivity : Activity() {
                 setPadding(p, p, p, p)
                 
                 val bg = GradientDrawable().apply {
+                    setColor(Color.parseColor("#1AFFFFFF")) // White 10% opacity
                     cornerRadius = dp((12 * scaleFactor).toInt()).toFloat()
+                    setStroke(dp(1), Color.parseColor("#33FFFFFF")) // Subtle border
                 }
                 background = bg
                 
@@ -122,12 +143,12 @@ class AddToQuickAccessActivity : Activity() {
                     val background = (v.background as? GradientDrawable) ?: return@setOnFocusChangeListener
                     if (hasFocus) {
                         background.setColor(Color.parseColor("#33FFFFFF"))
-                        background.setStroke(dp(2), Color.WHITE)
+                        background.setStroke(dp(2), Color.parseColor("#80FFFFFF")) // Glowing border effect
                         v.scaleX = 1.1f
                         v.scaleY = 1.1f
                     } else {
-                        background.setColor(Color.TRANSPARENT)
-                        background.setStroke(0, Color.TRANSPARENT)
+                        background.setColor(Color.parseColor("#1AFFFFFF"))
+                        background.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
                         v.scaleX = 1.0f
                         v.scaleY = 1.0f
                     }
