@@ -1,6 +1,9 @@
 package com.tvapps.launcher
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.animation.LayoutTransition
+import android.animation.ValueAnimator
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
@@ -31,8 +34,10 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.view.animation.AccelerateInterpolator
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
+import android.view.animation.DecelerateInterpolator
 import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import android.widget.GridLayout
@@ -1626,6 +1631,64 @@ class MainActivity : Activity() {
     private val pillStates = mutableMapOf<TextView, PillState>()
 
     /**
+     * Anima a expansão/recolhimento de uma pílula deslizando suavemente.
+     */
+    private fun animateButtonExpand(button: TextView, iconRes: Int, compactText: String, expandedText: String, expand: Boolean) {
+        val iconSize = (button.textSize * 1.1f).toInt()
+        val padding = button.paddingLeft + button.paddingRight
+        
+        // Largura compacta: ícone + texto compacto (se houver) + padding
+        val compactTextWidth = if (compactText.isEmpty()) 0 else (button.paint.measureText(compactText).toInt() + button.compoundDrawablePadding)
+        val compactWidth = iconSize + compactTextWidth + padding
+        
+        // Largura expandida: ícone + texto completo + padding
+        val expandedWidth = iconSize + button.compoundDrawablePadding + button.paint.measureText(expandedText).toInt() + padding
+        
+        val baseColor = button.currentTextColor and 0x00FFFFFF
+        
+        val animator = ValueAnimator.ofInt(
+            if (expand) compactWidth else expandedWidth,
+            if (expand) expandedWidth else compactWidth
+        ).apply {
+            duration = 250
+            interpolator = if (expand) DecelerateInterpolator() else AccelerateInterpolator()
+            
+            addUpdateListener { anim ->
+                val progress = anim.animatedFraction
+                val width = anim.animatedValue as Int
+                val params = button.layoutParams
+                params.width = width
+                button.layoutParams = params
+                
+                // Anima alpha do texto (opcionalmente poderíamos usar ForegroundColorSpan para não afetar o ícone,
+                // mas para simplificar e seguir o pedido, animamos o alpha geral do texto)
+                val alpha = if (expand) (progress * 255).toInt() else ((1f - progress) * 255).toInt()
+                button.setTextColor(baseColor or (alpha shl 24))
+            }
+            
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationStart(animation: Animator) {
+                    if (expand) {
+                        setPillContent(button, iconRes, expandedText)
+                        button.setTextColor(baseColor) // Começa invisível
+                    }
+                }
+                override fun onAnimationEnd(animation: Animator) {
+                    if (!expand) {
+                        setPillContent(button, iconRes, compactText)
+                        // Volta para WRAP_CONTENT para não travar o tamanho em atualizações futuras
+                        button.layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
+                    }
+                    // Garante que a cor final esteja correta e opaca
+                    button.setTextColor(baseColor or (0xFF shl 24))
+                    button.requestLayout()
+                }
+            })
+        }
+        animator.start()
+    }
+
+    /**
      * Configura uma pílula da barra superior para começar compacta (só ícone
      * ou valor curto) e expandir o texto completo quando receber foco pelo
      * D-pad, voltando ao estado compacto ao perder o foco. Também aplica o
@@ -1652,12 +1715,12 @@ class MainActivity : Activity() {
                 bg?.setColor(Color.parseColor("#33FFFFFF"))
                 bg?.setStroke(dp(2), Color.parseColor("#FFFFFF"))
                 tv.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
-                setPillContent(tv, st.iconRes, st.expanded)
+                animateButtonExpand(tv, st.iconRes, st.compact, st.expanded, true)
             } else {
                 bg?.setColor(Color.parseColor("#1AFFFFFF"))
                 bg?.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
                 tv.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
-                setPillContent(tv, st.iconRes, st.compact)
+                animateButtonExpand(tv, st.iconRes, st.compact, st.expanded, false)
             }
         }
     }
