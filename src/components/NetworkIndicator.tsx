@@ -113,17 +113,23 @@ export function NetworkIndicator({ compact = false }: { compact?: boolean } = {}
 
       {/* Main Indicator */}
       {compact ? (
-        <div
-          aria-label={getLabel()}
-          title={getLabel()}
-          className={`flex items-center justify-center w-[60px] h-[60px] rounded-2xl border-2 backdrop-blur-md transition-all duration-300 hover:scale-105 ${
+        <button
+          onClick={() => {
+            if (typeof window !== "undefined" && typeof window.Android?.openSettings === "function") {
+              window.Android.openSettings();
+            }
+          }}
+          className={`group flex items-center justify-center gap-0 px-4 py-4 rounded-2xl border-2 backdrop-blur-md transition-all duration-300 active:scale-95 focus:outline-none ${
             online
-              ? "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.15)]"
+              ? "bg-white/5 border-white/10 focus:border-white/40 focus:bg-white/10 focus:shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:bg-white/10 hover:scale-105"
               : "bg-destructive/10 border-destructive/40 shadow-[0_0_15px_rgba(239,68,68,0.25)]"
           }`}
         >
-          {getIcon()}
-        </div>
+          <div className="shrink-0">{getIcon()}</div>
+          <span className="max-w-0 overflow-hidden whitespace-nowrap text-lg font-bold text-white/90 transition-all duration-300 group-focus:max-w-xs group-focus:ml-2">
+            Wi-Fi
+          </span>
+        </button>
       ) : (
         <div className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-500 border ${
           online 
