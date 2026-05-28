@@ -2653,6 +2653,8 @@ class MainActivity : Activity() {
             setBackgroundColor(Color.parseColor("#E6000000"))
             isClickable = true
             isFocusable = true
+            descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
         }
         activeOverlay = overlay
 
@@ -2670,14 +2672,21 @@ class MainActivity : Activity() {
             }
             background = bg
             setPadding(dp(32), dp(32), dp(32), dp(32))
+            isFocusable = true
+            descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
         }
 
         val title = TextView(this).apply {
+            id = View.generateViewId()
             text = "Adicionar ao Acesso Rápido"
             setTextColor(Color.WHITE)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f * scale)
             setTypeface(null, android.graphics.Typeface.BOLD)
             gravity = Gravity.CENTER
+            isFocusable = true
+            nextFocusUpId = id
+            nextFocusLeftId = id
+            nextFocusRightId = id
             layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
                 bottomMargin = dp(32)
             }
@@ -2693,6 +2702,7 @@ class MainActivity : Activity() {
         }
 
         val grid = GridLayout(this).apply {
+            id = View.generateViewId()
             columnCount = 5
             layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
                 gravity = Gravity.CENTER
@@ -2717,13 +2727,20 @@ class MainActivity : Activity() {
             .map { it.activityInfo.applicationInfo }
             .sortedBy { pm.getApplicationLabel(it).toString().lowercase() }
 
-        allApps.forEach { appInfo ->
+        allApps.forEachIndexed { index, appInfo ->
             val pkg = appInfo.packageName
             val item = LinearLayout(this).apply {
+                id = View.generateViewId()
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
                 isFocusable = true
                 isClickable = true
+                
+                // Se estiver na primeira linha, foca no título ao subir
+                if (index < 5) {
+                    nextFocusUpId = title.id
+                }
+
                 val itemWidth = dp(110)
                 layoutParams = GridLayout.LayoutParams().apply {
                     width = itemWidth
@@ -2788,12 +2805,16 @@ class MainActivity : Activity() {
         container.addView(scrollView)
 
         val closeBtn = TextView(this).apply {
+            id = View.generateViewId()
             text = "VOLTAR"
             setTextColor(Color.WHITE)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f * scale)
             gravity = Gravity.CENTER
             isFocusable = true
             isClickable = true
+            nextFocusDownId = id
+            nextFocusLeftId = id
+            nextFocusRightId = id
             val bg = GradientDrawable().apply {
                 cornerRadius = dp(8).toFloat()
                 setColor(Color.parseColor("#33FFFFFF"))
@@ -2825,6 +2846,17 @@ class MainActivity : Activity() {
         overlay.addView(container)
         root.addView(overlay)
         
+        if (grid.childCount > 0) {
+            title.nextFocusDownId = grid.getChildAt(0).id
+            // Define que os itens da grade apontam para o botão voltar ao descer
+            for (i in 0 until grid.childCount) {
+                val child = grid.getChildAt(i)
+                child.nextFocusDownId = closeBtn.id
+            }
+        } else {
+            title.nextFocusDownId = closeBtn.id
+        }
+
         if (grid.childCount > 0) {
             grid.getChildAt(0).requestFocus()
         } else {
