@@ -1651,9 +1651,10 @@ class MainActivity : Activity() {
             else -> "$compactText  ·  $expandedText"
         }
 
-        // Define o texto ANTES de medir e iniciar a animação para o layout já conhecer o conteúdo
         // Garante gravity START para que o ícone fique fixo à esquerda e o texto expanda para a direita
         button.gravity = Gravity.START or Gravity.CENTER_VERTICAL
+        
+        // Define o conteúdo ANTES de medir para garantir o cálculo correto
         if (expand) {
             setPillContent(button, iconRes, fullExpandedText)
         }
@@ -1664,28 +1665,34 @@ class MainActivity : Activity() {
 
         val baseColor = button.currentTextColor and 0x00FFFFFF
         
-        if (expand) {
-            button.setTextColor(baseColor) // Começa invisível para o fade-in
+        // Cancela animação anterior se houver para evitar conflitos
+        button.tag = (button.tag as? ValueAnimator)?.let {
+            it.cancel()
+            null
         }
 
         val animator = ValueAnimator.ofInt(
-            if (expand) compactWidth else expandedWidth,
+            button.width.coerceAtLeast(if (expand) compactWidth else expandedWidth),
             if (expand) expandedWidth else compactWidth
         ).apply {
-            duration = 300
-            // Interpolador suave (física de movimento)
-            interpolator = if (expand) android.view.animation.PathInterpolator(0.25f, 0.1f, 0.25f, 1f) 
-                           else android.view.animation.PathInterpolator(0.4f, 0f, 0.2f, 1f)
+            duration = 350 // Ligeiramente mais lento para ser mais suave
+            // Interpolador de sistema para movimento orgânico (Empurra os vizinhos suavemente)
+            interpolator = DecelerateInterpolator(1.5f)
             
             addUpdateListener { anim ->
-                val progress = anim.animatedFraction
                 val width = anim.animatedValue as Int
                 val params = button.layoutParams
-                params.width = width
-                button.layoutParams = params
+                if (params != null) {
+                    params.width = width
+                    button.layoutParams = params
+                    // Força o pai (LinearLayout) a re-layoutar para empurrar os vizinhos em tempo real
+                    (button.parent as? View)?.requestLayout()
+                }
                 
-                // Anima alpha do texto junto com a largura
-                val alpha = if (expand) (progress * 255).toInt() else ((1f - progress) * 255).toInt()
+                // Anima alpha do texto sincronizado com a largura
+                val progress = anim.animatedFraction
+                val alphaValue = if (expand) progress else (1f - progress)
+                val alpha = (alphaValue * 255).toInt()
                 button.setTextColor(baseColor or (alpha shl 24))
             }
             
@@ -1693,15 +1700,17 @@ class MainActivity : Activity() {
                 override fun onAnimationEnd(animation: Animator) {
                     if (!expand) {
                         setPillContent(button, iconRes, compactText)
-                        // Volta para WRAP_CONTENT para flexibilidade, mas a animação foi controlada
                         button.layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
+                    } else {
+                        button.layoutParams.width = expandedWidth
                     }
-                    // Garante opacidade total ao fim
                     button.setTextColor(baseColor or (0xFF shl 24))
                     button.requestLayout()
+                    button.tag = null
                 }
             })
         }
+        button.tag = animator
         animator.start()
     }
 
