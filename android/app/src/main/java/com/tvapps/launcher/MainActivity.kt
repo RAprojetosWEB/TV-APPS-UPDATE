@@ -2818,33 +2818,27 @@ class MainActivity : Activity() {
 
     private fun uninstallApp(packageName: String) {
         runOnUiThread {
-            try {
-                // Tenta o método moderno e mais compatível primeiro
-                val intent = Intent(Intent.ACTION_DELETE).apply {
-                    data = Uri.fromParts("package", packageName, null)
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-                startActivity(intent)
-            } catch (e: Exception) {
+            val packageUri = Uri.fromParts("package", packageName, null)
+            val uninstallIntents = listOf(
+                Intent(Intent.ACTION_UNINSTALL_PACKAGE, packageUri).apply {
+                    putExtra(Intent.EXTRA_RETURN_RESULT, false)
+                },
+                Intent(Intent.ACTION_DELETE, packageUri)
+            )
+
+            for (intent in uninstallIntents) {
                 try {
-                    // Fallback para o método específico de Android TV legado
-                    val intent = Intent(Intent.ACTION_UNINSTALL_PACKAGE).apply {
-                        data = Uri.parse("package:$packageName")
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
                     startActivity(intent)
-                } catch (e2: Exception) {
-                    try {
-                        // Fallback final: abre as configurações de detalhes do app para desinstalação manual
-                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                            data = Uri.fromParts("package", packageName, null)
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        }
-                        startActivity(intent)
-                    } catch (e3: Exception) {
-                        Toast.makeText(this, "Erro ao tentar desinstalar o aplicativo", Toast.LENGTH_SHORT).show()
-                    }
+                    return@runOnUiThread
+                } catch (_: Exception) {
                 }
+            }
+
+            try {
+                startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, packageUri))
+                Toast.makeText(this, "Abra Desinstalar nas informações do app", Toast.LENGTH_LONG).show()
+            } catch (_: Exception) {
+                Toast.makeText(this, "Erro ao tentar desinstalar o aplicativo", Toast.LENGTH_SHORT).show()
             }
         }
     }
