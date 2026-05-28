@@ -1996,7 +1996,7 @@ class MainActivity : Activity() {
                 }
             }
             // Estado inicial fixo (ícone + texto)
-            setPillContent(this, R.drawable.ic_rotate_ccw, "Procurar atualizações")
+            setPillContent(this, R.drawable.ic_rotate_ccw, "")
         }
 
         val allApps = makeStatusPill("", "#FFFFFF", scale).apply {
@@ -2018,7 +2018,7 @@ class MainActivity : Activity() {
                 }
             }
             // Estado inicial fixo (ícone + texto)
-            setPillContent(this, R.drawable.ic_grid, "Todos os aplicativos")
+            setPillContent(this, R.drawable.ic_grid, "")
         }
 
         val settings = makeStatusPill("", "#FFFFFF", scale).apply {
@@ -2040,7 +2040,7 @@ class MainActivity : Activity() {
                 }
             }
             // Estado inicial fixo (ícone + texto)
-            setPillContent(this, R.drawable.ic_settings, "Configurações")
+            setPillContent(this, R.drawable.ic_settings, "")
         }
 
         val clock = makeStatusPill("", "#FFFFFF", scale)
@@ -2228,7 +2228,7 @@ class MainActivity : Activity() {
             } catch (_: Exception) { null }
 
             if (otaInfo == null) {
-                setPillContent(systemPill, R.drawable.ic_rotate_ccw, "Procurar atualizações")
+                setPillContent(systemPill, R.drawable.ic_rotate_ccw, "")
                 systemPill.setTextColor(Color.parseColor("#FF6B6B"))
                 if (manual) {
                     Toast.makeText(this@MainActivity, "Falha ao verificar atualizações (sem conexão)", Toast.LENGTH_SHORT).show()
@@ -2239,7 +2239,7 @@ class MainActivity : Activity() {
             val (hasUpdate, remoteVersion, downloadUrl) = otaInfo
 
             if (hasUpdate) {
-                setPillContent(systemPill, R.drawable.ic_download, "Atualização disponível ($remoteVersion)")
+                setPillContent(systemPill, R.drawable.ic_download, "")
                 systemPill.setTextColor(Color.parseColor("#5EE6A8"))
                 if (manual) {
                     if (downloadUrl.isEmpty()) {
@@ -2249,7 +2249,7 @@ class MainActivity : Activity() {
                     }
                 }
             } else {
-                setPillContent(systemPill, R.drawable.ic_rotate_ccw, "Procurar atualizações")
+                setPillContent(systemPill, R.drawable.ic_rotate_ccw, "")
                 systemPill.setTextColor(Color.parseColor("#5EE6A8"))
                 if (manual) {
                     Toast.makeText(this@MainActivity, "Você já está na versão mais recente", Toast.LENGTH_SHORT).show()
@@ -2342,9 +2342,9 @@ class MainActivity : Activity() {
                             views.speed.visibility = View.VISIBLE
                             views.speed.text = "Erro no download"
                         }
-                        systemPill?.text = "⚠  Erro no download"
+                        systemPill?.let { setPillContent(it, R.drawable.ic_rotate_ccw, "") }
                         Toast.makeText(this@MainActivity, "Erro ao baixar atualização: ${p.message}", Toast.LENGTH_LONG).show()
-                        systemPill?.postDelayed({ setPillContent(systemPill, R.drawable.ic_rotate_ccw, "Procurar atualizações") }, 3000)
+                        systemPill?.postDelayed({ setPillContent(systemPill, R.drawable.ic_rotate_ccw, "") }, 3000)
                     }
                 }
             }
