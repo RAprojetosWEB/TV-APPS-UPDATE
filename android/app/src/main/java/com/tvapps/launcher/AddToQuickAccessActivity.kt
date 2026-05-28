@@ -168,6 +168,7 @@ class AddToQuickAccessActivity : Activity() {
 
             container.setOnClickListener {
                 LauncherSettings.addToDock(this@AddToQuickAccessActivity, app.activityInfo.packageName)
+                MainActivity.pendingFocusAddDock = true
                 finish()
             }
         }
