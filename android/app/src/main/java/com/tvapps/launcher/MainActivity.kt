@@ -2321,13 +2321,10 @@ class MainActivity : Activity() {
             setPadding(px, py, px, py)
             
             // Layout animável com margens para evitar toque/sobreposição
-            layoutParams = LinearLayout.LayoutParams(
+            layoutParams = FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply {
-                leftMargin = dp(6)
-                rightMargin = dp(6)
-            }
+            )
         }
     }
 
