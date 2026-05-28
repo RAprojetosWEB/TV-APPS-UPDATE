@@ -25,6 +25,14 @@ class AddToQuickAccessActivity : Activity() {
     private val density by lazy { resources.displayMetrics.density }
     private fun dp(v: Int) = (v * density).toInt()
     private var scaleFactor = 1.0f
+    
+    private var isMultiSelectMode = false
+    private val selectedApps = mutableListOf<ResolveInfo>()
+    
+    private lateinit var btnCancel: Button
+    private lateinit var btnMultiAdd: Button
+    private lateinit var selectionCounter: TextView
+    private lateinit var recyclerView: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,35 +59,34 @@ class AddToQuickAccessActivity : Activity() {
         val title = findViewById<TextView>(R.id.title)
         title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 24f * scaleFactor)
 
-        val recyclerView = findViewById<RecyclerView>(R.id.apps_grid)
+        selectionCounter = findViewById(R.id.selection_counter)
+        selectionCounter.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f * scaleFactor)
+
+        recyclerView = findViewById(R.id.apps_grid)
         recyclerView.layoutManager = GridLayoutManager(this, 5)
         recyclerView.setHasFixedSize(true)
 
-        val btnCancel = findViewById<Button>(R.id.btn_cancel)
-        btnCancel.apply {
-            val bg = GradientDrawable().apply {
-                setColor(Color.parseColor("#1A237E"))
-                cornerRadius = dp(8).toFloat()
+        btnMultiAdd = findViewById(R.id.btn_multi_add)
+        setupButton(btnMultiAdd, "#4CAF50") // Green for Add
+        btnMultiAdd.setOnClickListener {
+            selectedApps.forEach { app ->
+                LauncherSettings.addToDock(this, app.activityInfo.packageName)
             }
-            background = bg
-            setOnClickListener {
+            MainActivity.pendingFocusAddDock = true
+            finish()
+        }
+
+        btnCancel = findViewById(R.id.btn_cancel)
+        setupButton(btnCancel, "#1A237E")
+        btnCancel.setOnClickListener {
+            if (isMultiSelectMode) {
+                exitMultiSelectMode()
+            } else {
                 finish()
-            }
-            setOnFocusChangeListener { v, hasFocus ->
-                val drawable = v.background as? GradientDrawable ?: return@setOnFocusChangeListener
-                if (hasFocus) {
-                    drawable.setColor(Color.parseColor("#3F51B5"))
-                    v.scaleX = 1.05f
-                    v.scaleY = 1.05f
-                } else {
-                    drawable.setColor(Color.parseColor("#1A237E"))
-                    v.scaleX = 1.0f
-                    v.scaleY = 1.0f
-                }
             }
         }
 
-        loadApps(recyclerView)
+        loadApps()
         
         // Foca no primeiro item da lista automaticamente
         recyclerView.post {
@@ -89,7 +96,66 @@ class AddToQuickAccessActivity : Activity() {
         }
     }
 
-    private fun loadApps(recyclerView: RecyclerView) {
+    private fun setupButton(button: Button, colorStr: String) {
+        button.apply {
+            val bg = GradientDrawable().apply {
+                setColor(Color.parseColor(colorStr))
+                cornerRadius = dp(8).toFloat()
+            }
+            background = bg
+            setOnFocusChangeListener { v, hasFocus ->
+                val drawable = v.background as? GradientDrawable ?: return@setOnFocusChangeListener
+                if (hasFocus) {
+                    drawable.setStroke(dp(2), Color.WHITE)
+                    v.scaleX = 1.05f
+                    v.scaleY = 1.05f
+                } else {
+                    drawable.setStroke(0, Color.TRANSPARENT)
+                    v.scaleX = 1.0f
+                    v.scaleY = 1.0f
+                }
+            }
+        }
+    }
+
+    override fun onBackPressed() {
+        if (isMultiSelectMode) {
+            exitMultiSelectMode()
+        } else {
+            super.onBackPressed()
+        }
+    }
+
+    private fun enterMultiSelectMode(initialApp: ResolveInfo) {
+        isMultiSelectMode = true
+        selectedApps.clear()
+        selectedApps.add(initialApp)
+        updateMultiSelectUI()
+        recyclerView.adapter?.notifyDataSetChanged()
+    }
+
+    private fun exitMultiSelectMode() {
+        isMultiSelectMode = false
+        selectedApps.clear()
+        updateMultiSelectUI()
+        recyclerView.adapter?.notifyDataSetChanged()
+    }
+
+    private fun updateMultiSelectUI() {
+        if (isMultiSelectMode) {
+            selectionCounter.visibility = View.VISIBLE
+            selectionCounter.text = "${selectedApps.size} selecionados"
+            btnMultiAdd.visibility = View.VISIBLE
+            btnMultiAdd.text = "Adicionar (${selectedApps.size})"
+            btnCancel.text = "Cancelar"
+        } else {
+            selectionCounter.visibility = View.GONE
+            btnMultiAdd.visibility = View.GONE
+            btnCancel.text = "Voltar"
+        }
+    }
+
+    private fun loadApps() {
         val pm = packageManager
         
         // Busca apps de launcher padrão
@@ -142,14 +208,16 @@ class AddToQuickAccessActivity : Activity() {
 
                 setOnFocusChangeListener { v, hasFocus ->
                     val background = (v.background as? GradientDrawable) ?: return@setOnFocusChangeListener
+                    val isSelected = v.tag as? Boolean ?: false
+                    
                     if (hasFocus) {
                         background.setColor(Color.parseColor("#33FFFFFF"))
-                        background.setStroke(dp(2), Color.parseColor("#80FFFFFF")) // Glowing border effect
+                        background.setStroke(dp(2), if (isSelected) Color.parseColor("#4CAF50") else Color.parseColor("#80FFFFFF"))
                         v.scaleX = 1.1f
                         v.scaleY = 1.1f
                     } else {
                         background.setColor(Color.parseColor("#1AFFFFFF"))
-                        background.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                        background.setStroke(if (isSelected) dp(2) else dp(1), if (isSelected) Color.parseColor("#4CAF50") else Color.parseColor("#33FFFFFF"))
                         v.scaleX = 1.0f
                         v.scaleY = 1.0f
                     }
@@ -171,6 +239,25 @@ class AddToQuickAccessActivity : Activity() {
                 }
             }
             iconContainer.addView(icon)
+
+            // Checkmark overlay
+            val checkmark = TextView(this@AddToQuickAccessActivity).apply {
+                text = "✓"
+                setTextColor(Color.WHITE)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f * scaleFactor)
+                gravity = Gravity.CENTER
+                val s = dp(20)
+                layoutParams = FrameLayout.LayoutParams(s, s).apply {
+                    gravity = Gravity.TOP or Gravity.END
+                }
+                val bg = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(Color.parseColor("#4CAF50"))
+                }
+                background = bg
+                visibility = View.GONE
+            }
+            iconContainer.addView(checkmark)
 
             val label = TextView(this@AddToQuickAccessActivity).apply {
                 setTextColor(Color.WHITE)
@@ -195,15 +282,56 @@ class AddToQuickAccessActivity : Activity() {
             val container = holder.view as LinearLayout
             val iconContainer = container.getChildAt(0) as FrameLayout
             val icon = iconContainer.getChildAt(0) as ImageView
+            val checkmark = iconContainer.getChildAt(1) as TextView
             val label = container.getChildAt(1) as TextView
 
             icon.setImageDrawable(app.loadIcon(pm))
             label.text = app.loadLabel(pm)
 
+            val isSelected = selectedApps.contains(app)
+            container.tag = isSelected
+            checkmark.visibility = if (isSelected) View.VISIBLE else View.GONE
+            
+            val bg = container.background as GradientDrawable
+            if (isSelected) {
+                bg.setStroke(dp(2), Color.parseColor("#4CAF50"))
+            } else {
+                if (container.hasFocus()) {
+                    bg.setStroke(dp(2), Color.parseColor("#80FFFFFF"))
+                } else {
+                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                }
+            }
+
             container.setOnClickListener {
-                LauncherSettings.addToDock(this@AddToQuickAccessActivity, app.activityInfo.packageName)
-                MainActivity.pendingFocusAddDock = true
-                finish()
+                if (isMultiSelectMode) {
+                    if (selectedApps.contains(app)) {
+                        selectedApps.remove(app)
+                        if (selectedApps.isEmpty()) {
+                            exitMultiSelectMode()
+                        } else {
+                            updateMultiSelectUI()
+                            notifyItemChanged(position)
+                        }
+                    } else {
+                        selectedApps.add(app)
+                        updateMultiSelectUI()
+                        notifyItemChanged(position)
+                    }
+                } else {
+                    LauncherSettings.addToDock(this@AddToQuickAccessActivity, app.activityInfo.packageName)
+                    MainActivity.pendingFocusAddDock = true
+                    finish()
+                }
+            }
+
+            container.setOnLongClickListener {
+                if (!isMultiSelectMode) {
+                    enterMultiSelectMode(app)
+                    true
+                } else {
+                    false
+                }
             }
         }
 
