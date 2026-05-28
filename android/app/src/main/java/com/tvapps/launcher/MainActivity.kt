@@ -1850,7 +1850,7 @@ class MainActivity : Activity() {
 
     /** Torna uma pílula focável (D-pad), clicável e com mesmo realce de foco
      *  das demais pílulas (borda branca + leve scale). */
-    private fun wireStatusPillAction(pill: TextView, iconRes: Int, onTap: () -> Unit) {
+    private fun wireStatusPillAction(pill: TextView, iconRes: Int, keepTextOnFocusLoss: Boolean = false, onTap: () -> Unit) {
         val originalIcon = iconRes
         pill.isFocusable = true
         pill.isClickable = true
@@ -1859,13 +1859,10 @@ class MainActivity : Activity() {
             val tv = v as TextView
             val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
             
-            // Texto original para restaurar ao perder foco
-            val originalText = tv.tag?.toString() ?: ""
-            
             if (hasFocus) {
-                bg.setColor(Color.parseColor("#33FFFFFF"))
+                bg.setColor(Color.parseColor("#4DFFFFFF")) // 30% white on focus
                 bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
-                v.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
+                v.animate().scaleX(1.08f).scaleY(1.08f).setDuration(150).start()
                 
                 // Expande o texto (copiando lógica do "Configurar hora")
                 val expandedText = tv.tag?.toString() ?: ""
@@ -1875,12 +1872,13 @@ class MainActivity : Activity() {
                 
                 showTopBarTooltip(v)
             } else {
-                bg.setColor(Color.parseColor("#1AFFFFFF"))
-                bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                bg.setColor(Color.parseColor("#CC000000")) // 80% black when unfocused
+                bg.setStroke(dp(1), Color.parseColor("#22FFFFFF")) // Very subtle stroke
                 v.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
                 
-                // Restaura apenas o ícone
-                setPillContent(tv, originalIcon, "")
+                // Restaura o texto se necessário, ou apenas o ícone
+                val textToRestore = if (keepTextOnFocusLoss) tv.tag?.toString() ?: "" else ""
+                setPillContent(tv, originalIcon, textToRestore)
                 
                 hideTopBarTooltip()
             }
@@ -2034,15 +2032,15 @@ class MainActivity : Activity() {
         val allApps = makeStatusPill("", "#FFFFFF", scale)
         val settings = makeStatusPill("", "#FFFFFF", scale)
 
-        wireStatusPillAction(system, R.drawable.ic_rotate_ccw) { checkOtaUpdate(system, true) }
+        wireStatusPillAction(system, R.drawable.ic_rotate_ccw, false) { checkOtaUpdate(system, true) }
         system.tag = "Atualizações"
         // Sobrescreve o listener específico para as cores de OTA se necessário, 
         // mas o wireStatusPillAction já cuida da expansão de texto.
         
-        wireStatusPillAction(allApps, R.drawable.ic_grid) { showAllAppsOverlay(scale) }
+        wireStatusPillAction(allApps, R.drawable.ic_grid, false) { showAllAppsOverlay(scale) }
         allApps.tag = "Aplicativos"
 
-        wireStatusPillAction(settings, R.drawable.ic_settings) { openSystemSettings() }
+        wireStatusPillAction(settings, R.drawable.ic_settings, false) { openSystemSettings() }
         settings.tag = "Configurações"
 
         // Estado inicial (ícones sem texto)
@@ -2055,16 +2053,16 @@ class MainActivity : Activity() {
         val weather = makeStatusPill("", "#FFFFFF", scale)
         val wifi = makeStatusPill("", "#5EE6A8", scale)
 
-        wireStatusPillAction(clock, R.drawable.ic_clock) { openDateSettings() }
-        wireStatusPillAction(date, R.drawable.ic_calendar) { openDateSettings() }
-        wireStatusPillAction(weather, R.drawable.ic_cloud) {
+        wireStatusPillAction(clock, R.drawable.ic_clock, true) { openDateSettings() }
+        wireStatusPillAction(date, R.drawable.ic_calendar, true) { openDateSettings() }
+        wireStatusPillAction(weather, R.drawable.ic_cloud, true) {
             try {
                 openLocationSettings()
             } catch (_: Exception) {
                 // Erro ignorado silenciosamente conforme solicitado
             }
         }
-        wireStatusPillAction(wifi, R.drawable.ic_wifi) { openNetworkSettings() }
+        wireStatusPillAction(wifi, R.drawable.ic_wifi, true) { openNetworkSettings() }
 
         val gap = dp((8 * scale).toInt())
         listOf<View>(system, allApps, settings, clock, date, weather, wifi).forEach { pill ->
@@ -2143,9 +2141,9 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER
             
             val bg = GradientDrawable().apply {
-                setColor(Color.parseColor("#1AFFFFFF"))
-                cornerRadius = dp((12 * scale).toInt()).toFloat()
-                setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                setColor(Color.parseColor("#CC000000")) // 80% black background
+                cornerRadius = dp((24 * scale).toInt()).toFloat() // Circular radius
+                setStroke(dp(1), Color.parseColor("#22FFFFFF")) // Subtle stroke
             }
             background = bg
             val px = dp((14 * scale).toInt())
