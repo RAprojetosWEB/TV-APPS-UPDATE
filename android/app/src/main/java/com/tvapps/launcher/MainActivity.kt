@@ -1378,23 +1378,16 @@ class MainActivity : Activity() {
                 if (hasFocus) Color.parseColor("#15102A") else Color.WHITE,
             )
             v.animate().cancel()
-            if (hasFocus) {
-                v.animate()
-                    .scaleX(1.07f)
-                    .scaleY(1.07f)
-                    .translationZ(dp(10).toFloat())
-                    .setDuration(260)
-                    .setInterpolator(android.view.animation.OvershootInterpolator(1.1f))
-                    .start()
-            } else {
-                v.animate()
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .translationZ(0f)
-                    .setDuration(220)
-                    .setInterpolator(android.view.animation.DecelerateInterpolator(1.5f))
-                    .start()
-            }
+            val interpolator = if (hasFocus) android.view.animation.OvershootInterpolator(0.8f) else android.view.animation.DecelerateInterpolator(1.2f)
+            val duration = if (hasFocus) 350L else 250L
+            
+            v.animate()
+                .scaleX(if (hasFocus) 1.05f else 1f)
+                .scaleY(if (hasFocus) 1.05f else 1f)
+                .translationZ(if (hasFocus) dp(8).toFloat() else 0f)
+                .setDuration(duration)
+                .setInterpolator(interpolator)
+                .start()
         }
         container.setOnClickListener { 
             it.playSoundEffect(SoundEffectConstants.CLICK)
