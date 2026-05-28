@@ -5,6 +5,7 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
@@ -23,10 +24,12 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
+import android.widget.GridLayout
 import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import kotlinx.coroutines.CoroutineScope
@@ -121,6 +124,8 @@ class MainActivity : Activity() {
 
     // APK aguardando instalação após usuário conceder permissão "Instalar apps desconhecidos"
     private var pendingInstallApk: File? = null
+    private var activeOverlay: View? = null
+
 
 
 
@@ -383,6 +388,17 @@ class MainActivity : Activity() {
         networkMonitor?.stop()
         super.onStop()
     }
+
+    override fun onBackPressed() {
+        val overlay = activeOverlay
+        if (overlay != null) {
+            (overlay.parent as? ViewGroup)?.removeView(overlay)
+            activeOverlay = null
+        } else {
+            super.onBackPressed()
+        }
+    }
+
 
     private fun applyNetworkState(state: NetworkMonitor.State) {
         lastNetworkState = state
@@ -1903,6 +1919,38 @@ class MainActivity : Activity() {
                 }
             }
         }
+        val allApps = makeStatusPill("", "#FFFFFF", scale).apply {
+            isFocusable = true
+            isClickable = true
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            gravity = android.view.Gravity.CENTER
+
+            val grid = androidx.core.content.ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_grid)
+            val rs = dp((16 * scale).toInt())
+            grid?.setBounds(0, 0, rs, rs)
+            grid?.setTint(Color.WHITE)
+            setCompoundDrawables(grid, null, null, null)
+            compoundDrawablePadding = 0
+
+            setOnClickListener { showAllAppsOverlay(scale) }
+            setOnFocusChangeListener { v, hasFocus ->
+                val tv = v as TextView
+                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
+                
+                if (hasFocus) {
+                    bg.setColor(Color.parseColor("#33FFFFFF"))
+                    bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                    tv.compoundDrawablePadding = dp((6 * scale).toInt())
+                    tv.text = "Todos os aplicativos"
+                } else {
+                    bg.setColor(Color.parseColor("#1AFFFFFF"))
+                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    tv.compoundDrawablePadding = 0
+                    tv.text = ""
+                }
+            }
+        }
         val settings = makeStatusPill("", "#FFFFFF", scale).apply {
             isFocusable = true
             isClickable = true
@@ -1950,11 +1998,12 @@ class MainActivity : Activity() {
         wireStatusPillAction(wifi) { openNetworkSettings() }
 
         val gap = dp((8 * scale).toInt())
-        listOf<View>(system, settings, clock, date, weather, wifi).forEach { pill ->
+        listOf<View>(system, allApps, settings, clock, date, weather, wifi).forEach { pill ->
             (pill.layoutParams as LinearLayout.LayoutParams).marginStart = gap
         }
 
         right.addView(system)
+        right.addView(allApps)
         right.addView(settings)
         right.addView(clock)
         right.addView(date)
@@ -1971,12 +2020,15 @@ class MainActivity : Activity() {
         // (o monitor só dispara em mudanças de rede).
         applyNetworkState(lastNetworkState)
 
-        // Navegação D-pad determinística entre as pílulas focáveis,
-        // independente da animação de LayoutTransition.
+        // Navegação D-pad determinística entre as pílulas focáveis
         system.id = View.generateViewId()
+        allApps.id = View.generateViewId()
         settings.id = View.generateViewId()
-        system.nextFocusRightId = settings.id
-        settings.nextFocusLeftId = system.id
+        
+        system.nextFocusRightId = allApps.id
+        allApps.nextFocusLeftId = system.id
+        allApps.nextFocusRightId = settings.id
+        settings.nextFocusLeftId = allApps.id
 
         row.addView(left)
         row.addView(right)
@@ -2222,6 +2274,174 @@ class MainActivity : Activity() {
         scope.cancel()
         statusHandler.removeCallbacksAndMessages(null)
         super.onDestroy()
+    }
+
+    private fun showAllAppsOverlay(scale: Float) {
+        val root = findViewById<ViewGroup>(android.R.id.content)
+        
+        val overlay = FrameLayout(this).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            setBackgroundColor(Color.parseColor("#F20d0820"))
+            isClickable = true
+            isFocusable = true
+        }
+        activeOverlay = overlay
+
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            val p = dp((40 * scale).toInt())
+            setPadding(p, p, p, p)
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        }
+
+        val topRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        val title = TextView(this).apply {
+            text = "Todos os aplicativos"
+            setTextColor(Color.WHITE)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 28f * scale)
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        }
+
+        val closeBtn = makeStatusPill("Fechar", "#FFFFFF", scale).apply {
+            isFocusable = true
+            isClickable = true
+            setOnClickListener { 
+                root.removeView(overlay)
+                activeOverlay = null
+            }
+            setOnFocusChangeListener { v, hasFocus ->
+                val bg = (v.background as? GradientDrawable) ?: return@setOnFocusChangeListener
+                if (hasFocus) {
+                    bg.setColor(Color.parseColor("#33FFFFFF"))
+                    bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                } else {
+                    bg.setColor(Color.parseColor("#1AFFFFFF"))
+                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                }
+            }
+        }
+
+        topRow.addView(title)
+        topRow.addView(closeBtn)
+        container.addView(topRow)
+
+        val scrollView = ScrollView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                0,
+                1f
+            ).apply { topMargin = dp((24 * scale).toInt()) }
+            isVerticalScrollBarEnabled = true
+        }
+
+        val grid = GridLayout(this).apply {
+            columnCount = 6
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        val pm = packageManager
+        val mainIntent = Intent(Intent.ACTION_MAIN, null).apply { addCategory(Intent.CATEGORY_LAUNCHER) }
+        val apps = pm.queryIntentActivities(mainIntent, 0)
+        
+        apps.sortBy { it.loadLabel(pm).toString().lowercase() }
+
+        apps.forEach { app ->
+            val item = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                isFocusable = true
+                isClickable = true
+                val p2 = dp((16 * scale).toInt())
+                setPadding(p2, p2, p2, p2)
+                
+                val bg = GradientDrawable().apply {
+                    cornerRadius = dp((12 * scale).toInt()).toFloat()
+                }
+                background = bg
+                
+                layoutParams = GridLayout.LayoutParams(
+                    GridLayout.spec(GridLayout.UNDEFINED, 1f),
+                    GridLayout.spec(GridLayout.UNDEFINED)
+                ).apply {
+                    width = 0
+                    val m = dp((8 * scale).toInt())
+                    setMargins(m, m, m, m)
+                }
+
+                setOnClickListener {
+                    val launchIntent = pm.getLaunchIntentForPackage(app.activityInfo.packageName)
+                    if (launchIntent != null) {
+                        startActivity(launchIntent)
+                    }
+                }
+
+                setOnFocusChangeListener { v, hasFocus ->
+                    if (hasFocus) {
+                        bg.setColor(Color.parseColor("#33FFFFFF"))
+                        bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                        v.scaleX = 1.05f
+                        v.scaleY = 1.05f
+                    } else {
+                        bg.setColor(Color.TRANSPARENT)
+                        bg.setStroke(0, Color.TRANSPARENT)
+                        v.scaleX = 1f
+                        v.scaleY = 1f
+                    }
+                }
+            }
+
+            val icon = ImageView(this).apply {
+                val s = dp((64 * scale).toInt())
+                layoutParams = LinearLayout.LayoutParams(s, s)
+                setImageDrawable(app.loadIcon(pm))
+            }
+
+            val name = TextView(this).apply {
+                text = app.loadLabel(pm)
+                setTextColor(Color.WHITE)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f * scale)
+                gravity = Gravity.CENTER
+                maxLines = 2
+                ellipsize = android.text.TextUtils.TruncateAt.END
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                ).apply { topMargin = dp((8 * scale).toInt()) }
+            }
+
+            item.addView(icon)
+            item.addView(name)
+            grid.addView(item)
+        }
+
+        scrollView.addView(grid)
+        container.addView(scrollView)
+        overlay.addView(container)
+        root.addView(overlay)
+        
+        if (grid.childCount > 0) {
+            grid.getChildAt(0).requestFocus()
+        } else {
+            closeBtn.requestFocus()
+        }
     }
 
 }
