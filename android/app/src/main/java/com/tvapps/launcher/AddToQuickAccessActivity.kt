@@ -69,9 +69,8 @@ class AddToQuickAccessActivity : Activity() {
         btnMultiAdd = findViewById(R.id.btn_multi_add)
         setupButton(btnMultiAdd, "#4CAF50") // Green for Add
         btnMultiAdd.setOnClickListener {
-            selectedApps.forEach { app ->
-                LauncherSettings.addToDock(this, app.activityInfo.packageName)
-            }
+            val packageNames = selectedApps.map { it.activityInfo.packageName }
+            LauncherSettings.addMultipleToDock(this, packageNames)
             MainActivity.pendingFocusAddDock = true
             finish()
         }
