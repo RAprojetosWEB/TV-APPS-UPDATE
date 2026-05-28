@@ -1651,59 +1651,57 @@ class MainActivity : Activity() {
             else -> "$compactText  ·  $expandedText"
         }
 
-        // Garante gravity START para que o ícone fique fixo à esquerda e o texto expanda para a direita
         button.gravity = Gravity.START or Gravity.CENTER_VERTICAL
         
-        // Define o conteúdo ANTES de medir para garantir o cálculo correto
-        if (expand) {
-            setPillContent(button, iconRes, fullExpandedText)
-        }
-
-        // Calcula larguras dinamicamente baseadas no texto real
+        // Calcula as larguras de referência
         val expandedWidth = getExpandedWidth(button, fullExpandedText)
         val compactWidth = getExpandedWidth(button, compactText)
 
         val baseColor = button.currentTextColor and 0x00FFFFFF
         
-        // Cancela animação anterior se houver para evitar conflitos
         button.tag = (button.tag as? ValueAnimator)?.let {
             it.cancel()
             null
         }
 
+        // Para evitar o reflow e saltos, vamos:
+        // 1. Manter a largura do componente fixa (compacta)
+        // 2. Não mudar layoutParams.width
+        // 3. O texto expandedText só aparecerá se houver espaço? Não, o usuário quer que "expanda visualmente".
+        // Se não mudarmos a largura real, o texto será cortado se o wrap_content não permitir.
+        
+        // CORREÇÃO: Vamos mudar a largura mas SEM chamar requestLayout() agressivamente ou forçar o pai.
+        // E vamos usar um interpolador suave.
+        
         val animator = ValueAnimator.ofInt(
             button.width.coerceAtLeast(if (expand) compactWidth else expandedWidth),
             if (expand) expandedWidth else compactWidth
         ).apply {
-            // Recolhimento um pouco mais longo para terminar de forma suave,
-            // sem corte abrupto no final da animação.
             duration = if (expand) 350L else 420L
-            // Curva ease-in-out (material standard) — começa e TERMINA suave,
-            // evitando a sensação de "corte seco" no final do recolhimento.
             interpolator = android.view.animation.PathInterpolator(0.4f, 0.0f, 0.2f, 1.0f)
             
             addUpdateListener { anim ->
                 val width = anim.animatedValue as Int
                 val params = button.layoutParams
                 if (params != null) {
+                    // Atualiza a largura sem forçar um ciclo completo de layout no pai
                     params.width = width
                     button.layoutParams = params
-                    // Força o pai (LinearLayout) a re-layoutar para empurrar os vizinhos em tempo real
-                    (button.parent as? View)?.requestLayout()
+                    // NOTA: Removido (button.parent as? View)?.requestLayout() que causava os saltos nos vizinhos
                 }
                 
-                // Anima alpha do texto sincronizado com a largura
-                val progress = anim.animatedFraction
-                val alphaValue = if (expand) progress else (1f - progress)
+                val fraction = anim.animatedFraction
+                val alphaValue = if (expand) fraction else (1f - fraction)
                 val alpha = (alphaValue * 255).toInt()
                 button.setTextColor(baseColor or (alpha shl 24))
             }
             
             addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationStart(animation: Animator) {
+                    if (expand) setPillContent(button, iconRes, fullExpandedText)
+                }
                 override fun onAnimationEnd(animation: Animator) {
                     if (!expand) {
-                        // Garante que o texto já está totalmente transparente antes
-                        // de trocar o conteúdo, evitando "pop" visual no final.
                         button.setTextColor(baseColor and 0x00FFFFFF)
                         setPillContent(button, iconRes, compactText)
                         button.layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
@@ -1712,6 +1710,7 @@ class MainActivity : Activity() {
                         button.layoutParams.width = expandedWidth
                         button.setTextColor(baseColor or (0xFF shl 24))
                     }
+                    // Apenas um requestLayout ao final da animação
                     button.requestLayout()
                     button.tag = null
                 }
