@@ -60,6 +60,8 @@
             android:layout_marginStart="8dp"
             android:focusable="true"
             android:focusableInTouchMode="false"
+            android:maxLines="1"
+            android:singleLine="true"
             android:nextFocusLeft="@id/btn_update"
             android:nextFocusRight="@id/btn_grid" />
 
@@ -70,6 +72,8 @@
             android:layout_marginStart="8dp"
             android:focusable="true"
             android:focusableInTouchMode="false"
+            android:maxLines="1"
+            android:singleLine="true"
             android:nextFocusLeft="@id/btn_update"
             android:nextFocusRight="@id/btn_settings" />
 
@@ -80,6 +84,8 @@
             android:layout_marginStart="8dp"
             android:focusable="true"
             android:focusableInTouchMode="false"
+            android:maxLines="1"
+            android:singleLine="true"
             android:nextFocusLeft="@id/btn_grid"
             android:nextFocusRight="@id/txt_hour" />
 
@@ -90,6 +96,8 @@
             android:layout_marginStart="8dp"
             android:focusable="true"
             android:focusableInTouchMode="false"
+            android:maxLines="1"
+            android:singleLine="true"
             android:nextFocusLeft="@id/btn_update"
             android:nextFocusRight="@id/txt_date" />
 
@@ -100,6 +108,8 @@
             android:layout_marginStart="8dp"
             android:focusable="true"
             android:focusableInTouchMode="false"
+            android:maxLines="1"
+            android:singleLine="true"
             android:nextFocusLeft="@id/txt_hour"
             android:nextFocusRight="@id/txt_weather" />
 
@@ -110,6 +120,8 @@
             android:layout_marginStart="8dp"
             android:focusable="true"
             android:focusableInTouchMode="false"
+            android:maxLines="1"
+            android:singleLine="true"
             android:nextFocusLeft="@id/txt_date"
             android:nextFocusRight="@id/btn_wifi" />
 
@@ -120,6 +132,8 @@
             android:layout_marginStart="8dp"
             android:focusable="true"
             android:focusableInTouchMode="false"
+            android:maxLines="1"
+            android:singleLine="true"
             android:nextFocusLeft="@id/txt_weather"
             android:nextFocusRight="@id/btn_wifi" />
 
