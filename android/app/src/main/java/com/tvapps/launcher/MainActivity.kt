@@ -1092,7 +1092,27 @@ class MainActivity : Activity() {
             setPadding(0, dp((20 * scaleFactor).toInt()), 0, dp((20 * scaleFactor).toInt()))
         }
 
-        AppCatalog.apps.forEachIndexed { index, app ->
+        val favorites = LauncherSettings.getFavorites(this)
+        val displayedApps = AppCatalog.apps.toMutableList()
+        val pm = packageManager
+        
+        favorites.forEach { pkg ->
+            if (AppCatalog.apps.none { it.packageName == pkg }) {
+                try {
+                    val info = pm.getApplicationInfo(pkg, 0)
+                    displayedApps.add(CatalogApp(
+                        name = pm.getApplicationLabel(info).toString(),
+                        description = "Aplicativo favorito",
+                        url = "",
+                        icon = "",
+                        packageName = pkg,
+                        iconRes = 0
+                    ))
+                } catch (_: Exception) {}
+            }
+        }
+
+        displayedApps.forEachIndexed { index, app ->
             val card = buildCard(index, app, cardWidth, cardHeight, cardMargin, scaleFactor)
             row.addView(card.container)
             cardViews.add(card)
