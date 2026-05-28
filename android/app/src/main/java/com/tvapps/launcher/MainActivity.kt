@@ -2551,9 +2551,20 @@ class MainActivity : Activity() {
         }
 
         val pm = packageManager
+        
+        // Busca apps de launcher padrão
         val mainIntent = Intent(Intent.ACTION_MAIN, null).apply { addCategory(Intent.CATEGORY_LAUNCHER) }
+        val standardApps = pm.queryIntentActivities(mainIntent, 0)
+        
+        // Busca apps de launcher de TV (Leanback)
+        val tvIntent = Intent(Intent.ACTION_MAIN, null).apply { addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER) }
+        val tvApps = pm.queryIntentActivities(tvIntent, 0)
+        
+        // Combina e remove duplicados
+        val allAppsList = (standardApps + tvApps).distinctBy { it.activityInfo.packageName }
+        
         val hidden = LauncherSettings.getHiddenApps(this)
-        val apps = pm.queryIntentActivities(mainIntent, 0).filter { 
+        val apps = allAppsList.filter { 
             !hidden.contains(it.activityInfo.packageName) 
         }
         
