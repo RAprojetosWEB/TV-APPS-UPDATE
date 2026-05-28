@@ -1645,16 +1645,6 @@ class MainActivity : Activity() {
      * Anima a expansão/recolhimento de uma pílula deslizando suavemente.
      */
     private fun animateButtonExpand(button: TextView, iconRes: Int, compactText: String, expandedText: String, expand: Boolean) {
-        // Garante que o layout do pai não sofra reflows constantes
-        // A estratégia aqui é manter a largura fixa no layout e animar apenas
-        // o aspecto visual (alpha/scale/background) ou usar uma largura máxima reservada.
-        
-        // Em vez de mudar layoutParams.width (que causa reflow), vamos:
-        // 1. Manter a largura ocupada constante ou usar um frame de reserva.
-        // Como o usuário pediu para a barra ser estável:
-        // Vamos definir uma largura fixa suficiente para o expandido no estado expandido.
-        // A expansão visual será feita por transição de alpha/escala, não width real.
-
         val fullExpandedText = when {
             compactText.isBlank() -> expandedText
             expandedText.isBlank() -> compactText
@@ -1663,7 +1653,7 @@ class MainActivity : Activity() {
 
         button.gravity = Gravity.START or Gravity.CENTER_VERTICAL
         
-        // Calcula as larguras de referência apenas para o tamanho final
+        // Calcula as larguras de referência
         val expandedWidth = getExpandedWidth(button, fullExpandedText)
         val compactWidth = getExpandedWidth(button, compactText)
 
@@ -1674,27 +1664,36 @@ class MainActivity : Activity() {
             null
         }
 
-        // Anima apenas o alpha do texto e escala do fundo para evitar reflow
-        // O tamanho real (layout) permanece fixo para não mover os vizinhos
-        val animator = ValueAnimator.ofFloat(0f, 1f).apply {
+        // Para evitar o reflow e saltos, vamos:
+        // 1. Manter a largura do componente fixa (compacta)
+        // 2. Não mudar layoutParams.width
+        // 3. O texto expandedText só aparecerá se houver espaço? Não, o usuário quer que "expanda visualmente".
+        // Se não mudarmos a largura real, o texto será cortado se o wrap_content não permitir.
+        
+        // CORREÇÃO: Vamos mudar a largura mas SEM chamar requestLayout() agressivamente ou forçar o pai.
+        // E vamos usar um interpolador suave.
+        
+        val animator = ValueAnimator.ofInt(
+            button.width.coerceAtLeast(if (expand) compactWidth else expandedWidth),
+            if (expand) expandedWidth else compactWidth
+        ).apply {
             duration = if (expand) 350L else 420L
             interpolator = android.view.animation.PathInterpolator(0.4f, 0.0f, 0.2f, 1.0f)
             
             addUpdateListener { anim ->
-                val fraction = anim.animatedFraction
-                val alpha = if (expand) fraction else (1f - fraction)
-                
-                // Aplica conteúdo apenas no início da expansão
-                if (expand && fraction > 0.1f && button.text.toString() != fullExpandedText) {
-                    setPillContent(button, iconRes, fullExpandedText)
+                val width = anim.animatedValue as Int
+                val params = button.layoutParams
+                if (params != null) {
+                    // Atualiza a largura sem forçar um ciclo completo de layout no pai
+                    params.width = width
+                    button.layoutParams = params
+                    // NOTA: Removido (button.parent as? View)?.requestLayout() que causava os saltos nos vizinhos
                 }
-
-                button.setTextColor(baseColor or ((alpha * 255).toInt() shl 24))
                 
-                // Escala visual suave (GPU)
-                val scale = 1f + (0.05f * alpha)
-                button.scaleX = scale
-                button.scaleY = scale
+                val fraction = anim.animatedFraction
+                val alphaValue = if (expand) fraction else (1f - fraction)
+                val alpha = (alphaValue * 255).toInt()
+                button.setTextColor(baseColor or (alpha shl 24))
             }
             
             addListener(object : AnimatorListenerAdapter() {
