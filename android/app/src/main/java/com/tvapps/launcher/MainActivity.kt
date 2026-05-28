@@ -1024,7 +1024,7 @@ class MainActivity : Activity() {
                 fun openApp(packageName: String) = this@MainActivity.openApp(packageName)
 
                 @JavascriptInterface
-                fun uninstallApp(packageName: String) = this@MainActivity.desinstalarApp(packageName)
+                fun uninstallApp(packageName: String) = this@MainActivity.uninstallApp(packageName)
 
                 @JavascriptInterface
                 fun openSettings() {
