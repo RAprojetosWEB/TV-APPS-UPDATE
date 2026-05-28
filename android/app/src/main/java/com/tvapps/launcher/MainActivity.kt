@@ -2733,6 +2733,11 @@ class MainActivity : Activity() {
             }
         }
         container.addView(addBtn)
+        
+        if (pendingFocusAddDock) {
+            addBtn.post { addBtn.requestFocus() }
+            pendingFocusAddDock = false
+        }
     }
 
     private fun buildDockItem(packageName: String, label: String, icon: Drawable, scale: Float): View {
