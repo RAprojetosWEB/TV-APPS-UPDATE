@@ -2310,7 +2310,7 @@ class MainActivity : Activity() {
                             views.speed.text = "Download concluído"
                             views.button.text = "ABRINDO INSTALADOR…"
                         }
-                        systemPill?.text = "✓  Download concluído"
+                        systemPill?.let { setPillContent(it, R.drawable.ic_rotate_ccw, "") }
                         val opened = ApkInstaller.install(this@MainActivity, p.file)
                         if (!opened) {
                             // Permissão "Instalar apps desconhecidos" não concedida.
@@ -2330,9 +2330,9 @@ class MainActivity : Activity() {
                                 views.speed.text = "Se nada acontecer, toque OK novamente"
                                 views.button.post { views.button.requestFocus() }
                             }
-                            systemPill?.text = "⚠  Autorize a instalação"
+                            systemPill?.let { setPillContent(it, R.drawable.ic_rotate_ccw, "") }
                         }
-                        systemPill?.postDelayed({ systemPill.text = "✓  Sistema atualizado" }, 5000)
+                        systemPill?.postDelayed({ systemPill?.let { setPillContent(it, R.drawable.ic_rotate_ccw, "") } }, 5000)
                     }
                     is DownloadProgress.Error -> withContext(Dispatchers.Main) {
                         ui?.let { views ->
