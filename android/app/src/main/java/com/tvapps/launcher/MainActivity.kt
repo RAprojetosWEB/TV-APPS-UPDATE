@@ -2132,7 +2132,7 @@ class MainActivity : Activity() {
         val system = makeStatusPill("", "#E8A85C", scale).apply {
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
-            gravity = Gravity.CENTER
+            gravity = Gravity.START or Gravity.CENTER_VERTICAL
         }
         setupPill(system, R.drawable.ic_rotate_ccw, "", "Atualização") {
             checkOtaUpdate(system, true)
