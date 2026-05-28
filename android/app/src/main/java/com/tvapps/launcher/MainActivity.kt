@@ -1647,7 +1647,13 @@ class MainActivity : Activity() {
         val compactWidth = iconSize + compactTextWidth + padding
 
         val expandedTextWidth = button.paint.measureText(fullExpandedText).toInt()
-        val expandedWidth = iconSize + button.compoundDrawablePadding + expandedTextWidth + padding
+        var expandedWidth = iconSize + button.compoundDrawablePadding + expandedTextWidth + padding
+        
+        // BUG 2 FIX: Define largura fixa para botões do topo para evitar que o texto 
+        // tente quebrar em duas linhas durante a animação (tremor).
+        if (expandedText.contains("Configurar") || expandedText.length > 12) {
+            expandedWidth = dp(250) 
+        }
         
         val baseColor = button.currentTextColor and 0x00FFFFFF
         
