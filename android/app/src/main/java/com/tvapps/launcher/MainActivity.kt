@@ -79,7 +79,7 @@ private fun verifyLauncherPasswordRemote(password: String): VerifyResult {
         val ok = JSONObject(body).optBoolean("ok", false)
         if (ok) VerifyResult.OK else VerifyResult.WRONG
     } catch (e: Exception) {
-        android.util.Log.w("MainActivity", "verifyLauncherPasswordRemote failed: ${e.message}")
+        android.util.Log.e("MainActivity", "verifyLauncherPasswordRemote failed: ${e.message}", e)
         VerifyResult.NETWORK_ERROR
     }
 }
@@ -597,7 +597,7 @@ class MainActivity : Activity() {
             }
 
             setOnClickListener {
-                val typed = passwordInput.text.toString()
+                val typed = passwordInput.text.toString().trim()
                 val btn = this
                 if (typed.isEmpty()) {
                     Toast.makeText(this@MainActivity, "Digite a senha", Toast.LENGTH_SHORT).show()
@@ -623,7 +623,12 @@ class MainActivity : Activity() {
                         isUnlocked = true
                         setContentView(buildRoot())
                     } else {
-                        Toast.makeText(this@MainActivity, "Senha incorreta", Toast.LENGTH_SHORT).show()
+                        val message = when (result) {
+                            VerifyResult.WRONG -> "Senha incorreta"
+                            VerifyResult.NETWORK_ERROR -> "Erro de conexão com o servidor"
+                            else -> "Erro desconhecido"
+                        }
+                        Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
                         passwordInput.text.clear()
                     }
                 }
