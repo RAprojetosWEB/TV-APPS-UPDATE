@@ -2656,6 +2656,7 @@ class MainActivity : Activity() {
         
         // Botão +
         val addBtn = FrameLayout(this).apply {
+            id = View.generateViewId()
             val size = dp((56 * scale).toInt())
             layoutParams = FrameLayout.LayoutParams(size, size).apply {
                 leftMargin = dp((8 * scale).toInt())
@@ -2686,7 +2687,7 @@ class MainActivity : Activity() {
                     v.scaleX = 1.15f
                     v.scaleY = 1.15f
                     // Garante que o scroller role para o final para mostrar que chegamos no botão +
-                    scroller.post { scroller.fullScroll(View.FOCUS_RIGHT) }
+                    scroller.post { scroller.smoothScrollTo(appsLayout.width, 0) }
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
