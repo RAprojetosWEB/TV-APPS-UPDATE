@@ -46,6 +46,8 @@ class AllAppsActivity : Activity() {
             setBackgroundColor(Color.parseColor("#0d0820")) // Opaque background
             val p = dp((40 * scaleFactor).toInt())
             setPadding(p, p, p, p)
+            clipChildren = false
+            clipToPadding = false
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
@@ -98,6 +100,8 @@ class AllAppsActivity : Activity() {
                 1f
             ).apply { topMargin = dp((24 * scaleFactor).toInt()) }
             layoutManager = GridLayoutManager(this@AllAppsActivity, 6)
+            clipChildren = false
+            clipToPadding = false
             // Melhora performance
             setHasFixedSize(true)
         }

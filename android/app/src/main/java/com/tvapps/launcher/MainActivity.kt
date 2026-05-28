@@ -1104,7 +1104,7 @@ class MainActivity : Activity() {
             )
             clipChildren = false
             clipToPadding = false
-            setPadding(0, dp((20 * scaleFactor).toInt()), 0, dp((20 * scaleFactor).toInt()))
+            setPadding(dp((32 * scaleFactor).toInt()), dp((20 * scaleFactor).toInt()), dp((32 * scaleFactor).toInt()), dp((20 * scaleFactor).toInt()))
         }
 
         val favorites = LauncherSettings.getFavorites(this)
