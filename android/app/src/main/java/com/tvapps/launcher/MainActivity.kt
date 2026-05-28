@@ -2554,7 +2554,7 @@ class MainActivity : Activity() {
             }
             
             setOnClickListener {
-                showAllAppsForDockOverlay(scale)
+                startActivity(Intent(this@MainActivity, AddToQuickAccessActivity::class.java))
             }
         }
         container.addView(addBtn)
