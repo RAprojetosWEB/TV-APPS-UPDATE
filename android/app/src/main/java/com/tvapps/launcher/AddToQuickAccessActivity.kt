@@ -38,14 +38,14 @@ class AddToQuickAccessActivity : Activity() {
         val widthDp = dm.widthPixels / dm.density
         scaleFactor = (widthDp / 1280f).coerceIn(0.85f, 1.1f)
         
-        val root = findViewById<View>(android.R.id.content)
+        setContentView(R.layout.activity_add_to_quick_access)
+
+        val root = findViewById<View>(R.id.root_layout)
         val gradient = GradientDrawable(
             GradientDrawable.Orientation.TOP_BOTTOM,
             intArrayOf(Color.parseColor("#1A237E"), Color.parseColor("#0D0D1A"))
         )
         root.background = gradient
-        
-        setContentView(R.layout.activity_add_to_quick_access)
 
         val title = findViewById<TextView>(R.id.title)
         title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 24f * scaleFactor)
