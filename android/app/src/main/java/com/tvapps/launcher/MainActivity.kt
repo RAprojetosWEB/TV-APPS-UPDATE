@@ -2664,12 +2664,20 @@ class MainActivity : Activity() {
             }
             
             setOnLongClickListener {
+                val options = arrayOf("Remover este", "Remover vários")
                 AlertDialog.Builder(this@MainActivity, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                    .setTitle("Remover do dock?")
-                    .setMessage("Deseja remover $label da barra de acesso rápido?")
-                    .setPositiveButton("Remover") { _, _ ->
-                        LauncherSettings.removeFromDock(this@MainActivity, packageName)
-                        setContentView(buildRoot())
+                    .setTitle("Opções de Acesso Rápido")
+                    .setItems(options) { _, which ->
+                        when (which) {
+                            0 -> { // Remover este
+                                LauncherSettings.removeFromDock(this@MainActivity, packageName)
+                                MainActivity.pendingFocusAddDock = true
+                                setContentView(buildRoot())
+                            }
+                            1 -> { // Remover vários
+                                startActivity(Intent(this@MainActivity, BatchRemoveQuickAccessActivity::class.java))
+                            }
+                        }
                     }
                     .setNegativeButton("Cancelar", null)
                     .show()
