@@ -1702,11 +1702,16 @@ class MainActivity : Activity() {
                 }
                 override fun onAnimationEnd(animation: Animator) {
                     if (!expand) {
+                        button.setTextColor(baseColor and 0x00FFFFFF)
                         setPillContent(button, iconRes, compactText)
+                        button.layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
                         button.setTextColor(baseColor or (0xFF shl 24))
-                        button.scaleX = 1f
-                        button.scaleY = 1f
+                    } else {
+                        button.layoutParams.width = expandedWidth
+                        button.setTextColor(baseColor or (0xFF shl 24))
                     }
+                    // Apenas um requestLayout ao final da animação
+                    button.requestLayout()
                     button.tag = null
                 }
             })
