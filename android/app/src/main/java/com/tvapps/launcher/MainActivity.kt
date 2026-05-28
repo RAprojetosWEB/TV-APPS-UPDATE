@@ -446,20 +446,9 @@ class MainActivity : Activity() {
             iv.clearColorFilter()
             iv.setImageResource(res)
         }
-        // Pílula única de Wi-Fi na barra superior (ícone + texto + cor).
+        // Pílula única de Wi-Fi na barra superior (atualiza ícone + cor mantendo
+        // o comportamento de expansão por foco definido em setupPill).
         wifiView?.let { v ->
-            val label = when (state) {
-                NetworkMonitor.State.OFFLINE -> "Sem rede"
-                NetworkMonitor.State.WIFI_LEVEL_1,
-                NetworkMonitor.State.WIFI_LEVEL_2,
-                NetworkMonitor.State.WIFI_LEVEL_3,
-                NetworkMonitor.State.WIFI_LEVEL_4 -> "Wi-Fi Conectado"
-                NetworkMonitor.State.WIFI_NO_INTERNET -> "Wi-Fi sem internet"
-                NetworkMonitor.State.ETHERNET -> "Cabo Conectado"
-                NetworkMonitor.State.ETHERNET_NO_INTERNET -> "Cabo sem internet"
-            }
-            v.tag = label
-            
             val color = when (state) {
                 NetworkMonitor.State.OFFLINE,
                 NetworkMonitor.State.WIFI_NO_INTERNET,
@@ -467,23 +456,7 @@ class MainActivity : Activity() {
                 else -> Color.parseColor("#5EE6A8")
             }
             v.setTextColor(color)
-
-            // Mantém texto vazio para manter tamanho fixo e evitar saltos de foco
-            val textToSet = "" 
-
-            val icon = androidx.core.content.ContextCompat.getDrawable(this, res)?.mutate()
-            // Mantém cores originais do vetor para alerta/ethernet; nos demais aplica cor da pílula.
-            if (state != NetworkMonitor.State.WIFI_NO_INTERNET &&
-                state != NetworkMonitor.State.ETHERNET_NO_INTERNET) {
-                icon?.setTint(color)
-            }
-            val size = dp(16)
-            icon?.setBounds(0, 0, size, size)
-            v.setCompoundDrawables(icon, null, null, null)
-            v.compoundDrawablePadding = 0
-            v.text = textToSet
-            
-            // O listener de foco já é gerenciado por wireStatusPillAction em buildRoot
+            updatePillCompact(v, res, "")
         }
     }
 
@@ -1648,6 +1621,60 @@ class MainActivity : Activity() {
         pill.text = label
     }
 
+    // ===== Expansão por foco das pílulas da top bar =====
+    private data class PillState(var iconRes: Int, var compact: String, val expanded: String)
+    private val pillStates = mutableMapOf<TextView, PillState>()
+
+    /**
+     * Configura uma pílula da barra superior para começar compacta (só ícone
+     * ou valor curto) e expandir o texto completo quando receber foco pelo
+     * D-pad, voltando ao estado compacto ao perder o foco. Também aplica o
+     * realce de borda/fundo e animação de escala já usados nas demais.
+     */
+    private fun setupPill(
+        pill: TextView,
+        iconRes: Int,
+        compact: String,
+        expanded: String,
+        onTap: () -> Unit,
+    ) {
+        pill.isFocusable = true
+        pill.isFocusableInTouchMode = false
+        pill.isClickable = true
+        pill.setOnClickListener { onTap() }
+        pillStates[pill] = PillState(iconRes, compact, expanded)
+        setPillContent(pill, iconRes, compact)
+        pill.setOnFocusChangeListener { v, hasFocus ->
+            val tv = v as TextView
+            val st = pillStates[tv] ?: return@setOnFocusChangeListener
+            val bg = tv.background as? GradientDrawable
+            if (hasFocus) {
+                bg?.setColor(Color.parseColor("#33FFFFFF"))
+                bg?.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                tv.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
+                setPillContent(tv, st.iconRes, st.expanded)
+            } else {
+                bg?.setColor(Color.parseColor("#1AFFFFFF"))
+                bg?.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                tv.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
+                setPillContent(tv, st.iconRes, st.compact)
+            }
+        }
+    }
+
+    /** Atualiza o conteúdo compacto/ícone de uma pílula sem perder o
+     *  comportamento de expansão por foco. */
+    private fun updatePillCompact(pill: TextView?, iconRes: Int, compact: String) {
+        if (pill == null) return
+        val st = pillStates[pill] ?: run {
+            setPillContent(pill, iconRes, compact)
+            return
+        }
+        st.iconRes = iconRes
+        st.compact = compact
+        if (!pill.isFocused) setPillContent(pill, iconRes, compact)
+    }
+
     private fun updatePillTextAndIcon(pill: TextView?, iconRes: Int, text: String) {
         pill?.apply {
             tag = text
@@ -2019,78 +2046,30 @@ class MainActivity : Activity() {
         }
 
         val system = makeStatusPill("", "#E8A85C", scale).apply {
-            isFocusable = true
-            isClickable = true
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
-            setOnClickListener { checkOtaUpdate(this, true) }
-            tag = "Verificar se há novas atualizações"
-            setOnFocusChangeListener { v, hasFocus ->
-                val tv = v as TextView
-                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
-                if (hasFocus) {
-                    bg.setColor(Color.parseColor("#335EE6A8"))
-                    bg.setStroke(dp(2), Color.parseColor("#5EE6A8"))
-                    showTopBarTooltip(v)
-                } else {
-                    bg.setColor(Color.parseColor("#1AFFFFFF"))
-                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                    hideTopBarTooltip()
-                }
-            }
-            // Estado inicial fixo (ícone + texto)
-            setPillContent(this, R.drawable.ic_rotate_ccw, "")
+        }
+        setupPill(system, R.drawable.ic_rotate_ccw, "", "Atualização") {
+            checkOtaUpdate(system, true)
         }
 
         val allApps = makeStatusPill("", "#FFFFFF", scale).apply {
-            isFocusable = true
-            isClickable = true
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
-            setOnClickListener { showAllAppsOverlay(scale) }
-            tag = "Todos os aplicativos instalados"
-            setOnFocusChangeListener { v, hasFocus ->
-                val tv = v as TextView
-                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
-                if (hasFocus) {
-                    bg.setColor(Color.parseColor("#33FFFFFF"))
-                    bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
-                    showTopBarTooltip(v)
-                } else {
-                    bg.setColor(Color.parseColor("#1AFFFFFF"))
-                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                    hideTopBarTooltip()
-                }
-            }
-            // Estado inicial fixo (ícone + texto)
-            setPillContent(this, R.drawable.ic_grid, "")
+        }
+        setupPill(allApps, R.drawable.ic_grid, "", "Todos os aplicativos") {
+            showAllAppsOverlay(scale)
         }
 
         val settings = makeStatusPill("", "#FFFFFF", scale).apply {
-            isFocusable = true
-            isClickable = true
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
-            setOnClickListener { openSystemSettings() }
-            tag = "Configurações"
-            setOnFocusChangeListener { v, hasFocus ->
-                val tv = v as TextView
-                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
-                if (hasFocus) {
-                    bg.setColor(Color.parseColor("#33FFFFFF"))
-                    bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
-                    showTopBarTooltip(v)
-                } else {
-                    bg.setColor(Color.parseColor("#1AFFFFFF"))
-                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                    hideTopBarTooltip()
-                }
-            }
-            // Estado inicial fixo (ícone + texto)
-            setPillContent(this, R.drawable.ic_settings, "")
+        }
+        setupPill(settings, R.drawable.ic_settings, "", "Configurações") {
+            openSystemSettings()
         }
 
         val clock = makeStatusPill("", "#FFFFFF", scale)
@@ -2098,16 +2077,12 @@ class MainActivity : Activity() {
         val weather = makeStatusPill("", "#FFFFFF", scale)
         val wifi = makeStatusPill("", "#5EE6A8", scale)
 
-        wireStatusPillAction(clock, R.drawable.ic_clock) { openDateSettings() }
-        wireStatusPillAction(date, R.drawable.ic_calendar) { openDateSettings() }
-        wireStatusPillAction(weather, R.drawable.ic_cloud) {
-            try {
-                openLocationSettings()
-            } catch (_: Exception) {
-                // Erro ignorado silenciosamente conforme solicitado
-            }
+        setupPill(clock, R.drawable.ic_clock, "", "Configurar hora") { openDateSettings() }
+        setupPill(date, R.drawable.ic_calendar, "", "Configurar data") { openDateSettings() }
+        setupPill(weather, R.drawable.ic_cloud, "--°", "Configurar clima") {
+            try { openLocationSettings() } catch (_: Exception) {}
         }
-        wireStatusPillAction(wifi, R.drawable.ic_wifi) { openNetworkSettings() }
+        setupPill(wifi, R.drawable.ic_wifi, "", "Wi-Fi") { openNetworkSettings() }
 
         val gap = dp((8 * scale).toInt())
         listOf<View>(system, allApps, settings, clock, date, weather, wifi).forEach { pill ->
@@ -2211,10 +2186,8 @@ class MainActivity : Activity() {
         val dateRaw = SimpleDateFormat("EEE, dd 'De' MMM.", Locale("pt", "BR")).format(now)
         val dateStr = capitalizeWords(dateRaw)
         
-        updatePillTextAndIcon(clockView, R.drawable.ic_clock, timeStr)
-        clockView?.tag = "Configurar hora"
-        updatePillTextAndIcon(dateView, R.drawable.ic_calendar, dateStr)
-        dateView?.tag = "Configurar data"
+        updatePillCompact(clockView, R.drawable.ic_clock, timeStr)
+        updatePillCompact(dateView, R.drawable.ic_calendar, dateStr)
     }
 
     private fun capitalizeWords(s: String): String =
@@ -2228,16 +2201,12 @@ class MainActivity : Activity() {
             try {
                 val w = StatusInfo.fetchWeather()
                 if (w != null) {
-                    updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "${w.tempC}°C")
-                    weatherView?.tag = "Configurar clima"
+                    updatePillCompact(weatherView, R.drawable.ic_cloud, "${w.tempC}°C")
                 } else {
-                    updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "--°")
-                    weatherView?.tag = "Configurar clima"
+                    updatePillCompact(weatherView, R.drawable.ic_cloud, "--°")
                 }
             } catch (e: Exception) {
-                // Em caso de falha na requisição ou lógica, exibe fallback
-                updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "--°")
-                weatherView?.tag = "Configurar clima"
+                updatePillCompact(weatherView, R.drawable.ic_cloud, "--°")
             }
         }
     }
