@@ -2754,7 +2754,7 @@ class MainActivity : Activity() {
             addView(iconContainer)
             addView(tv)
             
-            setOnFocusChangeListener { v, hasFocus ->
+            val innerFocusListener = View.OnFocusChangeListener { v, hasFocus ->
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#33FFFFFF"))
                     bg.setStroke(dp(2), Color.WHITE)
@@ -2767,6 +2767,8 @@ class MainActivity : Activity() {
                     v.scaleY = 1f
                 }
             }
+            tag = innerFocusListener
+            setOnFocusChangeListener(innerFocusListener)
             
             setOnClickListener {
                 try {
