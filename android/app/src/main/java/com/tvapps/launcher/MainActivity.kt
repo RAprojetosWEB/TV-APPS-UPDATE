@@ -2046,7 +2046,7 @@ class MainActivity : Activity() {
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
             setOnClickListener { showAllAppsOverlay(scale) }
-            tag = "Todos os aplicativos\ninstalados"
+            tag = "Aplicativos"
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
                 val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
