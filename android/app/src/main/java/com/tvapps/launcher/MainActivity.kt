@@ -1660,6 +1660,17 @@ class MainActivity : Activity() {
         pill.text = label
     }
 
+    private fun updatePillTextAndIcon(pill: TextView?, iconRes: Int, text: String) {
+        pill?.apply {
+            tag = text
+            if (hasFocus()) {
+                setPillContent(this, iconRes, text)
+            } else {
+                setPillContent(this, iconRes, "")
+            }
+        }
+    }
+
     private fun openApp(packageName: String) {
         val intent = packageManager.getLaunchIntentForPackage(packageName)
         if (intent != null) {
