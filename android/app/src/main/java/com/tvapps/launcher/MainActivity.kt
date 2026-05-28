@@ -1879,13 +1879,13 @@ class MainActivity : Activity() {
         val tooltipView = TextView(this).apply {
             this.text = text
             setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-            setPadding(dp(12), dp(6), dp(12), dp(6))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            setPadding(dp(8), dp(4), dp(8), dp(4))
             gravity = Gravity.CENTER
-            background = GradientDrawable().apply {
-                setColor(Color.parseColor("#CC000000"))
-                cornerRadius = dp(12).toFloat()
-            }
+            // Sombra para legibilidade sem fundo
+            setShadowLayer(8f, 0f, 2f, Color.BLACK)
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            background = null
         }
 
         val popup = android.widget.PopupWindow(
