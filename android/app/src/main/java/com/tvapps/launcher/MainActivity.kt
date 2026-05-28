@@ -1857,15 +1857,30 @@ class MainActivity : Activity() {
         pill.setOnFocusChangeListener { v, hasFocus ->
             val tv = v as TextView
             val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
+            
+            // Texto original para restaurar ao perder foco
+            val originalText = tv.tag?.toString() ?: ""
+            
             if (hasFocus) {
                 bg.setColor(Color.parseColor("#33FFFFFF"))
                 bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
                 v.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
+                
+                // Expande o texto (copiando lógica do "Configurar hora")
+                val expandedText = tv.tag?.toString() ?: ""
+                if (expandedText.isNotEmpty()) {
+                    tv.text = expandedText
+                }
+                
                 showTopBarTooltip(v)
             } else {
                 bg.setColor(Color.parseColor("#1AFFFFFF"))
                 bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
                 v.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
+                
+                // Restaura apenas o ícone ou texto curto
+                tv.text = ""
+                
                 hideTopBarTooltip()
             }
         }
