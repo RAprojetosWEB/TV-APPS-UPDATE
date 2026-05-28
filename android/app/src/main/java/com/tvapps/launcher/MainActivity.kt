@@ -1407,6 +1407,24 @@ class MainActivity : Activity() {
             it.playSoundEffect(SoundEffectConstants.CLICK)
             startDownload(index) 
         }
+
+        container.setOnLongClickListener {
+            val isInstalled = InstalledRegistry.isInstalled(this, app)
+            if (isInstalled) {
+                val pkg = InstalledRegistry.resolvePackage(this, app) ?: app.packageName
+                AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                    .setTitle("Desinstalar aplicativo?")
+                    .setMessage("Deseja remover ${app.name} do sistema?")
+                    .setPositiveButton("Desinstalar") { _, _ ->
+                        uninstallApp(pkg)
+                    }
+                    .setNegativeButton("Cancelar", null)
+                    .show()
+                true
+            } else {
+                false
+            }
+        }
         return CardViews(container, content, iconBadge, iconImage, title, subtitle, pill, progress, percent, installedChip)
     }
 
