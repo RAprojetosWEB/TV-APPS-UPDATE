@@ -229,7 +229,7 @@ class AllAppsActivity : Activity() {
                 }
                 background = bg
                 
-                val m = dp((8 * scaleFactor).toInt())
+                val m = dp((12 * scaleFactor).toInt())
                 layoutParams = RecyclerView.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
@@ -253,10 +253,21 @@ class AllAppsActivity : Activity() {
                 }
             }
 
+            val iconContainer = FrameLayout(this@AllAppsActivity).apply {
+                val s = dp((72 * scaleFactor).toInt())
+                layoutParams = LinearLayout.LayoutParams(s, s).apply {
+                    gravity = Gravity.CENTER
+                }
+                clipChildren = false
+                clipToPadding = false
+            }
             val icon = ImageView(this@AllAppsActivity).apply {
                 val s = dp((64 * scaleFactor).toInt())
-                layoutParams = LinearLayout.LayoutParams(s, s)
+                layoutParams = FrameLayout.LayoutParams(s, s).apply {
+                    gravity = Gravity.CENTER
+                }
             }
+            iconContainer.addView(icon)
 
             val label = TextView(this@AllAppsActivity).apply {
                 setTextColor(Color.WHITE)
@@ -270,7 +281,7 @@ class AllAppsActivity : Activity() {
                 ).apply { topMargin = dp((8 * scaleFactor).toInt()) }
             }
 
-            item.addView(icon)
+            item.addView(iconContainer)
             item.addView(label)
             
             return ViewHolder(item)
@@ -279,7 +290,8 @@ class AllAppsActivity : Activity() {
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
             val app = apps[position]
             val container = holder.view as LinearLayout
-            val icon = container.getChildAt(0) as ImageView
+            val iconContainer = container.getChildAt(0) as FrameLayout
+            val icon = iconContainer.getChildAt(0) as ImageView
             val label = container.getChildAt(1) as TextView
 
             icon.setImageDrawable(app.loadIcon(pm))
