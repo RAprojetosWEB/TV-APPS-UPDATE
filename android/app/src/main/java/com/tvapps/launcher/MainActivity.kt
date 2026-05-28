@@ -1738,26 +1738,40 @@ class MainActivity : Activity() {
         pill.isClickable = true
         pill.setOnClickListener { onTap() }
         
-        // BUG 2 FIX: Previne que o texto quebre em duas linhas causando tremor
         pill.maxLines = 1
         pill.setSingleLine(true)
         pill.gravity = Gravity.START or Gravity.CENTER_VERTICAL
         pill.ellipsize = TextUtils.TruncateAt.END
         pillStates[pill] = PillState(iconRes, compact, expanded)
         setPillContent(pill, iconRes, compact)
+        
+        // Fixa a largura inicial baseada no conteúdo compacto
+        val compactWidth = getExpandedWidth(pill, compact)
+        pill.layoutParams?.let {
+            it.width = compactWidth
+            pill.layoutParams = it
+        }
+        
+        // Garante que o wrapper tenha a largura fixa para não empurrar vizinhos
+        pill.post {
+            (pill.parent as? FrameLayout)?.let { wrapper ->
+                val lp = wrapper.layoutParams
+                lp.width = compactWidth
+                wrapper.layoutParams = lp
+            }
+        }
+
         pill.setOnFocusChangeListener { v, hasFocus ->
             val tv = v as TextView
             val st = pillStates[tv] ?: return@setOnFocusChangeListener
             val bg = tv.background as? GradientDrawable
             if (hasFocus) {
-                bg?.setColor(Color.parseColor("#33FFFFFF"))
+                bg?.setColor(Color.parseColor("#4DFFFFFF")) // Mais brilho no foco
                 bg?.setStroke(dp(2), Color.parseColor("#FFFFFF"))
-                // Removida animação de escala para evitar sobreposição dos vizinhos no LinearLayout
                 animateButtonExpand(tv, st.iconRes, st.compact, st.expanded, true)
             } else {
                 bg?.setColor(Color.parseColor("#1AFFFFFF"))
                 bg?.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                // Removida animação de escala para manter o fluxo do layout estável
                 animateButtonExpand(tv, st.iconRes, st.compact, st.expanded, false)
             }
         }
@@ -1773,7 +1787,22 @@ class MainActivity : Activity() {
         }
         st.iconRes = iconRes
         st.compact = compact
-        if (!pill.isFocused) setPillContent(pill, iconRes, compact)
+        if (!pill.isFocused) {
+            setPillContent(pill, iconRes, compact)
+            // Atualiza a largura do wrapper se o conteúdo compacto mudou
+            val newWidth = getExpandedWidth(pill, compact)
+            pill.layoutParams?.let {
+                it.width = newWidth
+                pill.layoutParams = it
+            }
+            (pill.parent as? FrameLayout)?.let { wrapper ->
+                val lp = wrapper.layoutParams
+                if (lp.width != newWidth) {
+                    lp.width = newWidth
+                    wrapper.layoutParams = lp
+                }
+            }
+        }
     }
 
     private fun updatePillTextAndIcon(pill: TextView?, iconRes: Int, text: String) {
@@ -2188,16 +2217,29 @@ class MainActivity : Activity() {
         listOf<View>(system, allApps, settings, clock, date, weather, wifi).forEach { pill ->
             pill.isFocusable = true
             pill.isFocusableInTouchMode = false
-            (pill.layoutParams as LinearLayout.LayoutParams).marginStart = gap
         }
 
-        right.addView(system)
-        right.addView(allApps)
-        right.addView(settings)
-        right.addView(clock)
-        right.addView(date)
-        right.addView(weather)
-        right.addView(wifi)
+        fun wrap(v: TextView): FrameLayout {
+            return FrameLayout(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    marginStart = dp((8 * scale).toInt())
+                }
+                clipChildren = false
+                clipToPadding = false
+                addView(v)
+            }
+        }
+
+        right.addView(wrap(system))
+        right.addView(wrap(allApps))
+        right.addView(wrap(settings))
+        right.addView(wrap(clock))
+        right.addView(wrap(date))
+        right.addView(wrap(weather))
+        right.addView(wrap(wifi))
 
         clockView = clock
         dateView = date
