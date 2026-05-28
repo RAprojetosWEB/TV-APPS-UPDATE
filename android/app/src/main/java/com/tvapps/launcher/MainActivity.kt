@@ -2565,7 +2565,7 @@ class MainActivity : Activity() {
 
 
     private fun buildDock(scale: Float): View {
-        val container = LinearLayout(this).apply {
+        val rootContainer = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             layoutParams = LinearLayout.LayoutParams(
@@ -2579,13 +2579,47 @@ class MainActivity : Activity() {
             clipChildren = false
             clipToPadding = false
         }
+
+        val scrollContainer = HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            overScrollMode = View.OVER_SCROLL_NEVER
+            clipChildren = false
+            clipToPadding = false
+            isFillViewport = true
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                // Largura máxima de aproximadamente 80% da tela para não encostar nas bordas
+                val maxW = (resources.displayMetrics.widthPixels * 0.8f).toInt()
+                width = ViewGroup.LayoutParams.WRAP_CONTENT
+            }
+        }
+
+        val appsLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            clipChildren = false
+            clipToPadding = false
+        }
+        scrollContainer.addView(appsLayout)
+
+        val addBtnContainer = FrameLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            clipChildren = false
+            clipToPadding = false
+        }
+
+        rootContainer.addView(scrollContainer)
+        rootContainer.addView(addBtnContainer)
         
-        refreshDock(container, scale)
-        return container
+        refreshDock(appsLayout, addBtnContainer, scrollContainer, scale)
+        return rootContainer
     }
 
-    private fun refreshDock(container: LinearLayout, scale: Float) {
-        container.removeAllViews()
+    private fun refreshDock(appsLayout: LinearLayout, addBtnContainer: FrameLayout, scroller: HorizontalScrollView, scale: Float) {
+        appsLayout.removeAllViews()
+        addBtnContainer.removeAllViews()
         val pm = packageManager
         val dockApps = LauncherSettings.getDockApps(this)
         
@@ -2593,14 +2627,34 @@ class MainActivity : Activity() {
             try {
                 val info = pm.getApplicationInfo(pkg, 0)
                 val item = buildDockItem(pkg, pm.getApplicationLabel(info).toString(), pm.getApplicationIcon(info), scale)
-                container.addView(item)
+                
+                // Centralizar no scroller ao focar
+                item.setOnFocusChangeListener { v, hasFocus ->
+                    // Mantém o comportamento visual original do item se existir
+                    val innerFocusListener = v.tag as? View.OnFocusChangeListener
+                    innerFocusListener?.onFocusChange(v, hasFocus)
+
+                    if (hasFocus) {
+                        v.post {
+                            val scrollerWidth = scroller.width
+                            if (scrollerWidth <= 0) return@post
+                            val itemCenter = v.left + v.width / 2
+                            val target = (itemCenter - scrollerWidth / 2)
+                                .coerceAtLeast(0)
+                                .coerceAtMost((appsLayout.width - scrollerWidth).coerceAtLeast(0))
+                            scroller.smoothScrollTo(target, 0)
+                        }
+                    }
+                }
+                
+                appsLayout.addView(item)
             } catch (_: Exception) {}
         }
         
         // Botão +
         val addBtn = FrameLayout(this).apply {
             val size = dp((56 * scale).toInt())
-            layoutParams = LinearLayout.LayoutParams(size, size).apply {
+            layoutParams = FrameLayout.LayoutParams(size, size).apply {
                 leftMargin = dp((8 * scale).toInt())
                 gravity = Gravity.CENTER_VERTICAL
             }
@@ -2627,6 +2681,8 @@ class MainActivity : Activity() {
                     bg.setStroke(dp(2), Color.WHITE)
                     v.scaleX = 1.15f
                     v.scaleY = 1.15f
+                    // Garante que o scroller role para o final para mostrar que chegamos no botão +
+                    scroller.post { scroller.fullScroll(View.FOCUS_RIGHT) }
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
@@ -2639,7 +2695,7 @@ class MainActivity : Activity() {
                 startActivity(Intent(this@MainActivity, AddToQuickAccessActivity::class.java))
             }
         }
-        container.addView(addBtn)
+        addBtnContainer.addView(addBtn)
         
         if (pendingFocusAddDock) {
             addBtn.post { addBtn.requestFocus() }
@@ -2698,7 +2754,7 @@ class MainActivity : Activity() {
             addView(iconContainer)
             addView(tv)
             
-            setOnFocusChangeListener { v, hasFocus ->
+            val innerFocusListener = View.OnFocusChangeListener { v, hasFocus ->
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#33FFFFFF"))
                     bg.setStroke(dp(2), Color.WHITE)
@@ -2711,6 +2767,8 @@ class MainActivity : Activity() {
                     v.scaleY = 1f
                 }
             }
+            tag = innerFocusListener
+            setOnFocusChangeListener(innerFocusListener)
             
             setOnClickListener {
                 try {
