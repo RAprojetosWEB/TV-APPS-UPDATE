@@ -1916,6 +1916,8 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
             clipChildren = false
             clipToPadding = false
+            isFocusable = false
+            isFocusableInTouchMode = false
             // Habilita animações de transição de layout (expansão suave)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
                 layoutTransition = android.animation.LayoutTransition().apply {
