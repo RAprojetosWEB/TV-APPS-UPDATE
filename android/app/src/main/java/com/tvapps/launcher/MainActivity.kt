@@ -2187,9 +2187,12 @@ class MainActivity : Activity() {
 
     private fun updateClockAndDate() {
         val now = Date()
-        clockView?.text = "🕐  " + SimpleDateFormat("HH:mm", Locale("pt", "BR")).format(now)
-        val raw = SimpleDateFormat("EEE, dd 'De' MMM.", Locale("pt", "BR")).format(now)
-        dateView?.text = "📅  " + capitalizeWords(raw)
+        val timeStr = SimpleDateFormat("HH:mm", Locale("pt", "BR")).format(now)
+        val dateRaw = SimpleDateFormat("EEE, dd 'De' MMM.", Locale("pt", "BR")).format(now)
+        val dateStr = capitalizeWords(dateRaw)
+        
+        updatePillTextAndIcon(clockView, R.drawable.ic_clock, timeStr)
+        updatePillTextAndIcon(dateView, R.drawable.ic_calendar, dateStr)
     }
 
     private fun capitalizeWords(s: String): String =
@@ -2202,7 +2205,7 @@ class MainActivity : Activity() {
         scope.launch {
             val w = StatusInfo.fetchWeather()
             if (w != null) {
-                weatherView?.text = "${w.emoji}  ${w.tempC}°C"
+                updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "${w.tempC}°C")
             }
         }
     }
