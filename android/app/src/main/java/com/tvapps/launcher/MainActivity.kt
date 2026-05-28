@@ -1941,60 +1941,50 @@ class MainActivity : Activity() {
         val system = makeStatusPill("", "#E8A85C", scale).apply {
             isFocusable = true
             isClickable = true
-            // Desativa a mudança de linha automática para permitir animação de largura
             maxLines = 1
-            ellipsize = android.text.TextUtils.TruncateAt.END
-            gravity = android.view.Gravity.CENTER
-
-            // Ícone de refresh (estilo lucide RotateCcw)
-            val refresh = androidx.core.content.ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_rotate_ccw)
+            ellipsize = TextUtils.TruncateAt.END
+            gravity = Gravity.CENTER
+            val icon = ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_rotate_ccw)
             val rs = dp((16 * scale).toInt())
-            refresh?.setBounds(0, 0, rs, rs)
-            refresh?.setTint(Color.parseColor("#E8A85C"))
-            setCompoundDrawables(refresh, null, null, null)
-            // Sem padding quando colapsado (só ícone), evita deslocar para a esquerda
+            icon?.setBounds(0, 0, rs, rs)
+            icon?.setTint(Color.parseColor("#E8A85C"))
+            setCompoundDrawables(icon, null, null, null)
             compoundDrawablePadding = 0
-
             setOnClickListener { checkOtaUpdate(this, true) }
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
                 val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
-                
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#335EE6A8"))
                     bg.setStroke(dp(2), Color.parseColor("#5EE6A8"))
                     tv.compoundDrawablePadding = dp((6 * scale).toInt())
-                    // Expande com texto e animação
                     tv.text = "Procurar atualizações"
                     tv.animate().alpha(1f).setDuration(200).start()
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
                     tv.compoundDrawablePadding = 0
-                    // Retrai para apenas o ícone
                     tv.text = ""
                 }
             }
         }
+
         val allApps = makeStatusPill("", "#FFFFFF", scale).apply {
             isFocusable = true
             isClickable = true
             maxLines = 1
-            ellipsize = android.text.TextUtils.TruncateAt.END
-            gravity = android.view.Gravity.CENTER
-
-            val grid = androidx.core.content.ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_grid)
+            ellipsize = TextUtils.TruncateAt.END
+            gravity = Gravity.CENTER
+            val icon = ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_grid)
             val rs = dp((16 * scale).toInt())
-            grid?.setBounds(0, 0, rs, rs)
-            grid?.setTint(Color.WHITE)
-            setCompoundDrawables(grid, null, null, null)
+            icon?.setBounds(0, 0, rs, rs)
+            icon?.setTint(Color.WHITE)
+            setCompoundDrawables(icon, null, null, null)
             compoundDrawablePadding = 0
-
             setOnClickListener { showAllAppsOverlay(scale) }
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
                 val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
-                
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#33FFFFFF"))
                     bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
@@ -2008,28 +1998,23 @@ class MainActivity : Activity() {
                 }
             }
         }
+
         val settings = makeStatusPill("", "#FFFFFF", scale).apply {
             isFocusable = true
             isClickable = true
             maxLines = 1
-            ellipsize = android.text.TextUtils.TruncateAt.END
-            gravity = android.view.Gravity.CENTER
-
-            // Ícone de engrenagem (estilo lucide), igual ao da versão Web
-            val gear = androidx.core.content.ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_settings)
-            val gs = dp((16 * scale).toInt())
-            gear?.setBounds(0, 0, gs, gs)
-            gear?.setTint(Color.WHITE)
-            setCompoundDrawables(gear, null, null, null)
+            ellipsize = TextUtils.TruncateAt.END
+            gravity = Gravity.CENTER
+            val icon = ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_settings)
+            val rs = dp((16 * scale).toInt())
+            icon?.setBounds(0, 0, rs, rs)
+            icon?.setTint(Color.WHITE)
+            setCompoundDrawables(icon, null, null, null)
             compoundDrawablePadding = 0
-
-            setOnClickListener {
-                openSystemSettings()
-            }
+            setOnClickListener { openSystemSettings() }
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
                 val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
-                
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#33FFFFFF"))
                     bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
@@ -2043,12 +2028,12 @@ class MainActivity : Activity() {
                 }
             }
         }
+
         val clock = makeStatusPill("🕐  --:--", "#FFFFFF", scale)
         val date = makeStatusPill("📅  ---", "#FFFFFF", scale)
         val weather = makeStatusPill("🌥  --°C", "#FFFFFF", scale)
         val wifi = makeStatusPill("📶  Wi-Fi", "#5EE6A8", scale)
 
-        // Pílulas que abrem a configuração correspondente do sistema.
         wireStatusPillAction(clock) { openDateSettings() }
         wireStatusPillAction(date) { openDateSettings() }
         wireStatusPillAction(weather) { openLocationSettings() }
