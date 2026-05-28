@@ -1905,6 +1905,38 @@ class MainActivity : Activity() {
                 }
             }
         }
+        val allApps = makeStatusPill("", "#FFFFFF", scale).apply {
+            isFocusable = true
+            isClickable = true
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            gravity = android.view.Gravity.CENTER
+
+            val grid = androidx.core.content.ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_grid)
+            val rs = dp((16 * scale).toInt())
+            grid?.setBounds(0, 0, rs, rs)
+            grid?.setTint(Color.WHITE)
+            setCompoundDrawables(grid, null, null, null)
+            compoundDrawablePadding = 0
+
+            setOnClickListener { showAllAppsOverlay(scale) }
+            setOnFocusChangeListener { v, hasFocus ->
+                val tv = v as TextView
+                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
+                
+                if (hasFocus) {
+                    bg.setColor(Color.parseColor("#33FFFFFF"))
+                    bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                    tv.compoundDrawablePadding = dp((6 * scale).toInt())
+                    tv.text = "Todos os aplicativos"
+                } else {
+                    bg.setColor(Color.parseColor("#1AFFFFFF"))
+                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    tv.compoundDrawablePadding = 0
+                    tv.text = ""
+                }
+            }
+        }
         val settings = makeStatusPill("", "#FFFFFF", scale).apply {
             isFocusable = true
             isClickable = true
