@@ -2242,7 +2242,7 @@ class MainActivity : Activity() {
             setTextColor(Color.parseColor(accentHex))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
-            gravity = Gravity.CENTER
+            gravity = Gravity.START or Gravity.CENTER_VERTICAL
             
             val bg = GradientDrawable().apply {
                 setColor(Color.parseColor("#1AFFFFFF"))
