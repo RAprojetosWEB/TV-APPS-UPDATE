@@ -459,23 +459,17 @@ class MainActivity : Activity() {
                 NetworkMonitor.State.ETHERNET_NO_INTERNET -> "Cabo sem internet"
             }
             v.tag = label
-            v.text = "" // Mantém texto vazio no botão fixo conforme solicitado anteriormente
-            v.setCompoundDrawablesWithIntrinsicBounds(res, 0, 0, 0)
-                NetworkMonitor.State.WIFI_NO_INTERNET -> "Sem internet"
-                NetworkMonitor.State.ETHERNET -> "Ethernet"
-                NetworkMonitor.State.ETHERNET_NO_INTERNET -> "Sem internet"
-                else -> "Wi-Fi"
-            }
+            
             val color = when (state) {
                 NetworkMonitor.State.OFFLINE,
                 NetworkMonitor.State.WIFI_NO_INTERNET,
                 NetworkMonitor.State.ETHERNET_NO_INTERNET -> Color.parseColor("#FF6B6B")
                 else -> Color.parseColor("#5EE6A8")
             }
-            v.tag = label
             v.setTextColor(color)
 
-            val textToSet = label
+            // Mantém texto vazio para manter tamanho fixo e evitar saltos de foco
+            val textToSet = "" 
 
             val icon = androidx.core.content.ContextCompat.getDrawable(this, res)?.mutate()
             // Mantém cores originais do vetor para alerta/ethernet; nos demais aplica cor da pílula.
@@ -486,23 +480,10 @@ class MainActivity : Activity() {
             val size = dp(16)
             icon?.setBounds(0, 0, size, size)
             v.setCompoundDrawables(icon, null, null, null)
-            v.compoundDrawablePadding = if (textToSet.isEmpty()) 0 else dp(6)
+            v.compoundDrawablePadding = 0
             v.text = textToSet
             
-            // Atualiza o listener para usar o ícone correto de rede ao mudar o foco
-            v.setOnFocusChangeListener { view, hasFocus ->
-                val tv = view as TextView
-                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
-                if (hasFocus) {
-                    bg.setColor(Color.parseColor("#33FFFFFF"))
-                    bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
-                    view.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
-                } else {
-                    bg.setColor(Color.parseColor("#1AFFFFFF"))
-                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                    view.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
-                }
-            }
+            // O listener de foco já é gerenciado por wireStatusPillAction em buildRoot
         }
     }
 
