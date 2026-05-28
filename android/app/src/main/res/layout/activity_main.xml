@@ -42,7 +42,7 @@
     </LinearLayout>
 
     <!-- Bloco direito: pílulas de status e navegação -->
-    <LinearLayout
+    <com.tvapps.launcher.FocusAwareLinearLayout
         android:id="@+id/status_pills_container"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -123,5 +123,5 @@
             android:nextFocusLeft="@id/txt_weather"
             android:nextFocusRight="@id/btn_wifi" />
 
-    </LinearLayout>
+    </com.tvapps.launcher.FocusAwareLinearLayout>
 </LinearLayout>
