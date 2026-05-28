@@ -130,6 +130,7 @@ class MainActivity : Activity() {
     // APK aguardando instalação após usuário conceder permissão "Instalar apps desconhecidos"
     private var pendingInstallApk: File? = null
     private var activeOverlay: View? = null
+    private var pendingFocusAddDock = false
 
 
 
@@ -2732,6 +2733,11 @@ class MainActivity : Activity() {
             }
         }
         container.addView(addBtn)
+        
+        if (pendingFocusAddDock) {
+            addBtn.post { addBtn.requestFocus() }
+            pendingFocusAddDock = false
+        }
     }
 
     private fun buildDockItem(packageName: String, label: String, icon: Drawable, scale: Float): View {
@@ -2946,6 +2952,7 @@ class MainActivity : Activity() {
                     LauncherSettings.addToDock(this@MainActivity, pkg)
                     root.removeView(overlay)
                     activeOverlay = null
+                    pendingFocusAddDock = true
                     setContentView(buildRoot())
                 }
             }
