@@ -77,6 +77,17 @@ class AddToQuickAccessActivity : Activity() {
             MainActivity.pendingFocusAddDock = true
             finish()
         }
+        
+        btnMultiUninstall = findViewById(R.id.btn_multi_uninstall)
+        setupButton(btnMultiUninstall, "#F44336") // Red for Uninstall
+        btnMultiUninstall.setOnClickListener {
+            val appsToUninstall = selectedApps.toList()
+            appsToUninstall.forEach { app ->
+                uninstallApp(app.activityInfo.packageName)
+            }
+            // Saímos do modo de seleção após disparar as desinstalações
+            exitMultiSelectMode()
+        }
 
         btnCancel = findViewById(R.id.btn_cancel)
         setupButton(btnCancel, "#1A237E")
