@@ -463,8 +463,7 @@ class MainActivity : Activity() {
             v.tag = label
             v.setTextColor(color)
 
-            val showText = v.hasFocus()
-            val textToSet = if (showText) label else ""
+            val textToSet = label
 
             val icon = androidx.core.content.ContextCompat.getDrawable(this, res)?.mutate()
             // Mantém cores originais do vetor para alerta/ethernet; nos demais aplica cor da pílula.
@@ -486,17 +485,10 @@ class MainActivity : Activity() {
                     bg.setColor(Color.parseColor("#33FFFFFF"))
                     bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
                     view.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
-                    
-                    val currentLabel = tv.tag as? String ?: ""
-                    tv.text = currentLabel
-                    tv.compoundDrawablePadding = dp(6)
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
                     view.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
-                    
-                    tv.text = ""
-                    tv.compoundDrawablePadding = 0
                 }
             }
         }
@@ -1663,11 +1655,7 @@ class MainActivity : Activity() {
     private fun updatePillTextAndIcon(pill: TextView?, iconRes: Int, text: String) {
         pill?.apply {
             tag = text
-            if (hasFocus()) {
-                setPillContent(this, iconRes, text)
-            } else {
-                setPillContent(this, iconRes, "")
-            }
+            setPillContent(this, iconRes, text)
         }
     }
 
@@ -1880,18 +1868,6 @@ class MainActivity : Activity() {
                 bg.setColor(Color.parseColor("#33FFFFFF"))
                 bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
                 v.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
-                
-                // Expande o texto ao ganhar foco
-                val currentText = v.tag as? String ?: ""
-                setPillContent(tv, iconRes, currentText)
-            } else {
-                bg.setColor(Color.parseColor("#1AFFFFFF"))
-                bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                v.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
-                
-                // Recolhe o texto ao perder foco
-                setPillContent(tv, iconRes, "")
-            }
         }
     }
 
@@ -2024,7 +2000,7 @@ class MainActivity : Activity() {
                 }
             }
             // Estado inicial recolhido
-            setPillContent(this, R.drawable.ic_rotate_ccw, "")
+            setPillContent(this, R.drawable.ic_rotate_ccw, "Procurar atualizações")
         }
 
         val allApps = makeStatusPill("", "#FFFFFF", scale).apply {
@@ -2048,7 +2024,7 @@ class MainActivity : Activity() {
                 }
             }
             // Estado inicial recolhido
-            setPillContent(this, R.drawable.ic_grid, "")
+            setPillContent(this, R.drawable.ic_grid, "Todos os aplicativos")
         }
 
         val settings = makeStatusPill("", "#FFFFFF", scale).apply {
@@ -2072,7 +2048,7 @@ class MainActivity : Activity() {
                 }
             }
             // Estado inicial recolhido
-            setPillContent(this, R.drawable.ic_settings, "")
+            setPillContent(this, R.drawable.ic_settings, "Configurações")
         }
 
         val clock = makeStatusPill("", "#FFFFFF", scale)
@@ -2160,7 +2136,7 @@ class MainActivity : Activity() {
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             gravity = Gravity.CENTER
-            minWidth = dp((52 * scale).toInt())
+            
             val bg = GradientDrawable().apply {
                 setColor(Color.parseColor("#1AFFFFFF"))
                 cornerRadius = dp((12 * scale).toInt()).toFloat()
