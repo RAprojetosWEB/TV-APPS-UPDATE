@@ -1711,6 +1711,11 @@ class MainActivity : Activity() {
         pill.isFocusableInTouchMode = false
         pill.isClickable = true
         pill.setOnClickListener { onTap() }
+        
+        // BUG 2 FIX: Previne que o texto quebre em duas linhas causando tremor
+        pill.maxLines = 1
+        pill.setSingleLine(true)
+        pill.ellipsize = android.text.TextUtils.TruncateAt.END
         pillStates[pill] = PillState(iconRes, compact, expanded)
         setPillContent(pill, iconRes, compact)
         pill.setOnFocusChangeListener { v, hasFocus ->
