@@ -2081,6 +2081,7 @@ class MainActivity : Activity() {
         weather.id = View.generateViewId()
         wifi.id = View.generateViewId()
         
+        system.nextFocusLeftId = View.NO_ID
         system.nextFocusRightId = allApps.id
         
         allApps.nextFocusLeftId = system.id
