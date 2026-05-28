@@ -1648,6 +1648,60 @@ class MainActivity : Activity() {
         pill.text = label
     }
 
+    // ===== Expansão por foco das pílulas da top bar =====
+    private data class PillState(var iconRes: Int, var compact: String, val expanded: String)
+    private val pillStates = mutableMapOf<TextView, PillState>()
+
+    /**
+     * Configura uma pílula da barra superior para começar compacta (só ícone
+     * ou valor curto) e expandir o texto completo quando receber foco pelo
+     * D-pad, voltando ao estado compacto ao perder o foco. Também aplica o
+     * realce de borda/fundo e animação de escala já usados nas demais.
+     */
+    private fun setupPill(
+        pill: TextView,
+        iconRes: Int,
+        compact: String,
+        expanded: String,
+        onTap: () -> Unit,
+    ) {
+        pill.isFocusable = true
+        pill.isFocusableInTouchMode = false
+        pill.isClickable = true
+        pill.setOnClickListener { onTap() }
+        pillStates[pill] = PillState(iconRes, compact, expanded)
+        setPillContent(pill, iconRes, compact)
+        pill.setOnFocusChangeListener { v, hasFocus ->
+            val tv = v as TextView
+            val st = pillStates[tv] ?: return@setOnFocusChangeListener
+            val bg = tv.background as? GradientDrawable
+            if (hasFocus) {
+                bg?.setColor(Color.parseColor("#33FFFFFF"))
+                bg?.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                tv.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
+                setPillContent(tv, st.iconRes, st.expanded)
+            } else {
+                bg?.setColor(Color.parseColor("#1AFFFFFF"))
+                bg?.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                tv.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
+                setPillContent(tv, st.iconRes, st.compact)
+            }
+        }
+    }
+
+    /** Atualiza o conteúdo compacto/ícone de uma pílula sem perder o
+     *  comportamento de expansão por foco. */
+    private fun updatePillCompact(pill: TextView?, iconRes: Int, compact: String) {
+        if (pill == null) return
+        val st = pillStates[pill] ?: run {
+            setPillContent(pill, iconRes, compact)
+            return
+        }
+        st.iconRes = iconRes
+        st.compact = compact
+        if (!pill.isFocused) setPillContent(pill, iconRes, compact)
+    }
+
     private fun updatePillTextAndIcon(pill: TextView?, iconRes: Int, text: String) {
         pill?.apply {
             tag = text
