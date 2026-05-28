@@ -2050,7 +2050,13 @@ class MainActivity : Activity() {
 
         wireStatusPillAction(clock, R.drawable.ic_clock) { openDateSettings() }
         wireStatusPillAction(date, R.drawable.ic_calendar) { openDateSettings() }
-        wireStatusPillAction(weather, R.drawable.ic_cloud) { openLocationSettings() }
+        wireStatusPillAction(weather, R.drawable.ic_cloud) {
+            try {
+                openLocationSettings()
+            } catch (_: Exception) {
+                // Erro ignorado silenciosamente conforme solicitado
+            }
+        }
         wireStatusPillAction(wifi, R.drawable.ic_wifi) { openNetworkSettings() }
 
         val gap = dp((8 * scale).toInt())
@@ -2167,9 +2173,16 @@ class MainActivity : Activity() {
 
     private fun refreshWeather() {
         scope.launch {
-            val w = StatusInfo.fetchWeather()
-            if (w != null) {
-                updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "${w.tempC}°C")
+            try {
+                val w = StatusInfo.fetchWeather()
+                if (w != null) {
+                    updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "${w.tempC}°C")
+                } else {
+                    updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "--°")
+                }
+            } catch (e: Exception) {
+                // Em caso de falha na requisição ou lógica, exibe fallback
+                updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "--°")
             }
         }
     }
