@@ -2805,12 +2805,16 @@ class MainActivity : Activity() {
         container.addView(scrollView)
 
         val closeBtn = TextView(this).apply {
+            id = View.generateViewId()
             text = "VOLTAR"
             setTextColor(Color.WHITE)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f * scale)
             gravity = Gravity.CENTER
             isFocusable = true
             isClickable = true
+            nextFocusDownId = id
+            nextFocusLeftId = id
+            nextFocusRightId = id
             val bg = GradientDrawable().apply {
                 cornerRadius = dp(8).toFloat()
                 setColor(Color.parseColor("#33FFFFFF"))
@@ -2842,6 +2846,17 @@ class MainActivity : Activity() {
         overlay.addView(container)
         root.addView(overlay)
         
+        if (grid.childCount > 0) {
+            title.nextFocusDownId = grid.getChildAt(0).id
+            // Define que os itens da grade apontam para o botão voltar ao descer
+            for (i in 0 until grid.childCount) {
+                val child = grid.getChildAt(i)
+                child.nextFocusDownId = closeBtn.id
+            }
+        } else {
+            title.nextFocusDownId = closeBtn.id
+        }
+
         if (grid.childCount > 0) {
             grid.getChildAt(0).requestFocus()
         } else {
