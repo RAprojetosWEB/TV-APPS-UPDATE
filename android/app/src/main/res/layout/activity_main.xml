@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/top_bar_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:focusable="false"
+    android:focusableInTouchMode="false"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:paddingEnd="12dp">
+
+    <!-- Bloco esquerdo: TV.Apps + subtítulo (Geralmente em um layout vertical separado, mas mantendo a estrutura pedida) -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:focusable="false"
+        android:focusableInTouchMode="false">
+        
+        <TextView
+            android:id="@+id/tv_apps_logo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TV.Apps"
+            android:textColor="#FFFFFF"
+            android:textSize="36sp"
+            android:textStyle="bold"
+            android:focusable="false" />
+            
+        <TextView
+            android:id="@+id/tv_apps_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Central de Downloads Automática"
+            android:textColor="#99FFFFFF"
+            android:textSize="14sp"
+            android:paddingTop="4dp"
+            android:focusable="false" />
+    </LinearLayout>
+
+    <!-- Bloco direito: pílulas de status e navegação -->
+    <LinearLayout
+        android:id="@+id/status_pills_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:clipChildren="false"
+        android:clipToPadding="false">
+
+        <TextView
+            android:id="@+id/btn_update"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:focusable="true"
+            android:focusableInTouchMode="false"
+            android:nextFocusLeft="@id/btn_update"
+            android:nextFocusRight="@id/btn_grid" />
+
+        <TextView
+            android:id="@+id/btn_grid"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:focusable="true"
+            android:focusableInTouchMode="false"
+            android:nextFocusLeft="@id/btn_update"
+            android:nextFocusRight="@id/btn_settings" />
+
+        <TextView
+            android:id="@+id/btn_settings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:focusable="true"
+            android:focusableInTouchMode="false"
+            android:nextFocusLeft="@id/btn_grid"
+            android:nextFocusRight="@id/txt_hour" />
+
+        <TextView
+            android:id="@+id/txt_hour"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:focusable="true"
+            android:focusableInTouchMode="false"
+            android:nextFocusLeft="@id/btn_settings"
+            android:nextFocusRight="@id/txt_date" />
+
+        <TextView
+            android:id="@+id/txt_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:focusable="true"
+            android:focusableInTouchMode="false"
+            android:nextFocusLeft="@id/txt_hour"
+            android:nextFocusRight="@id/txt_weather" />
+
+        <TextView
+            android:id="@+id/txt_weather"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:focusable="true"
+            android:focusableInTouchMode="false"
+            android:nextFocusLeft="@id/txt_date"
+            android:nextFocusRight="@id/btn_wifi" />
+
+        <TextView
+            android:id="@+id/btn_wifi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:focusable="true"
+            android:focusableInTouchMode="false"
+            android:nextFocusLeft="@id/txt_weather"
+            android:nextFocusRight="@id/btn_wifi" />
+
+    </LinearLayout>
+</LinearLayout>
