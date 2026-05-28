@@ -114,6 +114,7 @@ class MainActivity : Activity() {
     private var wifiView: TextView? = null
     private var otaStatusPill: TextView? = null
     private var settingsPill: TextView? = null
+    private var currentTooltip: android.widget.PopupWindow? = null
     private val statusHandler = Handler(Looper.getMainLooper())
     private val clockTicker = object : Runnable {
         override fun run() {
@@ -449,6 +450,17 @@ class MainActivity : Activity() {
         wifiView?.let { v ->
             val label = when (state) {
                 NetworkMonitor.State.OFFLINE -> "Sem rede"
+                NetworkMonitor.State.WIFI_LEVEL_1,
+                NetworkMonitor.State.WIFI_LEVEL_2,
+                NetworkMonitor.State.WIFI_LEVEL_3,
+                NetworkMonitor.State.WIFI_LEVEL_4 -> "Wi-Fi Conectado"
+                NetworkMonitor.State.WIFI_NO_INTERNET -> "Wi-Fi sem internet"
+                NetworkMonitor.State.ETHERNET -> "Cabo Conectado"
+                NetworkMonitor.State.ETHERNET_NO_INTERNET -> "Cabo sem internet"
+            }
+            v.tag = label
+            v.text = "" // Mantém texto vazio no botão fixo conforme solicitado anteriormente
+            v.setCompoundDrawablesWithIntrinsicBounds(res, 0, 0, 0)
                 NetworkMonitor.State.WIFI_NO_INTERNET -> "Sem internet"
                 NetworkMonitor.State.ETHERNET -> "Ethernet"
                 NetworkMonitor.State.ETHERNET_NO_INTERNET -> "Sem internet"
@@ -1868,12 +1880,56 @@ class MainActivity : Activity() {
                 bg.setColor(Color.parseColor("#33FFFFFF"))
                 bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
                 v.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
+                showTopBarTooltip(v)
             } else {
                 bg.setColor(Color.parseColor("#1AFFFFFF"))
                 bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
                 v.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
+                hideTopBarTooltip()
             }
         }
+    }
+
+    private fun showTopBarTooltip(anchor: View) {
+        currentTooltip?.dismiss()
+        val text = anchor.tag?.toString() ?: return
+        if (text.isEmpty()) return
+
+        val tooltipView = TextView(this).apply {
+            this.text = text
+            setTextColor(Color.WHITE)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+            setPadding(dp(12), dp(6), dp(12), dp(6))
+            gravity = Gravity.CENTER
+            background = GradientDrawable().apply {
+                setColor(Color.parseColor("#CC000000"))
+                cornerRadius = dp(12).toFloat()
+            }
+        }
+
+        val popup = android.widget.PopupWindow(
+            tooltipView,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply {
+            isFocusable = false
+            isOutsideTouchable = true
+        }
+        currentTooltip = popup
+
+        tooltipView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+        val location = IntArray(2)
+        anchor.getLocationOnScreen(location)
+        
+        val x = location[0] + (anchor.width / 2) - (tooltipView.measuredWidth / 2)
+        val y = location[1] + anchor.height + dp(8)
+        
+        popup.showAtLocation(anchor, Gravity.NO_GRAVITY, x, y)
+    }
+
+    private fun hideTopBarTooltip() {
+        currentTooltip?.dismiss()
+        currentTooltip = null
     }
 
     private fun dp(value: Int): Int {
@@ -1984,15 +2040,18 @@ class MainActivity : Activity() {
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
             setOnClickListener { checkOtaUpdate(this, true) }
+            tag = "Update"
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
                 val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#335EE6A8"))
                     bg.setStroke(dp(2), Color.parseColor("#5EE6A8"))
+                    showTopBarTooltip(v)
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    hideTopBarTooltip()
                 }
             }
             // Estado inicial fixo (ícone + texto)
@@ -2006,15 +2065,18 @@ class MainActivity : Activity() {
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
             setOnClickListener { showAllAppsOverlay(scale) }
+            tag = "Todos os Apps"
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
                 val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#33FFFFFF"))
                     bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                    showTopBarTooltip(v)
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    hideTopBarTooltip()
                 }
             }
             // Estado inicial fixo (ícone + texto)
@@ -2028,15 +2090,18 @@ class MainActivity : Activity() {
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
             setOnClickListener { openSystemSettings() }
+            tag = "Configurações"
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
                 val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#33FFFFFF"))
                     bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                    showTopBarTooltip(v)
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    hideTopBarTooltip()
                 }
             }
             // Estado inicial fixo (ícone + texto)
@@ -2162,7 +2227,9 @@ class MainActivity : Activity() {
         val dateStr = capitalizeWords(dateRaw)
         
         updatePillTextAndIcon(clockView, R.drawable.ic_clock, timeStr)
+        clockView?.tag = timeStr
         updatePillTextAndIcon(dateView, R.drawable.ic_calendar, dateStr)
+        dateView?.tag = dateStr
     }
 
     private fun capitalizeWords(s: String): String =
@@ -2177,6 +2244,7 @@ class MainActivity : Activity() {
                 val w = StatusInfo.fetchWeather()
                 if (w != null) {
                     updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "${w.tempC}°C")
+                    weatherView?.tag = "${w.tempC}°C - ${w.condition}"
                 } else {
                     updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "--°")
                 }
