@@ -388,6 +388,17 @@ class MainActivity : Activity() {
         super.onStop()
     }
 
+    override fun onBackPressed() {
+        val overlay = activeOverlay
+        if (overlay != null) {
+            (overlay.parent as? ViewGroup)?.removeView(overlay)
+            activeOverlay = null
+        } else {
+            super.onBackPressed()
+        }
+    }
+
+
     private fun applyNetworkState(state: NetworkMonitor.State) {
         lastNetworkState = state
         val res = when (state) {
