@@ -2129,8 +2129,8 @@ class MainActivity : Activity() {
         val right = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            clipChildren = true
-            clipToPadding = true
+            clipChildren = false
+            clipToPadding = false
             isFocusable = false
             isFocusableInTouchMode = false
             layoutParams = LinearLayout.LayoutParams(
