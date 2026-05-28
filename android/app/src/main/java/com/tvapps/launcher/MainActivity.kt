@@ -1637,8 +1637,8 @@ class MainActivity : Activity() {
         val iconSize = (button.textSize * 1.1f).toInt()
         val drawablePadding = if (text.isEmpty()) 0 else dp(8)
         val padding = button.paddingStart + button.paddingEnd
-        // Adiciona margem extra de 32dp conforme solicitado para evitar cortes
-        return (textWidth + iconSize + drawablePadding + padding + dp(32)).toInt()
+        // Reduzido o extra de 32dp para 12dp para evitar que fiquem grandes demais e sobreponham
+        return (textWidth + iconSize + drawablePadding + padding + dp(12)).toInt()
     }
 
     /**
