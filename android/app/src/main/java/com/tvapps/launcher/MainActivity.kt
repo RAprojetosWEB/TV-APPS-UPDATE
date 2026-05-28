@@ -2141,7 +2141,7 @@ class MainActivity : Activity() {
         val allApps = makeStatusPill("", "#FFFFFF", scale).apply {
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
-            gravity = Gravity.CENTER
+            gravity = Gravity.START or Gravity.CENTER_VERTICAL
         }
         setupPill(allApps, R.drawable.ic_grid, "", "Todos os aplicativos") {
             showAllAppsOverlay(scale)
