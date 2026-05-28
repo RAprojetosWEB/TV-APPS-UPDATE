@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Check, Download, Play, AlertCircle, Calendar, Clock, Cloud, RefreshCcw, RotateCcw, Search, Info, Settings } from "lucide-react";
+import { Check, Download, Play, AlertCircle, Calendar, Clock, Cloud, RefreshCcw, RotateCcw, Search, Info, Settings, LayoutGrid } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOtaUpdate } from "@/hooks/useOtaUpdate";
 import { OtaUpdateModal } from "@/components/OtaUpdateModal";
@@ -713,7 +713,20 @@ function Index() {
           >
             <RotateCcw size={20} className={`text-orange-400 shrink-0 ${ota.checking ? 'animate-spin' : ''}`} />
             <span className="max-w-0 overflow-hidden whitespace-nowrap text-lg font-bold text-white/90 transition-all duration-300 group-focus:max-w-xs group-focus:ml-2">
-              {ota.checking ? "Verificando..." : "Updates"}
+              {ota.checking ? "Verificando..." : "Verificar atualizações"}
+            </span>
+          </button>
+
+          <button
+            onClick={() => { 
+              playClick();
+              toast.info("Em breve: Lista de todos os aplicativos");
+            }}
+            className="group flex items-center justify-center gap-0 px-4 py-4 rounded-2xl bg-white/5 border-2 border-white/10 backdrop-blur-md transition-all duration-300 active:scale-95 focus:outline-none focus:border-white/40 focus:bg-white/10 focus:shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:bg-white/10 hover:scale-105"
+          >
+            <LayoutGrid size={20} className="text-white/70 shrink-0" />
+            <span className="max-w-0 overflow-hidden whitespace-nowrap text-lg font-bold text-white/90 transition-all duration-300 group-focus:max-w-xs group-focus:ml-2">
+              Todos os aplicativos
             </span>
           </button>
 
@@ -736,22 +749,44 @@ function Index() {
 
           <NetworkIndicator compact />
 
-          <div className="flex items-center gap-[clamp(1rem,2vw,2rem)] px-[clamp(1rem,2vw,2rem)] py-[clamp(0.5rem,1vh,1rem)] rounded-[clamp(1rem,2vw,1.5rem)] bg-white/5 border border-white/10 backdrop-blur-md">
-            <div className="flex items-center gap-2 text-white/90">
-              <Clock size={20} className="text-tv-accent" />
-              <span className="text-[clamp(1.2rem,2.5vw,2rem)] font-bold tabular-nums">{time}</span>
-            </div>
-            <div className="h-6 w-px bg-white/10" />
-            <div className="flex items-center gap-2 text-white/70">
-              <Calendar size={18} className="text-tv-accent" />
-              <span className="text-[clamp(0.9rem,1.8vw,1.25rem)] font-medium capitalize">{date}</span>
-            </div>
-            <div className="h-6 w-px bg-white/10" />
-            <div className="flex items-center gap-2 text-white/70">
-              <Cloud size={20} className="text-tv-accent" />
-              <span className="text-[clamp(0.9rem,1.8vw,1.25rem)] font-medium">24°C</span>
-            </div>
-          </div>
+          <button
+            onClick={() => toast.info("Configurações de hora disponíveis no sistema")}
+            className="group flex items-center justify-center gap-0 px-4 py-4 rounded-2xl bg-white/5 border-2 border-white/10 backdrop-blur-md transition-all duration-300 active:scale-95 focus:outline-none focus:border-white/40 focus:bg-white/10 focus:shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:bg-white/10 hover:scale-105"
+          >
+            <Clock size={20} className="text-tv-accent shrink-0" />
+            <span className="ml-2 text-[clamp(1.2rem,2.5vw,2rem)] font-bold tabular-nums text-white/90 group-focus:hidden">
+              {time}
+            </span>
+            <span className="max-w-0 overflow-hidden whitespace-nowrap text-lg font-bold text-white/90 transition-all duration-300 group-focus:max-w-xs group-focus:ml-2">
+              Configurar hora
+            </span>
+          </button>
+
+          <button
+            onClick={() => toast.info("Configurações de data disponíveis no sistema")}
+            className="group flex items-center justify-center gap-0 px-4 py-4 rounded-2xl bg-white/5 border-2 border-white/10 backdrop-blur-md transition-all duration-300 active:scale-95 focus:outline-none focus:border-white/40 focus:bg-white/10 focus:shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:bg-white/10 hover:scale-105"
+          >
+            <Calendar size={18} className="text-tv-accent shrink-0" />
+            <span className="ml-2 text-[clamp(0.9rem,1.8vw,1.25rem)] font-medium capitalize text-white/70 group-focus:hidden">
+              {date}
+            </span>
+            <span className="max-w-0 overflow-hidden whitespace-nowrap text-lg font-bold text-white/90 transition-all duration-300 group-focus:max-w-xs group-focus:ml-2">
+              Configurar data
+            </span>
+          </button>
+
+          <button
+            onClick={() => toast.info("Configurações de clima disponíveis no sistema")}
+            className="group flex items-center justify-center gap-0 px-4 py-4 rounded-2xl bg-white/5 border-2 border-white/10 backdrop-blur-md transition-all duration-300 active:scale-95 focus:outline-none focus:border-white/40 focus:bg-white/10 focus:shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:bg-white/10 hover:scale-105"
+          >
+            <Cloud size={20} className="text-tv-accent shrink-0" />
+            <span className="ml-2 text-[clamp(0.9rem,1.8vw,1.25rem)] font-medium text-white/70 group-focus:hidden">
+              24°C
+            </span>
+            <span className="max-w-0 overflow-hidden whitespace-nowrap text-lg font-bold text-white/90 transition-all duration-300 group-focus:max-w-xs group-focus:ml-2">
+              Configurar clima
+            </span>
+          </button>
 
         </div>
       </header>
