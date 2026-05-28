@@ -2518,10 +2518,7 @@ class MainActivity : Activity() {
                 onBackPressed()
             },
             "Desinstalar" to {
-                val intent = Intent(Intent.ACTION_DELETE).apply {
-                    data = Uri.fromParts("package", pkg, null)
-                }
-                startActivity(intent)
+                uninstallApp(pkg)
                 onBackPressed()
             }
         )
