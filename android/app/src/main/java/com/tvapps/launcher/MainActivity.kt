@@ -2173,9 +2173,16 @@ class MainActivity : Activity() {
 
     private fun refreshWeather() {
         scope.launch {
-            val w = StatusInfo.fetchWeather()
-            if (w != null) {
-                updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "${w.tempC}°C")
+            try {
+                val w = StatusInfo.fetchWeather()
+                if (w != null) {
+                    updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "${w.tempC}°C")
+                } else {
+                    updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "--°")
+                }
+            } catch (e: Exception) {
+                // Em caso de falha na requisição ou lógica, exibe fallback
+                updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "--°")
             }
         }
     }
