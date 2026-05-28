@@ -51,9 +51,13 @@ export const Route = createFileRoute("/api/public/verify-launcher-password")({
           );
         }
 
-        const expected = data?.login_password ?? "1555";
+        const expected = (data?.login_password ?? "1555").trim();
+        const received = parsed.data.password.trim();
+        
+        console.log(`Verificando senha: recebida="${received}", esperada="${expected}"`);
+        
         return new Response(
-          JSON.stringify({ ok: parsed.data.password === expected }),
+          JSON.stringify({ ok: received === expected }),
           { status: 200, headers: CORS },
         );
       },
