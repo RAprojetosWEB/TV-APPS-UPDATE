@@ -1652,6 +1652,8 @@ class MainActivity : Activity() {
         }
 
         // Define o texto ANTES de medir e iniciar a animação para o layout já conhecer o conteúdo
+        // Garante gravity START para que o ícone fique fixo à esquerda e o texto expanda para a direita
+        button.gravity = Gravity.START or Gravity.CENTER_VERTICAL
         if (expand) {
             setPillContent(button, iconRes, fullExpandedText)
         }
@@ -1724,7 +1726,8 @@ class MainActivity : Activity() {
         // BUG 2 FIX: Previne que o texto quebre em duas linhas causando tremor
         pill.maxLines = 1
         pill.setSingleLine(true)
-        pill.ellipsize = android.text.TextUtils.TruncateAt.END
+        pill.gravity = Gravity.START or Gravity.CENTER_VERTICAL
+        pill.ellipsize = TextUtils.TruncateAt.END
         pillStates[pill] = PillState(iconRes, compact, expanded)
         setPillContent(pill, iconRes, compact)
         pill.setOnFocusChangeListener { v, hasFocus ->
@@ -2131,7 +2134,7 @@ class MainActivity : Activity() {
         val system = makeStatusPill("", "#E8A85C", scale).apply {
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
-            gravity = Gravity.CENTER
+            gravity = Gravity.START or Gravity.CENTER_VERTICAL
         }
         setupPill(system, R.drawable.ic_rotate_ccw, "", "Atualização") {
             checkOtaUpdate(system, true)
@@ -2140,7 +2143,7 @@ class MainActivity : Activity() {
         val allApps = makeStatusPill("", "#FFFFFF", scale).apply {
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
-            gravity = Gravity.CENTER
+            gravity = Gravity.START or Gravity.CENTER_VERTICAL
         }
         setupPill(allApps, R.drawable.ic_grid, "", "Todos os aplicativos") {
             showAllAppsOverlay(scale)
@@ -2149,7 +2152,7 @@ class MainActivity : Activity() {
         val settings = makeStatusPill("", "#FFFFFF", scale).apply {
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
-            gravity = Gravity.CENTER
+            gravity = Gravity.START or Gravity.CENTER_VERTICAL
         }
         setupPill(settings, R.drawable.ic_settings, "", "Configurações") {
             openSystemSettings()
@@ -2241,7 +2244,7 @@ class MainActivity : Activity() {
             setTextColor(Color.parseColor(accentHex))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f * scale)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
-            gravity = Gravity.CENTER
+            gravity = Gravity.START or Gravity.CENTER_VERTICAL
             
             val bg = GradientDrawable().apply {
                 setColor(Color.parseColor("#1AFFFFFF"))
