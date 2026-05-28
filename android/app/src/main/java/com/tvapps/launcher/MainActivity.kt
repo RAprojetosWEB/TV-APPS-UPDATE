@@ -2213,10 +2213,8 @@ class MainActivity : Activity() {
         val dateRaw = SimpleDateFormat("EEE, dd 'De' MMM.", Locale("pt", "BR")).format(now)
         val dateStr = capitalizeWords(dateRaw)
         
-        updatePillTextAndIcon(clockView, R.drawable.ic_clock, timeStr)
-        clockView?.tag = "Configurar hora"
-        updatePillTextAndIcon(dateView, R.drawable.ic_calendar, dateStr)
-        dateView?.tag = "Configurar data"
+        updatePillCompact(clockView, R.drawable.ic_clock, timeStr)
+        updatePillCompact(dateView, R.drawable.ic_calendar, dateStr)
     }
 
     private fun capitalizeWords(s: String): String =
@@ -2230,16 +2228,12 @@ class MainActivity : Activity() {
             try {
                 val w = StatusInfo.fetchWeather()
                 if (w != null) {
-                    updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "${w.tempC}°C")
-                    weatherView?.tag = "Configurar clima"
+                    updatePillCompact(weatherView, R.drawable.ic_cloud, "${w.tempC}°C")
                 } else {
-                    updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "--°")
-                    weatherView?.tag = "Configurar clima"
+                    updatePillCompact(weatherView, R.drawable.ic_cloud, "--°")
                 }
             } catch (e: Exception) {
-                // Em caso de falha na requisição ou lógica, exibe fallback
-                updatePillTextAndIcon(weatherView, R.drawable.ic_cloud, "--°")
-                weatherView?.tag = "Configurar clima"
+                updatePillCompact(weatherView, R.drawable.ic_cloud, "--°")
             }
         }
     }
