@@ -1612,7 +1612,12 @@ class MainActivity : Activity() {
         val icon = androidx.core.content.ContextCompat.getDrawable(this, iconRes)
         val size = (pill.textSize * 1.1f).toInt()
         icon?.setBounds(0, 0, size, size)
-        icon?.setTint(pill.currentTextColor)
+        
+        // BUG 1 FIX: Garante que o ícone sempre tenha 100% de opacidade,
+        // mesmo que o texto esteja em fade (alpha animado).
+        val baseColor = pill.currentTextColor and 0x00FFFFFF
+        icon?.setTint(baseColor or (0xFF shl 24))
+        
         pill.setCompoundDrawables(icon, null, null, null)
         // Sem padding quando só ícone, evita deslocar o ícone para a esquerda
         pill.compoundDrawablePadding = if (label.isEmpty()) 0 else dp(8)
