@@ -2150,7 +2150,7 @@ class MainActivity : Activity() {
         val settings = makeStatusPill("", "#FFFFFF", scale).apply {
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
-            gravity = Gravity.CENTER
+            gravity = Gravity.START or Gravity.CENTER_VERTICAL
         }
         setupPill(settings, R.drawable.ic_settings, "", "Configurações") {
             openSystemSettings()
