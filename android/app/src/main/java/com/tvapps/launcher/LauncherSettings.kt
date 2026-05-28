@@ -8,6 +8,7 @@ object LauncherSettings {
     private const val PREFS_NAME = "launcher_settings"
     private const val KEY_FAVORITES = "favorites"
     private const val KEY_HIDDEN_APPS = "hidden_apps"
+    private const val KEY_DOCK_APPS = "dock_apps"
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
