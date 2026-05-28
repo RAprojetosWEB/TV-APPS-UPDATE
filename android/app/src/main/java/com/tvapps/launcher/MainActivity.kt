@@ -2643,6 +2643,8 @@ class MainActivity : Activity() {
         } else {
             closeBtn.requestFocus()
         }
+    }
+
     private fun buildDock(scale: Float): View {
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
