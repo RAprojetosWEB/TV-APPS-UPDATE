@@ -2684,7 +2684,7 @@ class MainActivity : Activity() {
                     val p = dp(8)
                     setPadding(p, p, p, p)
                     background = GradientDrawable().apply {
-                        setColor(Color.parseColor("#F2121212")) // Escuro semitransparente quase opaco
+                        setColor(Color.parseColor("#E6121212")) // Escuro semitransparente (90% opacidade)
                         cornerRadius = dp(12).toFloat()
                         setStroke(dp(1), Color.parseColor("#33FFFFFF"))
                     }
@@ -2695,8 +2695,8 @@ class MainActivity : Activity() {
                     gravity = Gravity.CENTER_VERTICAL
                     isFocusable = true
                     isClickable = true
-                    val hp = dp(16)
-                    val vp = dp(10)
+                    val hp = dp(14)
+                    val vp = dp(8)
                     setPadding(hp, vp, hp, vp)
                     
                     val itemBg = GradientDrawable().apply {
@@ -2708,7 +2708,7 @@ class MainActivity : Activity() {
                     setOnFocusChangeListener { _, hasFocus ->
                         if (hasFocus) {
                             itemBg.setColor(Color.parseColor("#33FFFFFF"))
-                            this.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
+                            this.animate().scaleX(1.02f).scaleY(1.02f).setDuration(150).start()
                         } else {
                             itemBg.setColor(Color.TRANSPARENT)
                             this.animate().scaleX(1.0f).scaleY(1.0f).setDuration(150).start()
@@ -2721,22 +2721,22 @@ class MainActivity : Activity() {
 
                     addView(TextView(this@MainActivity).apply {
                         this.text = icon
-                        textSize = 18f
+                        textSize = 16f
                         setTextColor(Color.WHITE)
                     })
                     
                     addView(TextView(this@MainActivity).apply {
                         this.text = text
-                        textSize = 15f
+                        textSize = 14f
                         setTextColor(Color.WHITE)
-                        setPadding(dp(12), 0, 0, 0)
+                        setPadding(dp(10), 0, 0, 0)
                         maxLines = 1
                         ellipsize = TextUtils.TruncateAt.END
                     })
                 }
 
-                val popupWidth = dp(240)
-                val popup = PopupWindow(popupView, popupWidth, ViewGroup.LayoutParams.WRAP_CONTENT, true)
+                val popupWidth = dp(220)
+                val popup = android.widget.PopupWindow(popupView, popupWidth, ViewGroup.LayoutParams.WRAP_CONTENT, true)
                 
                 popupView.addView(createItem("Remover este", "🗑") {
                     popup.dismiss()
@@ -2758,7 +2758,7 @@ class MainActivity : Activity() {
                 
                 val popupHeight = popupView.measuredHeight
                 val x = location[0] + (v.width / 2) - (popupWidth / 2)
-                val y = location[1] - popupHeight - dp(8)
+                val y = location[1] - popupHeight - dp(12) // Espaço maior da barra
                 
                 popup.showAtLocation(v, Gravity.NO_GRAVITY, x, y)
                 true
