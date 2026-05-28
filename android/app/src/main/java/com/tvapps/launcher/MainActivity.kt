@@ -1868,6 +1868,11 @@ class MainActivity : Activity() {
                 bg.setColor(Color.parseColor("#33FFFFFF"))
                 bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
                 v.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
+            } else {
+                bg.setColor(Color.parseColor("#1AFFFFFF"))
+                bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                v.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
+            }
         }
     }
 
