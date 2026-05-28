@@ -2947,6 +2947,7 @@ class MainActivity : Activity() {
                     LauncherSettings.addToDock(this@MainActivity, pkg)
                     root.removeView(overlay)
                     activeOverlay = null
+                    pendingFocusAddDock = true
                     setContentView(buildRoot())
                 }
             }
