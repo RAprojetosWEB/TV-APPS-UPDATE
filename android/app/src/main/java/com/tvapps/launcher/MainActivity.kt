@@ -2006,12 +2006,15 @@ class MainActivity : Activity() {
         // (o monitor só dispara em mudanças de rede).
         applyNetworkState(lastNetworkState)
 
-        // Navegação D-pad determinística entre as pílulas focáveis,
-        // independente da animação de LayoutTransition.
+        // Navegação D-pad determinística entre as pílulas focáveis
         system.id = View.generateViewId()
+        allApps.id = View.generateViewId()
         settings.id = View.generateViewId()
-        system.nextFocusRightId = settings.id
-        settings.nextFocusLeftId = system.id
+        
+        system.nextFocusRightId = allApps.id
+        allApps.nextFocusLeftId = system.id
+        allApps.nextFocusRightId = settings.id
+        settings.nextFocusLeftId = allApps.id
 
         row.addView(left)
         row.addView(right)
