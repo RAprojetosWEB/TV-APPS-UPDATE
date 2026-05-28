@@ -130,7 +130,9 @@ class MainActivity : Activity() {
     // APK aguardando instalação após usuário conceder permissão "Instalar apps desconhecidos"
     private var pendingInstallApk: File? = null
     private var activeOverlay: View? = null
-    private var pendingFocusAddDock = false
+    companion object {
+        var pendingFocusAddDock = false
+    }
 
 
 
