@@ -1872,8 +1872,8 @@ class MainActivity : Activity() {
                 
                 showTopBarTooltip(v)
             } else {
-                bg.setColor(Color.parseColor("#CC000000")) // 80% black when unfocused
-                bg.setStroke(dp(1), Color.parseColor("#22FFFFFF")) // Very subtle stroke
+                bg.setColor(Color.parseColor("#1AFFFFFF")) // Voltar ao padrão: 10% white background
+                bg.setStroke(dp(1), Color.parseColor("#33FFFFFF")) // Voltar ao stroke sutil original
                 v.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
                 
                 // Restaura o texto se necessário, ou apenas o ícone
@@ -1917,7 +1917,7 @@ class MainActivity : Activity() {
         anchor.getLocationOnScreen(location)
         
         val x = location[0] + (anchor.width / 2) - (tooltipView.measuredWidth / 2)
-        val y = location[1] + anchor.height + dp(2)
+        val y = location[1] + anchor.height + dp(12)
         
         popup.showAtLocation(anchor, Gravity.NO_GRAVITY, x, y)
     }
@@ -2033,12 +2033,12 @@ class MainActivity : Activity() {
         val settings = makeStatusPill("", "#FFFFFF", scale)
 
         wireStatusPillAction(system, R.drawable.ic_rotate_ccw, false) { checkOtaUpdate(system, true) }
-        system.tag = "Atualizações"
+        system.tag = "Update"
         // Sobrescreve o listener específico para as cores de OTA se necessário, 
         // mas o wireStatusPillAction já cuida da expansão de texto.
         
         wireStatusPillAction(allApps, R.drawable.ic_grid, false) { showAllAppsOverlay(scale) }
-        allApps.tag = "Aplicativos"
+        allApps.tag = "Todos os aplicativos\ninstalados"
 
         wireStatusPillAction(settings, R.drawable.ic_settings, false) { openSystemSettings() }
         settings.tag = "Configurações"
@@ -2141,7 +2141,7 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER
             
             val bg = GradientDrawable().apply {
-                setColor(Color.parseColor("#CC000000")) // 80% black background
+                setColor(Color.parseColor("#1AFFFFFF")) // 10% white background original
                 cornerRadius = dp((24 * scale).toInt()).toFloat() // Circular radius
                 setStroke(dp(1), Color.parseColor("#22FFFFFF")) // Subtle stroke
             }
