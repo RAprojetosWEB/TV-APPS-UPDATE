@@ -2581,6 +2581,11 @@ class MainActivity : Activity() {
                         startActivity(launchIntent)
                     }
                 }
+                
+                setOnLongClickListener {
+                    showContextMenu(app, scale)
+                    true
+                }
 
                 setOnFocusChangeListener { v, hasFocus ->
                     if (hasFocus) {
