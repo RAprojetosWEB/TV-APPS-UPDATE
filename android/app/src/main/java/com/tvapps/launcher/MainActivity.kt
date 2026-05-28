@@ -1024,6 +1024,9 @@ class MainActivity : Activity() {
                 fun openApp(packageName: String) = this@MainActivity.openApp(packageName)
 
                 @JavascriptInterface
+                fun uninstallApp(packageName: String) = this@MainActivity.desinstalarApp(packageName)
+
+                @JavascriptInterface
                 fun openSettings() {
                     try {
                         startActivity(Intent(android.provider.Settings.ACTION_SETTINGS))
@@ -1658,6 +1661,45 @@ class MainActivity : Activity() {
             startActivity(intent)
         } else {
             Toast.makeText(this, "Não foi possível abrir o aplicativo", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun desinstalarApp(packageName: String) {
+        // Tentativa 1: ACTION_UNINSTALL_PACKAGE (melhor para Android TV)
+        try {
+            val intent = Intent(Intent.ACTION_UNINSTALL_PACKAGE).apply {
+                data = Uri.parse("package:$packageName")
+                putExtra(Intent.EXTRA_RETURN_RESULT, false)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
+            startActivity(intent)
+            return
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Erro ao desinstalar (ACTION_UNINSTALL_PACKAGE): ${e.message}")
+        }
+
+        // Tentativa 2: ACTION_DELETE
+        try {
+            val intent = Intent(Intent.ACTION_DELETE).apply {
+                data = Uri.parse("package:$packageName")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(intent)
+            return
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Erro ao desinstalar (ACTION_DELETE): ${e.message}")
+        }
+
+        // Tentativa 3: Abre detalhes do app nas configurações do sistema
+        try {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:$packageName")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Erro ao abrir detalhes para desinstalação: ${e.message}")
         }
     }
 
