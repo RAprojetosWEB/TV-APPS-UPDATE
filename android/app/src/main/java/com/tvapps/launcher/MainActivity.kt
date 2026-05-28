@@ -2653,6 +2653,8 @@ class MainActivity : Activity() {
             setBackgroundColor(Color.parseColor("#E6000000"))
             isClickable = true
             isFocusable = true
+            descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
         }
         activeOverlay = overlay
 
@@ -2670,14 +2672,21 @@ class MainActivity : Activity() {
             }
             background = bg
             setPadding(dp(32), dp(32), dp(32), dp(32))
+            isFocusable = true
+            descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
         }
 
         val title = TextView(this).apply {
+            id = View.generateViewId()
             text = "Adicionar ao Acesso Rápido"
             setTextColor(Color.WHITE)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f * scale)
             setTypeface(null, android.graphics.Typeface.BOLD)
             gravity = Gravity.CENTER
+            isFocusable = true
+            nextFocusUpId = id
+            nextFocusLeftId = id
+            nextFocusRightId = id
             layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
                 bottomMargin = dp(32)
             }
