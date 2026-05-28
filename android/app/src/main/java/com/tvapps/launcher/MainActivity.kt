@@ -1629,40 +1629,49 @@ class MainActivity : Activity() {
     private val pillStates = mutableMapOf<TextView, PillState>()
 
     /**
+     * Calcula a largura total necessária para o botão expandido ou compacto.
+     */
+    private fun getExpandedWidth(button: TextView, text: String): Int {
+        val paint = button.paint
+        val textWidth = if (text.isEmpty()) 0f else paint.measureText(text)
+        val iconSize = (button.textSize * 1.1f).toInt()
+        val drawablePadding = if (text.isEmpty()) 0 else dp(8)
+        val padding = button.paddingStart + button.paddingEnd
+        // Adiciona margem extra de 32dp conforme solicitado para evitar cortes
+        return (textWidth + iconSize + drawablePadding + padding + dp(32)).toInt()
+    }
+
+    /**
      * Anima a expansão/recolhimento de uma pílula deslizando suavemente.
      */
     private fun animateButtonExpand(button: TextView, iconRes: Int, compactText: String, expandedText: String, expand: Boolean) {
-        val iconSize = (button.textSize * 1.1f).toInt()
-        val padding = button.paddingLeft + button.paddingRight
-
-        // Texto final expandido: mantém o valor compacto e adiciona o rótulo
         val fullExpandedText = when {
             compactText.isBlank() -> expandedText
             expandedText.isBlank() -> compactText
             else -> "$compactText  ·  $expandedText"
         }
 
-        // Medição do texto
-        val compactTextWidth = if (compactText.isEmpty()) 0 else (button.paint.measureText(compactText).toInt() + button.compoundDrawablePadding)
-        val compactWidth = iconSize + compactTextWidth + padding
-
-        val expandedTextWidth = button.paint.measureText(fullExpandedText).toInt()
-        var expandedWidth = iconSize + button.compoundDrawablePadding + expandedTextWidth + padding
-        
-        // BUG 2 FIX: Define largura fixa para botões do topo para evitar que o texto 
-        // tente quebrar em duas linhas durante a animação (tremor).
-        if (expandedText.contains("Configurar") || expandedText.length > 12) {
-            expandedWidth = dp(250) 
+        // Define o texto ANTES de medir e iniciar a animação para o layout já conhecer o conteúdo
+        if (expand) {
+            setPillContent(button, iconRes, fullExpandedText)
         }
-        
+
+        // Calcula larguras dinamicamente baseadas no texto real
+        val expandedWidth = getExpandedWidth(button, fullExpandedText)
+        val compactWidth = getExpandedWidth(button, compactText)
+
         val baseColor = button.currentTextColor and 0x00FFFFFF
         
+        if (expand) {
+            button.setTextColor(baseColor) // Começa invisível para o fade-in
+        }
+
         val animator = ValueAnimator.ofInt(
             if (expand) compactWidth else expandedWidth,
             if (expand) expandedWidth else compactWidth
         ).apply {
-            duration = 300 // Aumentado ligeiramente para ser mais suave
-            // Interpolador mais suave para TV (física de movimento)
+            duration = 300
+            // Interpolador suave (física de movimento)
             interpolator = if (expand) android.view.animation.PathInterpolator(0.25f, 0.1f, 0.25f, 1f) 
                            else android.view.animation.PathInterpolator(0.4f, 0f, 0.2f, 1f)
             
@@ -1673,25 +1682,19 @@ class MainActivity : Activity() {
                 params.width = width
                 button.layoutParams = params
                 
-                // Anima alpha do texto baseado no progresso
+                // Anima alpha do texto junto com a largura
                 val alpha = if (expand) (progress * 255).toInt() else ((1f - progress) * 255).toInt()
                 button.setTextColor(baseColor or (alpha shl 24))
             }
             
             addListener(object : AnimatorListenerAdapter() {
-                override fun onAnimationStart(animation: Animator) {
-                    if (expand) {
-                        setPillContent(button, iconRes, fullExpandedText)
-                        button.setTextColor(baseColor) // Começa invisível
-                    }
-                }
                 override fun onAnimationEnd(animation: Animator) {
                     if (!expand) {
                         setPillContent(button, iconRes, compactText)
-                        // Volta para WRAP_CONTENT apenas após terminar de recolher
+                        // Volta para WRAP_CONTENT para flexibilidade, mas a animação foi controlada
                         button.layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
                     }
-                    // Garante que a cor final esteja correta e opaca
+                    // Garante opacidade total ao fim
                     button.setTextColor(baseColor or (0xFF shl 24))
                     button.requestLayout()
                 }
