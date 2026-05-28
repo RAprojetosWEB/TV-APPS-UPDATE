@@ -1880,7 +1880,7 @@ class MainActivity : Activity() {
                 v.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
                 
                 // Restaura apenas o ícone
-                setPillContent(tv, iconRes, "")
+                setPillContent(tv, originalIcon, "")
                 
                 hideTopBarTooltip()
             }
