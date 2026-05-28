@@ -1878,8 +1878,8 @@ class MainActivity : Activity() {
                 bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
                 v.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
                 
-                // Restaura apenas o ícone ou texto curto
-                tv.text = ""
+                // Restaura apenas o ícone
+                setPillContent(tv, iconRes, "")
                 
                 hideTopBarTooltip()
             }
