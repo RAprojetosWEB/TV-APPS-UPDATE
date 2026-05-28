@@ -2507,6 +2507,8 @@ class MainActivity : Activity() {
             setOnClickListener { 
                 root.removeView(overlay)
                 activeOverlay = null
+                // Atualiza tela principal ao fechar para mostrar favoritos
+                setContentView(buildRoot())
             }
             setOnFocusChangeListener { v, hasFocus ->
                 val bg = (v.background as? GradientDrawable) ?: return@setOnFocusChangeListener
