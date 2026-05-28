@@ -123,5 +123,5 @@
             android:nextFocusLeft="@id/txt_weather"
             android:nextFocusRight="@id/btn_wifi" />
 
-    </LinearLayout>
+    </com.tvapps.launcher.FocusAwareLinearLayout>
 </LinearLayout>
