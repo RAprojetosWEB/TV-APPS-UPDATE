@@ -1637,21 +1637,19 @@ class MainActivity : Activity() {
         val iconSize = (button.textSize * 1.1f).toInt()
         val padding = button.paddingLeft + button.paddingRight
 
-        // Texto final expandido: mantém o valor compacto e adiciona o rótulo,
-        // para que o usuário não perca a informação (hora, data, temperatura)
-        // ao focar a pílula.
+        // Texto final expandido: mantém o valor compacto e adiciona o rótulo
         val fullExpandedText = when {
             compactText.isBlank() -> expandedText
             expandedText.isBlank() -> compactText
             else -> "$compactText  ·  $expandedText"
         }
 
-        // Largura compacta: ícone + texto compacto (se houver) + padding
+        // Medição do texto
         val compactTextWidth = if (compactText.isEmpty()) 0 else (button.paint.measureText(compactText).toInt() + button.compoundDrawablePadding)
         val compactWidth = iconSize + compactTextWidth + padding
 
-        // Largura expandida: ícone + texto completo (valor + rótulo) + padding
-        val expandedWidth = iconSize + button.compoundDrawablePadding + button.paint.measureText(fullExpandedText).toInt() + padding
+        val expandedTextWidth = button.paint.measureText(fullExpandedText).toInt()
+        val expandedWidth = iconSize + button.compoundDrawablePadding + expandedTextWidth + padding
         
         val baseColor = button.currentTextColor and 0x00FFFFFF
         
@@ -1659,8 +1657,10 @@ class MainActivity : Activity() {
             if (expand) compactWidth else expandedWidth,
             if (expand) expandedWidth else compactWidth
         ).apply {
-            duration = 250
-            interpolator = if (expand) DecelerateInterpolator() else AccelerateInterpolator()
+            duration = 300 // Aumentado ligeiramente para ser mais suave
+            // Interpolador mais suave para TV (física de movimento)
+            interpolator = if (expand) android.view.animation.PathInterpolator(0.25f, 0.1f, 0.25f, 1f) 
+                           else android.view.animation.PathInterpolator(0.4f, 0f, 0.2f, 1f)
             
             addUpdateListener { anim ->
                 val progress = anim.animatedFraction
@@ -1669,8 +1669,7 @@ class MainActivity : Activity() {
                 params.width = width
                 button.layoutParams = params
                 
-                // Anima alpha do texto (opcionalmente poderíamos usar ForegroundColorSpan para não afetar o ícone,
-                // mas para simplificar e seguir o pedido, animamos o alpha geral do texto)
+                // Anima alpha do texto baseado no progresso
                 val alpha = if (expand) (progress * 255).toInt() else ((1f - progress) * 255).toInt()
                 button.setTextColor(baseColor or (alpha shl 24))
             }
@@ -1685,7 +1684,7 @@ class MainActivity : Activity() {
                 override fun onAnimationEnd(animation: Animator) {
                     if (!expand) {
                         setPillContent(button, iconRes, compactText)
-                        // Volta para WRAP_CONTENT para não travar o tamanho em atualizações futuras
+                        // Volta para WRAP_CONTENT apenas após terminar de recolher
                         button.layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
                     }
                     // Garante que a cor final esteja correta e opaca
