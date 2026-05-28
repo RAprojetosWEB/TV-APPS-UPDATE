@@ -50,7 +50,7 @@ import java.net.URL
 import org.json.JSONObject
 
 private const val VERIFY_PASSWORD_ENDPOINT =
-    "https://sideload-hero.lovable.app/api/public/verify-launcher-password"
+    "https://tv-apps-update.lovable.app/api/public/verify-launcher-password"
 // Senha de emergência usada APENAS quando a TV está offline / servidor inacessível.
 // Quando há rede, vale somente a senha definida no admin (banco).
 private const val FALLBACK_LAUNCHER_PASSWORD = "1555"
