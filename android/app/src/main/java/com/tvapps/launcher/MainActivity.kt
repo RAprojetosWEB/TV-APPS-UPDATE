@@ -2073,78 +2073,30 @@ class MainActivity : Activity() {
         }
 
         val system = makeStatusPill("", "#E8A85C", scale).apply {
-            isFocusable = true
-            isClickable = true
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
-            setOnClickListener { checkOtaUpdate(this, true) }
-            tag = "Verificar se há novas atualizações"
-            setOnFocusChangeListener { v, hasFocus ->
-                val tv = v as TextView
-                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
-                if (hasFocus) {
-                    bg.setColor(Color.parseColor("#335EE6A8"))
-                    bg.setStroke(dp(2), Color.parseColor("#5EE6A8"))
-                    showTopBarTooltip(v)
-                } else {
-                    bg.setColor(Color.parseColor("#1AFFFFFF"))
-                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                    hideTopBarTooltip()
-                }
-            }
-            // Estado inicial fixo (ícone + texto)
-            setPillContent(this, R.drawable.ic_rotate_ccw, "")
+        }
+        setupPill(system, R.drawable.ic_rotate_ccw, "", "Atualização") {
+            checkOtaUpdate(system, true)
         }
 
         val allApps = makeStatusPill("", "#FFFFFF", scale).apply {
-            isFocusable = true
-            isClickable = true
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
-            setOnClickListener { showAllAppsOverlay(scale) }
-            tag = "Todos os aplicativos instalados"
-            setOnFocusChangeListener { v, hasFocus ->
-                val tv = v as TextView
-                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
-                if (hasFocus) {
-                    bg.setColor(Color.parseColor("#33FFFFFF"))
-                    bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
-                    showTopBarTooltip(v)
-                } else {
-                    bg.setColor(Color.parseColor("#1AFFFFFF"))
-                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                    hideTopBarTooltip()
-                }
-            }
-            // Estado inicial fixo (ícone + texto)
-            setPillContent(this, R.drawable.ic_grid, "")
+        }
+        setupPill(allApps, R.drawable.ic_grid, "", "Todos os aplicativos") {
+            showAllAppsOverlay(scale)
         }
 
         val settings = makeStatusPill("", "#FFFFFF", scale).apply {
-            isFocusable = true
-            isClickable = true
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
-            setOnClickListener { openSystemSettings() }
-            tag = "Configurações"
-            setOnFocusChangeListener { v, hasFocus ->
-                val tv = v as TextView
-                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
-                if (hasFocus) {
-                    bg.setColor(Color.parseColor("#33FFFFFF"))
-                    bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
-                    showTopBarTooltip(v)
-                } else {
-                    bg.setColor(Color.parseColor("#1AFFFFFF"))
-                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                    hideTopBarTooltip()
-                }
-            }
-            // Estado inicial fixo (ícone + texto)
-            setPillContent(this, R.drawable.ic_settings, "")
+        }
+        setupPill(settings, R.drawable.ic_settings, "", "Configurações") {
+            openSystemSettings()
         }
 
         val clock = makeStatusPill("", "#FFFFFF", scale)
@@ -2152,16 +2104,12 @@ class MainActivity : Activity() {
         val weather = makeStatusPill("", "#FFFFFF", scale)
         val wifi = makeStatusPill("", "#5EE6A8", scale)
 
-        wireStatusPillAction(clock, R.drawable.ic_clock) { openDateSettings() }
-        wireStatusPillAction(date, R.drawable.ic_calendar) { openDateSettings() }
-        wireStatusPillAction(weather, R.drawable.ic_cloud) {
-            try {
-                openLocationSettings()
-            } catch (_: Exception) {
-                // Erro ignorado silenciosamente conforme solicitado
-            }
+        setupPill(clock, R.drawable.ic_clock, "", "Configurar hora") { openDateSettings() }
+        setupPill(date, R.drawable.ic_calendar, "", "Configurar data") { openDateSettings() }
+        setupPill(weather, R.drawable.ic_cloud, "--°", "Configurar clima") {
+            try { openLocationSettings() } catch (_: Exception) {}
         }
-        wireStatusPillAction(wifi, R.drawable.ic_wifi) { openNetworkSettings() }
+        setupPill(wifi, R.drawable.ic_wifi, "", "Wi-Fi") { openNetworkSettings() }
 
         val gap = dp((8 * scale).toInt())
         listOf<View>(system, allApps, settings, clock, date, weather, wifi).forEach { pill ->
