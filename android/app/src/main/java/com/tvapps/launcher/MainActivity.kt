@@ -2108,6 +2108,7 @@ class MainActivity : Activity() {
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#335EE6A8"))
                     bg.setStroke(dp(2), Color.parseColor("#5EE6A8"))
+                    stopOtaPulse()
                     applyTopBarFocus(v, true, "#5EE6A8")
                     showTopBarTooltip(v)
                 } else {
@@ -2115,6 +2116,7 @@ class MainActivity : Activity() {
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
                     applyTopBarFocus(v, false, "#5EE6A8")
                     hideTopBarTooltip()
+                    if (otaHasUpdate) startOtaPulse(v)
                 }
             }
             // Estado inicial fixo (ícone + texto)
