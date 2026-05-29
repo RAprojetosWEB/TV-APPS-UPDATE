@@ -1910,6 +1910,81 @@ class MainActivity : Activity() {
         currentTooltip = null
     }
 
+    // ============== ANIMAÇÕES DA BARRA SUPERIOR ==============
+
+    /** Foco: cresce, sobe (eleva) e ganha glow colorido. */
+    private fun applyTopBarFocus(v: View, hasFocus: Boolean, glowHex: String = "#FFFFFF") {
+        v.animate().cancel()
+        if (hasFocus) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                try {
+                    val c = Color.parseColor(glowHex)
+                    v.outlineSpotShadowColor = c
+                    v.outlineAmbientShadowColor = c
+                } catch (_: Exception) {}
+            }
+            v.animate()
+                .scaleX(1.10f).scaleY(1.10f)
+                .translationZ(dp(10).toFloat())
+                .setDuration(180)
+                .setInterpolator(android.view.animation.OvershootInterpolator(1.2f))
+                .start()
+        } else {
+            v.animate()
+                .scaleX(1f).scaleY(1f)
+                .translationZ(0f)
+                .setDuration(140)
+                .setInterpolator(android.view.animation.DecelerateInterpolator())
+                .start()
+        }
+    }
+
+    /** Feedback ao clicar (OK do controle): pílula "afunda" e volta. */
+    private fun pressFeedback(v: View) {
+        val targetScale = if (v.isFocused) 1.10f else 1f
+        v.animate().cancel()
+        v.animate()
+            .scaleX(0.94f).scaleY(0.94f)
+            .setDuration(70)
+            .withEndAction {
+                v.animate()
+                    .scaleX(targetScale).scaleY(targetScale)
+                    .setDuration(110)
+                    .setInterpolator(android.view.animation.OvershootInterpolator(2f))
+                    .start()
+            }
+            .start()
+    }
+
+    /** Pulso infinito no botão Update quando há atualização disponível. */
+    private fun startOtaPulse(v: View) {
+        stopOtaPulse()
+        val sx = android.animation.ObjectAnimator.ofFloat(v, "scaleX", 1f, 1.12f, 1f).apply {
+            repeatCount = android.animation.ObjectAnimator.INFINITE
+        }
+        val sy = android.animation.ObjectAnimator.ofFloat(v, "scaleY", 1f, 1.12f, 1f).apply {
+            repeatCount = android.animation.ObjectAnimator.INFINITE
+        }
+        val set = android.animation.AnimatorSet().apply {
+            playTogether(sx, sy)
+            duration = 1200
+            interpolator = android.view.animation.AccelerateDecelerateInterpolator()
+        }
+        otaPulseAnimator = set
+        set.start()
+    }
+
+    private fun stopOtaPulse() {
+        otaPulseAnimator?.cancel()
+        otaPulseAnimator = null
+        otaStatusPill?.let {
+            if (!it.isFocused) {
+                it.scaleX = 1f
+                it.scaleY = 1f
+            }
+        }
+    }
+
     private fun dp(value: Int): Int {
         val d = resources.displayMetrics.density
         return (value * d).toInt()
