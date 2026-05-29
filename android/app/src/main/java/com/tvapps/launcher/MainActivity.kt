@@ -1880,13 +1880,9 @@ class MainActivity : Activity() {
             this.text = text
             setTextColor(Color.WHITE)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-            setPadding(dp(12), dp(6), dp(12), dp(6))
             gravity = Gravity.CENTER
-            background = GradientDrawable().apply {
-                setColor(Color.parseColor("#CC000000"))
-                cornerRadius = dp(12).toFloat()
-            }
         }
+
 
         val popup = android.widget.PopupWindow(
             tooltipView,
@@ -1903,7 +1899,7 @@ class MainActivity : Activity() {
         anchor.getLocationOnScreen(location)
         
         val x = location[0] + (anchor.width / 2) - (tooltipView.measuredWidth / 2)
-        val y = location[1] + anchor.height + dp(8)
+        val y = location[1] + anchor.height + dp(2)
         
         popup.showAtLocation(anchor, Gravity.NO_GRAVITY, x, y)
     }
@@ -2046,7 +2042,7 @@ class MainActivity : Activity() {
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
             setOnClickListener { showAllAppsOverlay(scale) }
-            tag = "Todos os aplicativos"
+            tag = "Aplicativos"
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
                 val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
