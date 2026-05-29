@@ -1850,36 +1850,22 @@ class MainActivity : Activity() {
 
     /** Torna uma pílula focável (D-pad), clicável e com mesmo realce de foco
      *  das demais pílulas (borda branca + leve scale). */
-    private fun wireStatusPillAction(pill: TextView, iconRes: Int, keepTextOnFocusLoss: Boolean = false, onTap: () -> Unit) {
-        val originalIcon = iconRes
+    private fun wireStatusPillAction(pill: TextView, iconRes: Int, onTap: () -> Unit) {
         pill.isFocusable = true
         pill.isClickable = true
         pill.setOnClickListener { onTap() }
         pill.setOnFocusChangeListener { v, hasFocus ->
             val tv = v as TextView
             val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
-            
             if (hasFocus) {
-                bg.setColor(Color.parseColor("#4DFFFFFF")) // 30% white on focus
+                bg.setColor(Color.parseColor("#33FFFFFF"))
                 bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
-                v.animate().scaleX(1.08f).scaleY(1.08f).setDuration(150).start()
-                
-                // Expande o texto (copiando lógica do "Configurar hora")
-                val expandedText = tv.tag?.toString() ?: ""
-                if (expandedText.isNotEmpty()) {
-                    setPillContent(tv, originalIcon, expandedText)
-                }
-                
+                v.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
                 showTopBarTooltip(v)
             } else {
-                bg.setColor(Color.parseColor("#1AFFFFFF")) // Voltar ao padrão: 10% white background
-                bg.setStroke(dp(1), Color.parseColor("#33FFFFFF")) // Voltar ao stroke sutil original
+                bg.setColor(Color.parseColor("#1AFFFFFF"))
+                bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
                 v.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
-                
-                // Restaura o texto se necessário, ou apenas o ícone
-                val textToRestore = if (keepTextOnFocusLoss) tv.tag?.toString() ?: "" else ""
-                setPillContent(tv, originalIcon, textToRestore)
-                
                 hideTopBarTooltip()
             }
         }
@@ -1917,7 +1903,7 @@ class MainActivity : Activity() {
         anchor.getLocationOnScreen(location)
         
         val x = location[0] + (anchor.width / 2) - (tooltipView.measuredWidth / 2)
-        val y = location[1] + anchor.height + dp(12)
+        val y = location[1] + anchor.height + dp(2)
         
         popup.showAtLocation(anchor, Gravity.NO_GRAVITY, x, y)
     }
@@ -2028,41 +2014,96 @@ class MainActivity : Activity() {
             )
         }
 
-        val system = makeStatusPill("", "#E8A85C", scale)
-        val allApps = makeStatusPill("", "#FFFFFF", scale)
-        val settings = makeStatusPill("", "#FFFFFF", scale)
+        val system = makeStatusPill("", "#E8A85C", scale).apply {
+            isFocusable = true
+            isClickable = true
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+            gravity = Gravity.CENTER
+            setOnClickListener { checkOtaUpdate(this, true) }
+            tag = "Verificar se há novas\natualizações"
+            setOnFocusChangeListener { v, hasFocus ->
+                val tv = v as TextView
+                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
+                if (hasFocus) {
+                    bg.setColor(Color.parseColor("#335EE6A8"))
+                    bg.setStroke(dp(2), Color.parseColor("#5EE6A8"))
+                    showTopBarTooltip(v)
+                } else {
+                    bg.setColor(Color.parseColor("#1AFFFFFF"))
+                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    hideTopBarTooltip()
+                }
+            }
+            // Estado inicial fixo (ícone + texto)
+            setPillContent(this, R.drawable.ic_rotate_ccw, "")
+        }
 
-        wireStatusPillAction(system, R.drawable.ic_rotate_ccw, false) { checkOtaUpdate(system, true) }
-        system.tag = "Update"
-        // Sobrescreve o listener específico para as cores de OTA se necessário, 
-        // mas o wireStatusPillAction já cuida da expansão de texto.
-        
-        wireStatusPillAction(allApps, R.drawable.ic_grid, false) { showAllAppsOverlay(scale) }
-        allApps.tag = "Todos os aplicativos\ninstalados"
+        val allApps = makeStatusPill("", "#FFFFFF", scale).apply {
+            isFocusable = true
+            isClickable = true
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+            gravity = Gravity.CENTER
+            setOnClickListener { showAllAppsOverlay(scale) }
+            tag = "Todos os aplicativos\ninstalados"
+            setOnFocusChangeListener { v, hasFocus ->
+                val tv = v as TextView
+                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
+                if (hasFocus) {
+                    bg.setColor(Color.parseColor("#33FFFFFF"))
+                    bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                    showTopBarTooltip(v)
+                } else {
+                    bg.setColor(Color.parseColor("#1AFFFFFF"))
+                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    hideTopBarTooltip()
+                }
+            }
+            // Estado inicial fixo (ícone + texto)
+            setPillContent(this, R.drawable.ic_grid, "")
+        }
 
-        wireStatusPillAction(settings, R.drawable.ic_settings, false) { openSystemSettings() }
-        settings.tag = "Configurações"
-
-        // Estado inicial (ícones sem texto)
-        setPillContent(system, R.drawable.ic_rotate_ccw, "")
-        setPillContent(allApps, R.drawable.ic_grid, "")
-        setPillContent(settings, R.drawable.ic_settings, "")
+        val settings = makeStatusPill("", "#FFFFFF", scale).apply {
+            isFocusable = true
+            isClickable = true
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+            gravity = Gravity.CENTER
+            setOnClickListener { openSystemSettings() }
+            tag = "Configurações"
+            setOnFocusChangeListener { v, hasFocus ->
+                val tv = v as TextView
+                val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
+                if (hasFocus) {
+                    bg.setColor(Color.parseColor("#33FFFFFF"))
+                    bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                    showTopBarTooltip(v)
+                } else {
+                    bg.setColor(Color.parseColor("#1AFFFFFF"))
+                    bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    hideTopBarTooltip()
+                }
+            }
+            // Estado inicial fixo (ícone + texto)
+            setPillContent(this, R.drawable.ic_settings, "")
+        }
 
         val clock = makeStatusPill("", "#FFFFFF", scale)
         val date = makeStatusPill("", "#FFFFFF", scale)
         val weather = makeStatusPill("", "#FFFFFF", scale)
         val wifi = makeStatusPill("", "#5EE6A8", scale)
 
-        wireStatusPillAction(clock, R.drawable.ic_clock, true) { openDateSettings() }
-        wireStatusPillAction(date, R.drawable.ic_calendar, true) { openDateSettings() }
-        wireStatusPillAction(weather, R.drawable.ic_cloud, true) {
+        wireStatusPillAction(clock, R.drawable.ic_clock) { openDateSettings() }
+        wireStatusPillAction(date, R.drawable.ic_calendar) { openDateSettings() }
+        wireStatusPillAction(weather, R.drawable.ic_cloud) {
             try {
                 openLocationSettings()
             } catch (_: Exception) {
                 // Erro ignorado silenciosamente conforme solicitado
             }
         }
-        wireStatusPillAction(wifi, R.drawable.ic_wifi, true) { openNetworkSettings() }
+        wireStatusPillAction(wifi, R.drawable.ic_wifi) { openNetworkSettings() }
 
         val gap = dp((8 * scale).toInt())
         listOf<View>(system, allApps, settings, clock, date, weather, wifi).forEach { pill ->
@@ -2141,13 +2182,14 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER
             
             val bg = GradientDrawable().apply {
-                setColor(Color.parseColor("#1AFFFFFF")) // 10% white background original
-                cornerRadius = dp((24 * scale).toInt()).toFloat() // Circular radius
-                setStroke(dp(1), Color.parseColor("#22FFFFFF")) // Subtle stroke
+                setColor(Color.parseColor("#1AFFFFFF"))
+                cornerRadius = dp((12 * scale).toInt()).toFloat()
+                setStroke(dp(1), Color.parseColor("#33FFFFFF"))
             }
             background = bg
-            val p = dp((11 * scale).toInt())
-            setPadding(p, p, p, p)
+            val px = dp((14 * scale).toInt())
+            val py = dp((10 * scale).toInt())
+            setPadding(px, py, px, py)
             
             // Layout animável
             layoutParams = LinearLayout.LayoutParams(
@@ -2614,7 +2656,6 @@ class MainActivity : Activity() {
         
         // Botão +
         val addBtn = FrameLayout(this).apply {
-            id = View.generateViewId()
             val size = dp((56 * scale).toInt())
             layoutParams = FrameLayout.LayoutParams(size, size).apply {
                 leftMargin = dp((8 * scale).toInt())
@@ -2645,7 +2686,7 @@ class MainActivity : Activity() {
                     v.scaleX = 1.15f
                     v.scaleY = 1.15f
                     // Garante que o scroller role para o final para mostrar que chegamos no botão +
-                    scroller.post { scroller.smoothScrollTo(appsLayout.width, 0) }
+                    scroller.post { scroller.fullScroll(View.FOCUS_RIGHT) }
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
