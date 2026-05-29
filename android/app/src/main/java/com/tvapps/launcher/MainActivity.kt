@@ -2371,6 +2371,7 @@ class MainActivity : Activity() {
             if (otaInfo == null) {
                 setPillContent(systemPill, R.drawable.ic_rotate_ccw, "")
                 systemPill.setTextColor(Color.parseColor("#FF6B6B"))
+                otaHasUpdate = false
                 stopOtaPulse()
                 if (manual) {
                     Toast.makeText(this@MainActivity, "Falha ao verificar atualizações (sem conexão)", Toast.LENGTH_SHORT).show()
@@ -2383,6 +2384,7 @@ class MainActivity : Activity() {
             if (hasUpdate) {
                 setPillContent(systemPill, R.drawable.ic_download, "")
                 systemPill.setTextColor(Color.parseColor("#5EE6A8"))
+                otaHasUpdate = true
                 startOtaPulse(systemPill)
                 if (manual) {
                     if (downloadUrl.isEmpty()) {
@@ -2394,6 +2396,7 @@ class MainActivity : Activity() {
             } else {
                 setPillContent(systemPill, R.drawable.ic_rotate_ccw, "")
                 systemPill.setTextColor(Color.parseColor("#5EE6A8"))
+                otaHasUpdate = false
                 stopOtaPulse()
                 if (manual) {
                     Toast.makeText(this@MainActivity, "Você já está na versão mais recente", Toast.LENGTH_SHORT).show()
