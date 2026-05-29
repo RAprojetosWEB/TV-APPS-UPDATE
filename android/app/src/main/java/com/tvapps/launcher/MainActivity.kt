@@ -1969,6 +1969,7 @@ class MainActivity : Activity() {
             )
             setPadding(0, 0, dp((12 * scale).toInt()), 0)
         }
+        // --- helpers chamados em escopo de classe (definidos abaixo) ---
 
         // Bloco esquerdo: TV.Apps + subtítulo
         val left = LinearLayout(this).apply {
