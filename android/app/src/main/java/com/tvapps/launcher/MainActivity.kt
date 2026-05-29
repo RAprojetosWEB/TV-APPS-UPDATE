@@ -113,6 +113,8 @@ class MainActivity : Activity() {
     private var weatherView: TextView? = null
     private var wifiView: TextView? = null
     private var otaStatusPill: TextView? = null
+    private var otaPulseAnimator: android.animation.AnimatorSet? = null
+    private var otaHasUpdate: Boolean = false
     private var settingsPill: TextView? = null
     private var currentTooltip: android.widget.PopupWindow? = null
     private val statusHandler = Handler(Looper.getMainLooper())
@@ -1853,19 +1855,22 @@ class MainActivity : Activity() {
     private fun wireStatusPillAction(pill: TextView, iconRes: Int, onTap: () -> Unit) {
         pill.isFocusable = true
         pill.isClickable = true
-        pill.setOnClickListener { onTap() }
+        pill.setOnClickListener {
+            pressFeedback(pill)
+            onTap()
+        }
         pill.setOnFocusChangeListener { v, hasFocus ->
             val tv = v as TextView
             val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
             if (hasFocus) {
                 bg.setColor(Color.parseColor("#33FFFFFF"))
                 bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
-                v.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
+                applyTopBarFocus(v, true, "#FFFFFF")
                 showTopBarTooltip(v)
             } else {
                 bg.setColor(Color.parseColor("#1AFFFFFF"))
                 bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                v.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
+                applyTopBarFocus(v, false, "#FFFFFF")
                 hideTopBarTooltip()
             }
         }
@@ -1907,6 +1912,81 @@ class MainActivity : Activity() {
     private fun hideTopBarTooltip() {
         currentTooltip?.dismiss()
         currentTooltip = null
+    }
+
+    // ============== ANIMAÇÕES DA BARRA SUPERIOR ==============
+
+    /** Foco: cresce, sobe (eleva) e ganha glow colorido. */
+    private fun applyTopBarFocus(v: View, hasFocus: Boolean, glowHex: String = "#FFFFFF") {
+        v.animate().cancel()
+        if (hasFocus) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                try {
+                    val c = Color.parseColor(glowHex)
+                    v.outlineSpotShadowColor = c
+                    v.outlineAmbientShadowColor = c
+                } catch (_: Exception) {}
+            }
+            v.animate()
+                .scaleX(1.10f).scaleY(1.10f)
+                .translationZ(dp(10).toFloat())
+                .setDuration(180)
+                .setInterpolator(android.view.animation.OvershootInterpolator(1.2f))
+                .start()
+        } else {
+            v.animate()
+                .scaleX(1f).scaleY(1f)
+                .translationZ(0f)
+                .setDuration(140)
+                .setInterpolator(android.view.animation.DecelerateInterpolator())
+                .start()
+        }
+    }
+
+    /** Feedback ao clicar (OK do controle): pílula "afunda" e volta. */
+    private fun pressFeedback(v: View) {
+        val targetScale = if (v.isFocused) 1.10f else 1f
+        v.animate().cancel()
+        v.animate()
+            .scaleX(0.94f).scaleY(0.94f)
+            .setDuration(70)
+            .withEndAction {
+                v.animate()
+                    .scaleX(targetScale).scaleY(targetScale)
+                    .setDuration(110)
+                    .setInterpolator(android.view.animation.OvershootInterpolator(2f))
+                    .start()
+            }
+            .start()
+    }
+
+    /** Pulso infinito no botão Update quando há atualização disponível. */
+    private fun startOtaPulse(v: View) {
+        stopOtaPulse()
+        val sx = android.animation.ObjectAnimator.ofFloat(v, "scaleX", 1f, 1.12f, 1f).apply {
+            repeatCount = android.animation.ObjectAnimator.INFINITE
+        }
+        val sy = android.animation.ObjectAnimator.ofFloat(v, "scaleY", 1f, 1.12f, 1f).apply {
+            repeatCount = android.animation.ObjectAnimator.INFINITE
+        }
+        val set = android.animation.AnimatorSet().apply {
+            playTogether(sx, sy)
+            duration = 1200
+            interpolator = android.view.animation.AccelerateDecelerateInterpolator()
+        }
+        otaPulseAnimator = set
+        set.start()
+    }
+
+    private fun stopOtaPulse() {
+        otaPulseAnimator?.cancel()
+        otaPulseAnimator = null
+        otaStatusPill?.let {
+            if (!it.isFocused) {
+                it.scaleX = 1f
+                it.scaleY = 1f
+            }
+        }
     }
 
     private fun dp(value: Int): Int {
@@ -1968,6 +2048,7 @@ class MainActivity : Activity() {
             )
             setPadding(0, 0, dp((12 * scale).toInt()), 0)
         }
+        // --- helpers chamados em escopo de classe (definidos abaixo) ---
 
         // Bloco esquerdo: TV.Apps + subtítulo
         val left = LinearLayout(this).apply {
@@ -2016,7 +2097,10 @@ class MainActivity : Activity() {
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
-            setOnClickListener { checkOtaUpdate(this, true) }
+            setOnClickListener {
+                pressFeedback(this)
+                checkOtaUpdate(this, true)
+            }
             tag = "Atualização"
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
@@ -2024,11 +2108,15 @@ class MainActivity : Activity() {
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#335EE6A8"))
                     bg.setStroke(dp(2), Color.parseColor("#5EE6A8"))
+                    stopOtaPulse()
+                    applyTopBarFocus(v, true, "#5EE6A8")
                     showTopBarTooltip(v)
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    applyTopBarFocus(v, false, "#5EE6A8")
                     hideTopBarTooltip()
+                    if (otaHasUpdate) startOtaPulse(v)
                 }
             }
             // Estado inicial fixo (ícone + texto)
@@ -2041,7 +2129,10 @@ class MainActivity : Activity() {
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
-            setOnClickListener { showAllAppsOverlay(scale) }
+            setOnClickListener {
+                pressFeedback(this)
+                showAllAppsOverlay(scale)
+            }
             tag = "Aplicativos"
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
@@ -2049,10 +2140,12 @@ class MainActivity : Activity() {
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#33FFFFFF"))
                     bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                    applyTopBarFocus(v, true, "#FFFFFF")
                     showTopBarTooltip(v)
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    applyTopBarFocus(v, false, "#FFFFFF")
                     hideTopBarTooltip()
                 }
             }
@@ -2066,7 +2159,10 @@ class MainActivity : Activity() {
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
-            setOnClickListener { openSystemSettings() }
+            setOnClickListener {
+                pressFeedback(this)
+                openSystemSettings()
+            }
             tag = "Configurações"
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
@@ -2074,10 +2170,12 @@ class MainActivity : Activity() {
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#33FFFFFF"))
                     bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                    applyTopBarFocus(v, true, "#FFFFFF")
                     showTopBarTooltip(v)
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    applyTopBarFocus(v, false, "#FFFFFF")
                     hideTopBarTooltip()
                 }
             }
@@ -2275,6 +2373,8 @@ class MainActivity : Activity() {
             if (otaInfo == null) {
                 setPillContent(systemPill, R.drawable.ic_rotate_ccw, "")
                 systemPill.setTextColor(Color.parseColor("#FF6B6B"))
+                otaHasUpdate = false
+                stopOtaPulse()
                 if (manual) {
                     Toast.makeText(this@MainActivity, "Falha ao verificar atualizações (sem conexão)", Toast.LENGTH_SHORT).show()
                 }
@@ -2286,6 +2386,8 @@ class MainActivity : Activity() {
             if (hasUpdate) {
                 setPillContent(systemPill, R.drawable.ic_download, "")
                 systemPill.setTextColor(Color.parseColor("#5EE6A8"))
+                otaHasUpdate = true
+                startOtaPulse(systemPill)
                 if (manual) {
                     if (downloadUrl.isEmpty()) {
                         Toast.makeText(this@MainActivity, "URL de atualização inválida", Toast.LENGTH_SHORT).show()
@@ -2296,6 +2398,8 @@ class MainActivity : Activity() {
             } else {
                 setPillContent(systemPill, R.drawable.ic_rotate_ccw, "")
                 systemPill.setTextColor(Color.parseColor("#5EE6A8"))
+                otaHasUpdate = false
+                stopOtaPulse()
                 if (manual) {
                     Toast.makeText(this@MainActivity, "Você já está na versão mais recente", Toast.LENGTH_SHORT).show()
                 }
