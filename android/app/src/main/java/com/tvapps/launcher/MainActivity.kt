@@ -1969,9 +1969,6 @@ class MainActivity : Activity() {
             )
             setPadding(0, 0, dp((12 * scale).toInt()), 0)
         }
-        // Permite que a sombra/glow do foco apareça fora dos limites das pílulas
-        row.clipChildren = false
-        row.clipToPadding = false
 
         // Bloco esquerdo: TV.Apps + subtítulo
         val left = LinearLayout(this).apply {
