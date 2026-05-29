@@ -1854,19 +1854,22 @@ class MainActivity : Activity() {
     private fun wireStatusPillAction(pill: TextView, iconRes: Int, onTap: () -> Unit) {
         pill.isFocusable = true
         pill.isClickable = true
-        pill.setOnClickListener { onTap() }
+        pill.setOnClickListener {
+            pressFeedback(pill)
+            onTap()
+        }
         pill.setOnFocusChangeListener { v, hasFocus ->
             val tv = v as TextView
             val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
             if (hasFocus) {
                 bg.setColor(Color.parseColor("#33FFFFFF"))
                 bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
-                v.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
+                applyTopBarFocus(v, true, "#FFFFFF")
                 showTopBarTooltip(v)
             } else {
                 bg.setColor(Color.parseColor("#1AFFFFFF"))
                 bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
-                v.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
+                applyTopBarFocus(v, false, "#FFFFFF")
                 hideTopBarTooltip()
             }
         }
