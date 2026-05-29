@@ -114,6 +114,7 @@ class MainActivity : Activity() {
     private var wifiView: TextView? = null
     private var otaStatusPill: TextView? = null
     private var otaPulseAnimator: android.animation.AnimatorSet? = null
+    private var otaHasUpdate: Boolean = false
     private var settingsPill: TextView? = null
     private var currentTooltip: android.widget.PopupWindow? = null
     private val statusHandler = Handler(Looper.getMainLooper())
