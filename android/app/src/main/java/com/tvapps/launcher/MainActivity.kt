@@ -2096,7 +2096,10 @@ class MainActivity : Activity() {
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
-            setOnClickListener { checkOtaUpdate(this, true) }
+            setOnClickListener {
+                pressFeedback(this)
+                checkOtaUpdate(this, true)
+            }
             tag = "Atualização"
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
@@ -2104,10 +2107,12 @@ class MainActivity : Activity() {
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#335EE6A8"))
                     bg.setStroke(dp(2), Color.parseColor("#5EE6A8"))
+                    applyTopBarFocus(v, true, "#5EE6A8")
                     showTopBarTooltip(v)
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    applyTopBarFocus(v, false, "#5EE6A8")
                     hideTopBarTooltip()
                 }
             }
@@ -2121,7 +2126,10 @@ class MainActivity : Activity() {
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
-            setOnClickListener { showAllAppsOverlay(scale) }
+            setOnClickListener {
+                pressFeedback(this)
+                showAllAppsOverlay(scale)
+            }
             tag = "Aplicativos"
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
@@ -2129,10 +2137,12 @@ class MainActivity : Activity() {
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#33FFFFFF"))
                     bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                    applyTopBarFocus(v, true, "#FFFFFF")
                     showTopBarTooltip(v)
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    applyTopBarFocus(v, false, "#FFFFFF")
                     hideTopBarTooltip()
                 }
             }
@@ -2146,7 +2156,10 @@ class MainActivity : Activity() {
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
-            setOnClickListener { openSystemSettings() }
+            setOnClickListener {
+                pressFeedback(this)
+                openSystemSettings()
+            }
             tag = "Configurações"
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
@@ -2154,10 +2167,12 @@ class MainActivity : Activity() {
                 if (hasFocus) {
                     bg.setColor(Color.parseColor("#33FFFFFF"))
                     bg.setStroke(dp(2), Color.parseColor("#FFFFFF"))
+                    applyTopBarFocus(v, true, "#FFFFFF")
                     showTopBarTooltip(v)
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
+                    applyTopBarFocus(v, false, "#FFFFFF")
                     hideTopBarTooltip()
                 }
             }
