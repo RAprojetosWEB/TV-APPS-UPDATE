@@ -2021,7 +2021,7 @@ class MainActivity : Activity() {
             ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER
             setOnClickListener { checkOtaUpdate(this, true) }
-            tag = "Verificar se há novas\natualizações"
+            tag = "Atualização"
             setOnFocusChangeListener { v, hasFocus ->
                 val tv = v as TextView
                 val bg = (tv.background as? GradientDrawable) ?: return@setOnFocusChangeListener
