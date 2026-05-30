@@ -2764,6 +2764,7 @@ class MainActivity : Activity() {
             isFocusable = true
             isFocusableInTouchMode = false
             isClickable = true
+            id = View.generateViewId()
             val bg = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
                 setColor(Color.parseColor("#1AFFFFFF"))
@@ -2785,8 +2786,12 @@ class MainActivity : Activity() {
                     bg.setStroke(dp(2), Color.WHITE)
                     v.scaleX = 1.15f
                     v.scaleY = 1.15f
-                    // Garante que o scroller role para o final para mostrar que chegamos no botão +
-                    scroller.post { scroller.fullScroll(View.FOCUS_RIGHT) }
+                    // Move a visualização até o fim sem pedir mudança automática de foco.
+                    scroller.post {
+                        val contentWidth = scroller.getChildAt(0)?.width ?: 0
+                        val targetX = (contentWidth - scroller.width).coerceAtLeast(0)
+                        scroller.smoothScrollTo(targetX, 0)
+                    }
                 } else {
                     bg.setColor(Color.parseColor("#1AFFFFFF"))
                     bg.setStroke(dp(1), Color.parseColor("#33FFFFFF"))
