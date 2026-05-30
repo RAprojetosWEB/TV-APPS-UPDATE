@@ -2803,6 +2803,7 @@ class MainActivity : Activity() {
 
         // Trava o foco do botão "+": direita fica nele mesmo,
         // esquerda volta para o último app da dock (se houver).
+        if (addBtn.id == View.NO_ID) addBtn.id = View.generateViewId()
         addBtn.nextFocusRightId = addBtn.id
         val lastAppItem = if (appsLayout.childCount > 0) appsLayout.getChildAt(appsLayout.childCount - 1) else null
         if (lastAppItem != null) {
