@@ -1721,10 +1721,18 @@ class MainActivity : Activity() {
             ApkDownloader.download(this@MainActivity, app.url, app.name).collect { p ->
                 when (p) {
                     is DownloadProgress.Progress -> withContext(Dispatchers.Main) {
-                        card.progress.progress = p.percent
-                        card.percent.text = "${p.percent}%"
+                        if (p.percent < 0 || p.totalBytes <= 0L) {
+                            if (!card.progress.isIndeterminate) card.progress.isIndeterminate = true
+                            val speed = formatSpeed(p.speedBytesPerSec)
+                            card.percent.text = "${formatBytes(p.downloadedBytes)} • $speed"
+                        } else {
+                            if (card.progress.isIndeterminate) card.progress.isIndeterminate = false
+                            card.progress.progress = p.percent
+                            card.percent.text = "${p.percent}%"
+                        }
                     }
                     is DownloadProgress.Done -> withContext(Dispatchers.Main) {
+                        card.progress.isIndeterminate = false
                         card.progress.progress = 100
                         card.percent.text = "100%"
 
