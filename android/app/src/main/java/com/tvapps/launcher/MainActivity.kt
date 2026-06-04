@@ -2447,21 +2447,31 @@ class MainActivity : Activity() {
                             views.progress.visibility = View.VISIBLE
                             views.percent.visibility = View.VISIBLE
                             views.speed.visibility = View.VISIBLE
-                            views.progress.progress = p.percent
-                            views.percent.text = "${p.percent}%"
+                            if (p.percent < 0 || p.totalBytes <= 0L) {
+                                if (!views.progress.isIndeterminate) views.progress.isIndeterminate = true
+                                views.percent.text = formatBytes(p.downloadedBytes)
+                            } else {
+                                if (views.progress.isIndeterminate) views.progress.isIndeterminate = false
+                                views.progress.progress = p.percent
+                                views.percent.text = "${p.percent}%"
+                            }
                             views.speed.text = "Velocidade: ${formatSpeed(p.speedBytesPerSec)}"
                         }
                         if (systemPill != null) {
                             val speed = formatSpeed(p.speedBytesPerSec)
+                            val label = if (p.percent < 0 || p.totalBytes <= 0L)
+                                "Baixando ${formatBytes(p.downloadedBytes)} • $speed"
+                            else "Baixando ${p.percent}% • $speed"
                             setPillContent(
                                 systemPill,
                                 R.drawable.ic_download,
-                                "Baixando ${p.percent}% • $speed",
+                                label,
                             )
                         }
                     }
                     is DownloadProgress.Done -> withContext(Dispatchers.Main) {
                         ui?.let { views ->
+                            views.progress.isIndeterminate = false
                             views.progress.progress = 100
                             views.percent.text = "100%"
                             views.speed.text = "Download concluído"
