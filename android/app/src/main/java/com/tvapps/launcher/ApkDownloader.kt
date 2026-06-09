@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.flowOn
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
+import kotlin.math.roundToInt
 import java.util.concurrent.TimeUnit
 
 sealed class DownloadProgress {
@@ -27,6 +28,14 @@ object ApkDownloader {
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
         .build()
+
+    private fun estimateUnknownSizePercent(downloadedBytes: Long): Int {
+        if (downloadedBytes <= 0L) return 0
+        val downloadedMb = downloadedBytes / 1024.0 / 1024.0
+        return ((downloadedMb * 100.0) / (downloadedMb + 20.0))
+            .roundToInt()
+            .coerceIn(1, 95)
+    }
 
     fun download(context: Context, url: String, fileNameHint: String): Flow<DownloadProgress> = flow {
         try {
@@ -57,7 +66,8 @@ object ApkDownloader {
                 return@flow
             }
             // total <= 0 significa "tamanho desconhecido" (chunked / sem Content-Length).
-            // Nesse caso emitimos percent = -1 e totalBytes = 0 para a UI usar barra indeterminada.
+            // Como Android TV nem sempre desenha bem barra indeterminada horizontal customizada,
+            // usamos uma porcentagem visual aproximada até 95%; no final emitimos 100%.
             val total = body.contentLength()
             val knownTotal = total > 0L
 
@@ -81,7 +91,7 @@ object ApkDownloader {
                         downloaded += read
                         val percent = if (knownTotal)
                             ((downloaded * 100) / total).toInt().coerceIn(0, 100)
-                        else -1
+                        else estimateUnknownSizePercent(downloaded)
                         val nowNs = System.nanoTime()
                         val windowMs = (nowNs - windowStartNs) / 1_000_000L
                         val emitMs = (nowNs - lastEmitNs) / 1_000_000L
