@@ -1721,15 +1721,10 @@ class MainActivity : Activity() {
             ApkDownloader.download(this@MainActivity, app.url, app.name).collect { p ->
                 when (p) {
                     is DownloadProgress.Progress -> withContext(Dispatchers.Main) {
-                        if (p.percent < 0 || p.totalBytes <= 0L) {
-                            if (!card.progress.isIndeterminate) card.progress.isIndeterminate = true
-                            val speed = formatSpeed(p.speedBytesPerSec)
-                            card.percent.text = "${formatBytes(p.downloadedBytes)} • $speed"
-                        } else {
-                            if (card.progress.isIndeterminate) card.progress.isIndeterminate = false
-                            card.progress.progress = p.percent
-                            card.percent.text = "${p.percent}%"
-                        }
+                        if (card.progress.isIndeterminate) card.progress.isIndeterminate = false
+                        val percent = p.percent.coerceIn(0, 99)
+                        card.progress.progress = percent
+                        card.percent.text = "$percent%"
                     }
                     is DownloadProgress.Done -> withContext(Dispatchers.Main) {
                         card.progress.isIndeterminate = false
@@ -2446,22 +2441,14 @@ class MainActivity : Activity() {
                             views.button.text = "BAIXANDO ATUALIZAÇÃO"
                             views.progress.visibility = View.VISIBLE
                             views.percent.visibility = View.VISIBLE
-                            views.speed.visibility = View.VISIBLE
-                            if (p.percent < 0 || p.totalBytes <= 0L) {
-                                if (!views.progress.isIndeterminate) views.progress.isIndeterminate = true
-                                views.percent.text = formatBytes(p.downloadedBytes)
-                            } else {
-                                if (views.progress.isIndeterminate) views.progress.isIndeterminate = false
-                                views.progress.progress = p.percent
-                                views.percent.text = "${p.percent}%"
-                            }
-                            views.speed.text = "Velocidade: ${formatSpeed(p.speedBytesPerSec)}"
+                            views.speed.visibility = View.GONE
+                            if (views.progress.isIndeterminate) views.progress.isIndeterminate = false
+                            val percent = p.percent.coerceIn(0, 99)
+                            views.progress.progress = percent
+                            views.percent.text = "$percent%"
                         }
                         if (systemPill != null) {
-                            val speed = formatSpeed(p.speedBytesPerSec)
-                            val label = if (p.percent < 0 || p.totalBytes <= 0L)
-                                "Baixando ${formatBytes(p.downloadedBytes)} • $speed"
-                            else "Baixando ${p.percent}% • $speed"
+                            val label = "Baixando ${p.percent.coerceIn(0, 99)}%"
                             setPillContent(
                                 systemPill,
                                 R.drawable.ic_download,
