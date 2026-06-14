@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { bootstrapFirstAdmin } from "@/lib/admin-bootstrap.functions";
 
 export const Route = createFileRoute("/launcher-admin/registro")({
   component: RegisterPage,
@@ -45,19 +46,20 @@ function RegisterPage() {
         return;
       }
 
-      // Atribui role admin automaticamente
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .insert({ user_id: userId, role: "admin" });
-
-      if (roleError) {
+      // Garante que a sessão está pronta antes de chamar a server fn
+      // (signUp com auto-confirm já retorna sessão ativa)
+      try {
+        await bootstrapFirstAdmin();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Erro desconhecido";
         toast.error("Conta criada, mas erro ao definir permissão admin", {
-          description: roleError.message,
+          description: msg,
         });
         return;
       }
 
       toast.success("Conta admin criada com sucesso!");
+      await supabase.auto?.signOut?.();
       navigate({ to: "/launcher-admin/login" });
     } finally {
       setLoading(false);
