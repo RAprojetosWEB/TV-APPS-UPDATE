@@ -148,6 +148,42 @@ export type Database = {
         }
         Relationships: []
       }
+      devices: {
+        Row: {
+          client_name: string | null
+          created_at: string
+          device_id: string | null
+          expires_at: string | null
+          id: string
+          notes: string | null
+          registered_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_name?: string | null
+          created_at?: string
+          device_id?: string | null
+          expires_at?: string | null
+          id?: string
+          notes?: string | null
+          registered_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string | null
+          created_at?: string
+          device_id?: string | null
+          expires_at?: string | null
+          id?: string
+          notes?: string | null
+          registered_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
