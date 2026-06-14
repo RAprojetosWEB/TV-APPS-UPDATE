@@ -14,7 +14,9 @@ function LauncherAdminLayout() {
   const [checking, setChecking] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
 
-  const isLoginPage = pathname === "/launcher-admin/login";
+  const isPublicPage =
+    pathname === "/launcher-admin/login" ||
+    pathname === "/launcher-admin/registro";
 
   useEffect(() => {
     let mounted = true;
@@ -22,14 +24,14 @@ function LauncherAdminLayout() {
       if (!mounted) return;
       const user = data.session?.user ?? null;
       setEmail(user?.email ?? null);
-      if (!user && !isLoginPage) {
+      if (!user && !isPublicPage) {
         navigate({ to: "/launcher-admin/login" });
       }
       setChecking(false);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       setEmail(session?.user?.email ?? null);
-      if (!session?.user && !isLoginPage) {
+      if (!session?.user && !isPublicPage) {
         navigate({ to: "/launcher-admin/login" });
       }
     });
@@ -37,7 +39,7 @@ function LauncherAdminLayout() {
       mounted = false;
       sub.subscription.unsubscribe();
     };
-  }, [isLoginPage, navigate]);
+  }, [isPublicPage, navigate]);
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -45,7 +47,7 @@ function LauncherAdminLayout() {
     navigate({ to: "/launcher-admin/login" });
   }
 
-  if (isLoginPage) {
+  if (isPublicPage) {
     return (
       <div className="min-h-screen bg-neutral-950 text-neutral-100">
         <Outlet />
