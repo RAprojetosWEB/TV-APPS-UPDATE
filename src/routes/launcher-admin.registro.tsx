@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { bootstrapFirstAdmin } from "@/lib/admin-bootstrap.functions";
+import { createFirstAdminAccount } from "@/lib/admin-bootstrap.functions";
 
 export const Route = createFileRoute("/launcher-admin/registro")({
   component: RegisterPage,
@@ -30,46 +30,22 @@ function RegisterPage() {
 
     setLoading(true);
     try {
-      let { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      // Se já existe, tenta logar com a senha informada
-      if (error) {
-        const msg = error.message.toLowerCase();
-        const alreadyExists =
-          msg.includes("already") || msg.includes("registered") || msg.includes("exists");
-        if (!alreadyExists) {
-          toast.error("Não foi possível criar a conta", { description: error.message });
-          return;
-        }
-        const signIn = await supabase.auth.signInWithPassword({ email, password });
-        if (signIn.error) {
-          toast.error("Este email já está cadastrado", {
-            description:
-              "A senha informada não confere. Use 'Entrar' ou recupere a senha.",
-          });
-          return;
-        }
-        data = { user: signIn.data.user, session: signIn.data.session } as typeof data;
-      }
-
-      const userId = data.user?.id;
-      if (!userId) {
-        toast.error("Conta criada, mas não foi possível identificar o usuário.");
+      try {
+        await createFirstAdminAccount({ data: { email, password } });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Erro desconhecido";
+        toast.error("Não foi possível criar a conta", {
+          description: msg,
+        });
         return;
       }
 
-      // Garante que a sessão está pronta antes de chamar a server fn
-      // (signUp com auto-confirm já retorna sessão ativa)
-      try {
-        await bootstrapFirstAdmin();
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "Erro desconhecido";
-        toast.error("Conta criada, mas erro ao definir permissão admin", {
-          description: msg,
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) {
+        toast.error("Conta criada, mas não foi possível entrar", {
+          description: "Clique em Entrar e use o mesmo email e senha.",
         });
+        navigate({ to: "/launcher-admin/login" });
         return;
       }
 
