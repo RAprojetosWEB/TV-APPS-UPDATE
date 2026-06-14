@@ -10,8 +10,13 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LauncherAdminRouteImport } from './routes/launcher-admin'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LauncherAdminIndexRouteImport } from './routes/launcher-admin.index'
+import { Route as LauncherAdminNovosRouteImport } from './routes/launcher-admin.novos'
+import { Route as LauncherAdminNovoRouteImport } from './routes/launcher-admin.novo'
+import { Route as LauncherAdminLoginRouteImport } from './routes/launcher-admin.login'
 import { Route as ApiPublicVerifyLauncherPasswordRouteImport } from './routes/api/public/verify-launcher-password'
 import { Route as ApiPublicCatalogRouteImport } from './routes/api/public/catalog'
 import { Route as ApiPublicBumpVersionRouteImport } from './routes/api/public/bump-version'
@@ -19,6 +24,11 @@ import { Route as ApiPublicBumpVersionRouteImport } from './routes/api/public/bu
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LauncherAdminRoute = LauncherAdminRouteImport.update({
+  id: '/launcher-admin',
+  path: '/launcher-admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -30,6 +40,26 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const LauncherAdminIndexRoute = LauncherAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LauncherAdminRoute,
+} as any)
+const LauncherAdminNovosRoute = LauncherAdminNovosRouteImport.update({
+  id: '/novos',
+  path: '/novos',
+  getParentRoute: () => LauncherAdminRoute,
+} as any)
+const LauncherAdminNovoRoute = LauncherAdminNovoRouteImport.update({
+  id: '/novo',
+  path: '/novo',
+  getParentRoute: () => LauncherAdminRoute,
+} as any)
+const LauncherAdminLoginRoute = LauncherAdminLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => LauncherAdminRoute,
 } as any)
 const ApiPublicVerifyLauncherPasswordRoute =
   ApiPublicVerifyLauncherPasswordRouteImport.update({
@@ -51,7 +81,12 @@ const ApiPublicBumpVersionRoute = ApiPublicBumpVersionRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/launcher-admin': typeof LauncherAdminRouteWithChildren
   '/login': typeof LoginRoute
+  '/launcher-admin/login': typeof LauncherAdminLoginRoute
+  '/launcher-admin/novo': typeof LauncherAdminNovoRoute
+  '/launcher-admin/novos': typeof LauncherAdminNovosRoute
+  '/launcher-admin/': typeof LauncherAdminIndexRoute
   '/api/public/bump-version': typeof ApiPublicBumpVersionRoute
   '/api/public/catalog': typeof ApiPublicCatalogRoute
   '/api/public/verify-launcher-password': typeof ApiPublicVerifyLauncherPasswordRoute
@@ -60,6 +95,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/login': typeof LoginRoute
+  '/launcher-admin/login': typeof LauncherAdminLoginRoute
+  '/launcher-admin/novo': typeof LauncherAdminNovoRoute
+  '/launcher-admin/novos': typeof LauncherAdminNovosRoute
+  '/launcher-admin': typeof LauncherAdminIndexRoute
   '/api/public/bump-version': typeof ApiPublicBumpVersionRoute
   '/api/public/catalog': typeof ApiPublicCatalogRoute
   '/api/public/verify-launcher-password': typeof ApiPublicVerifyLauncherPasswordRoute
@@ -68,7 +107,12 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/launcher-admin': typeof LauncherAdminRouteWithChildren
   '/login': typeof LoginRoute
+  '/launcher-admin/login': typeof LauncherAdminLoginRoute
+  '/launcher-admin/novo': typeof LauncherAdminNovoRoute
+  '/launcher-admin/novos': typeof LauncherAdminNovosRoute
+  '/launcher-admin/': typeof LauncherAdminIndexRoute
   '/api/public/bump-version': typeof ApiPublicBumpVersionRoute
   '/api/public/catalog': typeof ApiPublicCatalogRoute
   '/api/public/verify-launcher-password': typeof ApiPublicVerifyLauncherPasswordRoute
@@ -78,7 +122,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/launcher-admin'
     | '/login'
+    | '/launcher-admin/login'
+    | '/launcher-admin/novo'
+    | '/launcher-admin/novos'
+    | '/launcher-admin/'
     | '/api/public/bump-version'
     | '/api/public/catalog'
     | '/api/public/verify-launcher-password'
@@ -87,6 +136,10 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/login'
+    | '/launcher-admin/login'
+    | '/launcher-admin/novo'
+    | '/launcher-admin/novos'
+    | '/launcher-admin'
     | '/api/public/bump-version'
     | '/api/public/catalog'
     | '/api/public/verify-launcher-password'
@@ -94,7 +147,12 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/launcher-admin'
     | '/login'
+    | '/launcher-admin/login'
+    | '/launcher-admin/novo'
+    | '/launcher-admin/novos'
+    | '/launcher-admin/'
     | '/api/public/bump-version'
     | '/api/public/catalog'
     | '/api/public/verify-launcher-password'
@@ -103,6 +161,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  LauncherAdminRoute: typeof LauncherAdminRouteWithChildren
   LoginRoute: typeof LoginRoute
   ApiPublicBumpVersionRoute: typeof ApiPublicBumpVersionRoute
   ApiPublicCatalogRoute: typeof ApiPublicCatalogRoute
@@ -118,6 +177,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/launcher-admin': {
+      id: '/launcher-admin'
+      path: '/launcher-admin'
+      fullPath: '/launcher-admin'
+      preLoaderRoute: typeof LauncherAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -131,6 +197,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/launcher-admin/': {
+      id: '/launcher-admin/'
+      path: '/'
+      fullPath: '/launcher-admin/'
+      preLoaderRoute: typeof LauncherAdminIndexRouteImport
+      parentRoute: typeof LauncherAdminRoute
+    }
+    '/launcher-admin/novos': {
+      id: '/launcher-admin/novos'
+      path: '/novos'
+      fullPath: '/launcher-admin/novos'
+      preLoaderRoute: typeof LauncherAdminNovosRouteImport
+      parentRoute: typeof LauncherAdminRoute
+    }
+    '/launcher-admin/novo': {
+      id: '/launcher-admin/novo'
+      path: '/novo'
+      fullPath: '/launcher-admin/novo'
+      preLoaderRoute: typeof LauncherAdminNovoRouteImport
+      parentRoute: typeof LauncherAdminRoute
+    }
+    '/launcher-admin/login': {
+      id: '/launcher-admin/login'
+      path: '/login'
+      fullPath: '/launcher-admin/login'
+      preLoaderRoute: typeof LauncherAdminLoginRouteImport
+      parentRoute: typeof LauncherAdminRoute
     }
     '/api/public/verify-launcher-password': {
       id: '/api/public/verify-launcher-password'
@@ -156,9 +250,28 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface LauncherAdminRouteChildren {
+  LauncherAdminLoginRoute: typeof LauncherAdminLoginRoute
+  LauncherAdminNovoRoute: typeof LauncherAdminNovoRoute
+  LauncherAdminNovosRoute: typeof LauncherAdminNovosRoute
+  LauncherAdminIndexRoute: typeof LauncherAdminIndexRoute
+}
+
+const LauncherAdminRouteChildren: LauncherAdminRouteChildren = {
+  LauncherAdminLoginRoute: LauncherAdminLoginRoute,
+  LauncherAdminNovoRoute: LauncherAdminNovoRoute,
+  LauncherAdminNovosRoute: LauncherAdminNovosRoute,
+  LauncherAdminIndexRoute: LauncherAdminIndexRoute,
+}
+
+const LauncherAdminRouteWithChildren = LauncherAdminRoute._addFileChildren(
+  LauncherAdminRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  LauncherAdminRoute: LauncherAdminRouteWithChildren,
   LoginRoute: LoginRoute,
   ApiPublicBumpVersionRoute: ApiPublicBumpVersionRoute,
   ApiPublicCatalogRoute: ApiPublicCatalogRoute,
