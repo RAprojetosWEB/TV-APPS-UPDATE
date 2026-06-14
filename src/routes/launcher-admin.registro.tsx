@@ -30,14 +30,29 @@ function RegisterPage() {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
+      let { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
 
+      // Se já existe, tenta logar com a senha informada
       if (error) {
-        toast.error("Não foi possível criar a conta", { description: error.message });
-        return;
+        const msg = error.message.toLowerCase();
+        const alreadyExists =
+          msg.includes("already") || msg.includes("registered") || msg.includes("exists");
+        if (!alreadyExists) {
+          toast.error("Não foi possível criar a conta", { description: error.message });
+          return;
+        }
+        const signIn = await supabase.auth.signInWithPassword({ email, password });
+        if (signIn.error) {
+          toast.error("Este email já está cadastrado", {
+            description:
+              "A senha informada não confere. Use 'Entrar' ou recupere a senha.",
+          });
+          return;
+        }
+        data = { user: signIn.data.user, session: signIn.data.session } as typeof data;
       }
 
       const userId = data.user?.id;
@@ -58,7 +73,7 @@ function RegisterPage() {
         return;
       }
 
-      toast.success("Conta admin criada com sucesso!");
+      toast.success("Acesso admin liberado!");
       navigate({ to: "/launcher-admin" });
     } finally {
       setLoading(false);
