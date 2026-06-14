@@ -14,6 +14,7 @@ import { Route as LauncherAdminRouteImport } from './routes/launcher-admin'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LauncherAdminIndexRouteImport } from './routes/launcher-admin.index'
+import { Route as LauncherAdminRegistroRouteImport } from './routes/launcher-admin.registro'
 import { Route as LauncherAdminNovosRouteImport } from './routes/launcher-admin.novos'
 import { Route as LauncherAdminNovoRouteImport } from './routes/launcher-admin.novo'
 import { Route as LauncherAdminLoginRouteImport } from './routes/launcher-admin.login'
@@ -44,6 +45,11 @@ const IndexRoute = IndexRouteImport.update({
 const LauncherAdminIndexRoute = LauncherAdminIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => LauncherAdminRoute,
+} as any)
+const LauncherAdminRegistroRoute = LauncherAdminRegistroRouteImport.update({
+  id: '/registro',
+  path: '/registro',
   getParentRoute: () => LauncherAdminRoute,
 } as any)
 const LauncherAdminNovosRoute = LauncherAdminNovosRouteImport.update({
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/launcher-admin/login': typeof LauncherAdminLoginRoute
   '/launcher-admin/novo': typeof LauncherAdminNovoRoute
   '/launcher-admin/novos': typeof LauncherAdminNovosRoute
+  '/launcher-admin/registro': typeof LauncherAdminRegistroRoute
   '/launcher-admin/': typeof LauncherAdminIndexRoute
   '/api/public/bump-version': typeof ApiPublicBumpVersionRoute
   '/api/public/catalog': typeof ApiPublicCatalogRoute
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/launcher-admin/login': typeof LauncherAdminLoginRoute
   '/launcher-admin/novo': typeof LauncherAdminNovoRoute
   '/launcher-admin/novos': typeof LauncherAdminNovosRoute
+  '/launcher-admin/registro': typeof LauncherAdminRegistroRoute
   '/launcher-admin': typeof LauncherAdminIndexRoute
   '/api/public/bump-version': typeof ApiPublicBumpVersionRoute
   '/api/public/catalog': typeof ApiPublicCatalogRoute
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/launcher-admin/login': typeof LauncherAdminLoginRoute
   '/launcher-admin/novo': typeof LauncherAdminNovoRoute
   '/launcher-admin/novos': typeof LauncherAdminNovosRoute
+  '/launcher-admin/registro': typeof LauncherAdminRegistroRoute
   '/launcher-admin/': typeof LauncherAdminIndexRoute
   '/api/public/bump-version': typeof ApiPublicBumpVersionRoute
   '/api/public/catalog': typeof ApiPublicCatalogRoute
@@ -127,6 +136,7 @@ export interface FileRouteTypes {
     | '/launcher-admin/login'
     | '/launcher-admin/novo'
     | '/launcher-admin/novos'
+    | '/launcher-admin/registro'
     | '/launcher-admin/'
     | '/api/public/bump-version'
     | '/api/public/catalog'
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/launcher-admin/login'
     | '/launcher-admin/novo'
     | '/launcher-admin/novos'
+    | '/launcher-admin/registro'
     | '/launcher-admin'
     | '/api/public/bump-version'
     | '/api/public/catalog'
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/launcher-admin/login'
     | '/launcher-admin/novo'
     | '/launcher-admin/novos'
+    | '/launcher-admin/registro'
     | '/launcher-admin/'
     | '/api/public/bump-version'
     | '/api/public/catalog'
@@ -205,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LauncherAdminIndexRouteImport
       parentRoute: typeof LauncherAdminRoute
     }
+    '/launcher-admin/registro': {
+      id: '/launcher-admin/registro'
+      path: '/registro'
+      fullPath: '/launcher-admin/registro'
+      preLoaderRoute: typeof LauncherAdminRegistroRouteImport
+      parentRoute: typeof LauncherAdminRoute
+    }
     '/launcher-admin/novos': {
       id: '/launcher-admin/novos'
       path: '/novos'
@@ -254,6 +273,7 @@ interface LauncherAdminRouteChildren {
   LauncherAdminLoginRoute: typeof LauncherAdminLoginRoute
   LauncherAdminNovoRoute: typeof LauncherAdminNovoRoute
   LauncherAdminNovosRoute: typeof LauncherAdminNovosRoute
+  LauncherAdminRegistroRoute: typeof LauncherAdminRegistroRoute
   LauncherAdminIndexRoute: typeof LauncherAdminIndexRoute
 }
 
@@ -261,6 +281,7 @@ const LauncherAdminRouteChildren: LauncherAdminRouteChildren = {
   LauncherAdminLoginRoute: LauncherAdminLoginRoute,
   LauncherAdminNovoRoute: LauncherAdminNovoRoute,
   LauncherAdminNovosRoute: LauncherAdminNovosRoute,
+  LauncherAdminRegistroRoute: LauncherAdminRegistroRoute,
   LauncherAdminIndexRoute: LauncherAdminIndexRoute,
 }
 

@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -77,6 +77,13 @@ function LoginPage() {
             {loading ? "Entrando…" : "ENTRAR"}
           </button>
         </form>
+
+        <div className="mt-6 text-center text-sm text-neutral-400">
+          Não tem uma conta?{" "}
+          <Link to="/launcher-admin/registro" className="text-white underline hover:text-neutral-200">
+            Criar conta admin
+          </Link>
+        </div>
       </div>
     </div>
   );
