@@ -14,9 +14,11 @@ import { Route as LauncherAdminRouteImport } from './routes/launcher-admin'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LauncherAdminIndexRouteImport } from './routes/launcher-admin.index'
+import { Route as LauncherAdminResetarSenhaRouteImport } from './routes/launcher-admin.resetar-senha'
 import { Route as LauncherAdminRegistroRouteImport } from './routes/launcher-admin.registro'
 import { Route as LauncherAdminNovosRouteImport } from './routes/launcher-admin.novos'
 import { Route as LauncherAdminNovoRouteImport } from './routes/launcher-admin.novo'
+import { Route as LauncherAdminNovaSenhaRouteImport } from './routes/launcher-admin.nova-senha'
 import { Route as LauncherAdminLoginRouteImport } from './routes/launcher-admin.login'
 import { Route as ApiPublicVerifyLauncherPasswordRouteImport } from './routes/api/public/verify-launcher-password'
 import { Route as ApiPublicCatalogRouteImport } from './routes/api/public/catalog'
@@ -47,6 +49,12 @@ const LauncherAdminIndexRoute = LauncherAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LauncherAdminRoute,
 } as any)
+const LauncherAdminResetarSenhaRoute =
+  LauncherAdminResetarSenhaRouteImport.update({
+    id: '/resetar-senha',
+    path: '/resetar-senha',
+    getParentRoute: () => LauncherAdminRoute,
+  } as any)
 const LauncherAdminRegistroRoute = LauncherAdminRegistroRouteImport.update({
   id: '/registro',
   path: '/registro',
@@ -60,6 +68,11 @@ const LauncherAdminNovosRoute = LauncherAdminNovosRouteImport.update({
 const LauncherAdminNovoRoute = LauncherAdminNovoRouteImport.update({
   id: '/novo',
   path: '/novo',
+  getParentRoute: () => LauncherAdminRoute,
+} as any)
+const LauncherAdminNovaSenhaRoute = LauncherAdminNovaSenhaRouteImport.update({
+  id: '/nova-senha',
+  path: '/nova-senha',
   getParentRoute: () => LauncherAdminRoute,
 } as any)
 const LauncherAdminLoginRoute = LauncherAdminLoginRouteImport.update({
@@ -90,9 +103,11 @@ export interface FileRoutesByFullPath {
   '/launcher-admin': typeof LauncherAdminRouteWithChildren
   '/login': typeof LoginRoute
   '/launcher-admin/login': typeof LauncherAdminLoginRoute
+  '/launcher-admin/nova-senha': typeof LauncherAdminNovaSenhaRoute
   '/launcher-admin/novo': typeof LauncherAdminNovoRoute
   '/launcher-admin/novos': typeof LauncherAdminNovosRoute
   '/launcher-admin/registro': typeof LauncherAdminRegistroRoute
+  '/launcher-admin/resetar-senha': typeof LauncherAdminResetarSenhaRoute
   '/launcher-admin/': typeof LauncherAdminIndexRoute
   '/api/public/bump-version': typeof ApiPublicBumpVersionRoute
   '/api/public/catalog': typeof ApiPublicCatalogRoute
@@ -103,9 +118,11 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/login': typeof LoginRoute
   '/launcher-admin/login': typeof LauncherAdminLoginRoute
+  '/launcher-admin/nova-senha': typeof LauncherAdminNovaSenhaRoute
   '/launcher-admin/novo': typeof LauncherAdminNovoRoute
   '/launcher-admin/novos': typeof LauncherAdminNovosRoute
   '/launcher-admin/registro': typeof LauncherAdminRegistroRoute
+  '/launcher-admin/resetar-senha': typeof LauncherAdminResetarSenhaRoute
   '/launcher-admin': typeof LauncherAdminIndexRoute
   '/api/public/bump-version': typeof ApiPublicBumpVersionRoute
   '/api/public/catalog': typeof ApiPublicCatalogRoute
@@ -118,9 +135,11 @@ export interface FileRoutesById {
   '/launcher-admin': typeof LauncherAdminRouteWithChildren
   '/login': typeof LoginRoute
   '/launcher-admin/login': typeof LauncherAdminLoginRoute
+  '/launcher-admin/nova-senha': typeof LauncherAdminNovaSenhaRoute
   '/launcher-admin/novo': typeof LauncherAdminNovoRoute
   '/launcher-admin/novos': typeof LauncherAdminNovosRoute
   '/launcher-admin/registro': typeof LauncherAdminRegistroRoute
+  '/launcher-admin/resetar-senha': typeof LauncherAdminResetarSenhaRoute
   '/launcher-admin/': typeof LauncherAdminIndexRoute
   '/api/public/bump-version': typeof ApiPublicBumpVersionRoute
   '/api/public/catalog': typeof ApiPublicCatalogRoute
@@ -134,9 +153,11 @@ export interface FileRouteTypes {
     | '/launcher-admin'
     | '/login'
     | '/launcher-admin/login'
+    | '/launcher-admin/nova-senha'
     | '/launcher-admin/novo'
     | '/launcher-admin/novos'
     | '/launcher-admin/registro'
+    | '/launcher-admin/resetar-senha'
     | '/launcher-admin/'
     | '/api/public/bump-version'
     | '/api/public/catalog'
@@ -147,9 +168,11 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/launcher-admin/login'
+    | '/launcher-admin/nova-senha'
     | '/launcher-admin/novo'
     | '/launcher-admin/novos'
     | '/launcher-admin/registro'
+    | '/launcher-admin/resetar-senha'
     | '/launcher-admin'
     | '/api/public/bump-version'
     | '/api/public/catalog'
@@ -161,9 +184,11 @@ export interface FileRouteTypes {
     | '/launcher-admin'
     | '/login'
     | '/launcher-admin/login'
+    | '/launcher-admin/nova-senha'
     | '/launcher-admin/novo'
     | '/launcher-admin/novos'
     | '/launcher-admin/registro'
+    | '/launcher-admin/resetar-senha'
     | '/launcher-admin/'
     | '/api/public/bump-version'
     | '/api/public/catalog'
@@ -217,6 +242,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LauncherAdminIndexRouteImport
       parentRoute: typeof LauncherAdminRoute
     }
+    '/launcher-admin/resetar-senha': {
+      id: '/launcher-admin/resetar-senha'
+      path: '/resetar-senha'
+      fullPath: '/launcher-admin/resetar-senha'
+      preLoaderRoute: typeof LauncherAdminResetarSenhaRouteImport
+      parentRoute: typeof LauncherAdminRoute
+    }
     '/launcher-admin/registro': {
       id: '/launcher-admin/registro'
       path: '/registro'
@@ -236,6 +268,13 @@ declare module '@tanstack/react-router' {
       path: '/novo'
       fullPath: '/launcher-admin/novo'
       preLoaderRoute: typeof LauncherAdminNovoRouteImport
+      parentRoute: typeof LauncherAdminRoute
+    }
+    '/launcher-admin/nova-senha': {
+      id: '/launcher-admin/nova-senha'
+      path: '/nova-senha'
+      fullPath: '/launcher-admin/nova-senha'
+      preLoaderRoute: typeof LauncherAdminNovaSenhaRouteImport
       parentRoute: typeof LauncherAdminRoute
     }
     '/launcher-admin/login': {
@@ -271,17 +310,21 @@ declare module '@tanstack/react-router' {
 
 interface LauncherAdminRouteChildren {
   LauncherAdminLoginRoute: typeof LauncherAdminLoginRoute
+  LauncherAdminNovaSenhaRoute: typeof LauncherAdminNovaSenhaRoute
   LauncherAdminNovoRoute: typeof LauncherAdminNovoRoute
   LauncherAdminNovosRoute: typeof LauncherAdminNovosRoute
   LauncherAdminRegistroRoute: typeof LauncherAdminRegistroRoute
+  LauncherAdminResetarSenhaRoute: typeof LauncherAdminResetarSenhaRoute
   LauncherAdminIndexRoute: typeof LauncherAdminIndexRoute
 }
 
 const LauncherAdminRouteChildren: LauncherAdminRouteChildren = {
   LauncherAdminLoginRoute: LauncherAdminLoginRoute,
+  LauncherAdminNovaSenhaRoute: LauncherAdminNovaSenhaRoute,
   LauncherAdminNovoRoute: LauncherAdminNovoRoute,
   LauncherAdminNovosRoute: LauncherAdminNovosRoute,
   LauncherAdminRegistroRoute: LauncherAdminRegistroRoute,
+  LauncherAdminResetarSenhaRoute: LauncherAdminResetarSenhaRoute,
   LauncherAdminIndexRoute: LauncherAdminIndexRoute,
 }
 
@@ -301,3 +344,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

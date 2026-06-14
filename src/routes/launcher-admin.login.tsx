@@ -84,6 +84,12 @@ function LoginPage() {
             Criar conta admin
           </Link>
         </div>
+        <div className="mt-3 text-center text-sm text-neutral-400">
+          Senha não entra?{" "}
+          <Link to="/launcher-admin/resetar-senha" className="text-white underline hover:text-neutral-200">
+            Redefinir senha
+          </Link>
+        </div>
       </div>
     </div>
   );
