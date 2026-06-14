@@ -59,8 +59,7 @@ function RegisterPage() {
       }
 
       toast.success("Conta admin criada com sucesso!");
-      await supabase.auto?.signOut?.();
-      navigate({ to: "/launcher-admin/login" });
+      navigate({ to: "/launcher-admin" });
     } finally {
       setLoading(false);
     }
