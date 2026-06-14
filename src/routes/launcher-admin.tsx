@@ -16,7 +16,9 @@ function LauncherAdminLayout() {
 
   const isPublicPage =
     pathname === "/launcher-admin/login" ||
-    pathname === "/launcher-admin/registro";
+    pathname === "/launcher-admin/registro" ||
+    pathname === "/launcher-admin/resetar-senha" ||
+    pathname === "/launcher-admin/nova-senha";
 
   useEffect(() => {
     let mounted = true;
