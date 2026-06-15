@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Pencil } from "lucide-react";
 
 type Device = {
   id: string;
@@ -24,6 +25,8 @@ function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
 
   async function load() {
     setLoading(true);
@@ -93,6 +96,39 @@ function DashboardPage() {
     );
   }
 
+  async function renameDevice(id: string, newName: string) {
+    const trimmed = newName.trim();
+    const { error } = await supabase
+      .from("devices")
+      .update({ client_name: trimmed || null })
+      .eq("id", id);
+    if (error) {
+      toast.error("Não foi possível renomear", { description: error.message });
+      return;
+    }
+    toast.success("Nome atualizado");
+    setDevices((prev) =>
+      prev.map((x) => (x.id === id ? { ...x, client_name: trimmed || null } : x)),
+    );
+  }
+
+  function startEdit(d: Device) {
+    setEditingId(d.id);
+    setEditName(d.client_name ?? "");
+  }
+
+  function commitEdit(id: string) {
+    if (editingId === id) {
+      renameDevice(id, editName);
+      setEditingId(null);
+    }
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditName("");
+  }
+
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -135,9 +171,32 @@ function DashboardPage() {
                 className="grid grid-cols-12 items-center px-5 py-4 border-b border-neutral-800/60 last:border-b-0"
               >
                 <div className="col-span-5">
-                  <div className="font-medium text-white">
-                    {d.client_name?.trim() ? d.client_name : "Novo dispositivo"}
-                  </div>
+                  {editingId === d.id ? (
+                    <input
+                      autoFocus
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") commitEdit(d.id);
+                        if (e.key === "Escape") cancelEdit();
+                      }}
+                      onBlur={() => commitEdit(d.id)}
+                      className="w-full rounded-md border border-neutral-700 bg-neutral-800 px-2 py-1 text-sm text-white outline-none focus:border-neutral-500"
+                    />
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-white">
+                        {d.client_name?.trim() ? d.client_name : "Novo dispositivo"}
+                      </span>
+                      <button
+                        onClick={() => startEdit(d)}
+                        className="text-neutral-500 hover:text-neutral-300 transition-colors"
+                        title="Renomear"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
                   <div className="text-xs text-neutral-500 mt-0.5 truncate">
                     {d.device_id ?? "Aguardando primeira conexão"}
                   </div>
