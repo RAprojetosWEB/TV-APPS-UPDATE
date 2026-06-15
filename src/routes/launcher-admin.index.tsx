@@ -171,9 +171,32 @@ function DashboardPage() {
                 className="grid grid-cols-12 items-center px-5 py-4 border-b border-neutral-800/60 last:border-b-0"
               >
                 <div className="col-span-5">
-                  <div className="font-medium text-white">
-                    {d.client_name?.trim() ? d.client_name : "Novo dispositivo"}
-                  </div>
+                  {editingId === d.id ? (
+                    <input
+                      autoFocus
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") commitEdit(d.id);
+                        if (e.key === "Escape") cancelEdit();
+                      }}
+                      onBlur={() => commitEdit(d.id)}
+                      className="w-full rounded-md border border-neutral-700 bg-neutral-800 px-2 py-1 text-sm text-white outline-none focus:border-neutral-500"
+                    />
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-white">
+                        {d.client_name?.trim() ? d.client_name : "Novo dispositivo"}
+                      </span>
+                      <button
+                        onClick={() => startEdit(d)}
+                        className="text-neutral-500 hover:text-neutral-300 transition-colors"
+                        title="Renomear"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
                   <div className="text-xs text-neutral-500 mt-0.5 truncate">
                     {d.device_id ?? "Aguardando primeira conexão"}
                   </div>
