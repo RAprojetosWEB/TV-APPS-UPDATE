@@ -96,10 +96,10 @@ function DashboardPage() {
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Total de aparelhos" value={stats.total} tone="neutral" />
-        <StatCard label="Ativos" value={stats.active} tone="green" />
-        <StatCard label="Bloqueados" value={stats.blocked} tone="red" />
-        <StatCard label="Vencendo em 7 dias" value={stats.expiring} tone="orange" />
+        <StatCard label="Total de aparelhos" value={stats.total} tone="neutral" onClick={() => setFilter("all")} />
+        <StatCard label="Ativos" value={stats.active} tone="green" onClick={() => setFilter("active")} />
+        <StatCard label="Bloqueados" value={stats.blocked} tone="red" onClick={() => setFilter("blocked")} />
+        <StatCard label="Vencendo em 7 dias" value={stats.expiring} tone="orange" onClick={() => setFilter("expiring")} />
       </div>
 
       <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
