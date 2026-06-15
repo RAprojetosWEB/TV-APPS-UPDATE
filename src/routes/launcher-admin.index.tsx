@@ -188,10 +188,12 @@ function StatCard({
   label,
   value,
   tone,
+  onClick,
 }: {
   label: string;
   value: number;
   tone: "neutral" | "green" | "red" | "orange";
+  onClick?: () => void;
 }) {
   const toneClasses = {
     neutral: "border-neutral-800 bg-neutral-900/50",
@@ -206,12 +208,15 @@ function StatCard({
     orange: "text-orange-400",
   }[tone];
   return (
-    <div className={`rounded-2xl border p-5 ${toneClasses}`}>
+    <button
+      onClick={onClick}
+      className={`rounded-2xl border p-5 text-left transition-colors hover:brightness-110 ${toneClasses} ${onClick ? "cursor-pointer" : ""}`}
+    >
       <div className="text-xs font-medium uppercase tracking-wider text-neutral-400">
         {label}
       </div>
       <div className={`mt-2 text-4xl font-bold ${valueColor}`}>{value}</div>
-    </div>
+    </button>
   );
 }
 
