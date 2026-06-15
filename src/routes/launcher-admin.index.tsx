@@ -102,29 +102,14 @@ function DashboardPage() {
         <StatCard label="Vencendo em 7 dias" value={stats.expiring} tone="orange" onClick={() => setFilter("expiring")} />
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+      <div>
         <input
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar por nome do cliente…"
-          className="flex-1 h-11 rounded-xl border border-neutral-800 bg-neutral-900 px-4 text-sm text-white placeholder:text-neutral-500 outline-none focus:border-neutral-600"
+          className="w-full h-11 rounded-xl border border-neutral-800 bg-neutral-900 px-4 text-sm text-white placeholder:text-neutral-500 outline-none focus:border-neutral-600"
         />
-        <div className="flex gap-1 rounded-xl border border-neutral-800 bg-neutral-900 p-1">
-          {(["all", "active", "blocked", "expiring"] as Filter[]).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === f
-                  ? "bg-neutral-700 text-white"
-                  : "text-neutral-400 hover:text-white"
-              }`}
-            >
-              {f === "all" ? "Todos" : f === "active" ? "Ativos" : f === "blocked" ? "Bloqueados" : "Vencendo"}
-            </button>
-          ))}
-        </div>
       </div>
 
       <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 overflow-hidden">
