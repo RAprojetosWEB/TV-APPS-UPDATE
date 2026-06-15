@@ -13,7 +13,7 @@ type Device = {
   notes: string | null;
 };
 
-type Filter = "all" | "active" | "blocked";
+type Filter = "all" | "active" | "blocked" | "expiring";
 
 export const Route = createFileRoute("/launcher-admin/")({
   component: DashboardPage,
