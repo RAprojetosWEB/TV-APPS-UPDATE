@@ -111,7 +111,7 @@ function DashboardPage() {
           className="flex-1 h-11 rounded-xl border border-neutral-800 bg-neutral-900 px-4 text-sm text-white placeholder:text-neutral-500 outline-none focus:border-neutral-600"
         />
         <div className="flex gap-1 rounded-xl border border-neutral-800 bg-neutral-900 p-1">
-          {(["all", "active", "blocked"] as Filter[]).map((f) => (
+          {(["all", "active", "blocked", "expiring"] as Filter[]).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -121,7 +121,7 @@ function DashboardPage() {
                   : "text-neutral-400 hover:text-white"
               }`}
             >
-              {f === "all" ? "Todos" : f === "active" ? "Ativos" : "Bloqueados"}
+              {f === "all" ? "Todos" : f === "active" ? "Ativos" : f === "blocked" ? "Bloqueados" : "Vencendo"}
             </button>
           ))}
         </div>
