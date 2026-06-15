@@ -96,6 +96,39 @@ function DashboardPage() {
     );
   }
 
+  async function renameDevice(id: string, newName: string) {
+    const trimmed = newName.trim();
+    const { error } = await supabase
+      .from("devices")
+      .update({ client_name: trimmed || null })
+      .eq("id", id);
+    if (error) {
+      toast.error("Não foi possível renomear", { description: error.message });
+      return;
+    }
+    toast.success("Nome atualizado");
+    setDevices((prev) =>
+      prev.map((x) => (x.id === id ? { ...x, client_name: trimmed || null } : x)),
+    );
+  }
+
+  function startEdit(d: Device) {
+    setEditingId(d.id);
+    setEditName(d.client_name ?? "");
+  }
+
+  function commitEdit(id: string) {
+    if (editingId === id) {
+      renameDevice(id, editName);
+      setEditingId(null);
+    }
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditName("");
+  }
+
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
