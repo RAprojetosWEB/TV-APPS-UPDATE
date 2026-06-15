@@ -62,9 +62,16 @@ function DashboardPage() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const now = Date.now();
+    const in7 = now + 7 * 24 * 60 * 60 * 1000;
     return devices.filter((d) => {
       if (filter === "active" && d.status !== "active") return false;
       if (filter === "blocked" && d.status !== "blocked") return false;
+      if (filter === "expiring") {
+        if (!d.expires_at) return false;
+        const t = new Date(d.expires_at).getTime();
+        if (t < now || t > in7) return false;
+      }
       if (!q) return true;
       return (d.client_name ?? "").toLowerCase().includes(q);
     });
