@@ -13,7 +13,7 @@ type Device = {
   notes: string | null;
 };
 
-type Filter = "all" | "active" | "blocked";
+type Filter = "all" | "active" | "blocked" | "expiring";
 
 export const Route = createFileRoute("/launcher-admin/")({
   component: DashboardPage,
@@ -62,9 +62,16 @@ function DashboardPage() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const now = Date.now();
+    const in7 = now + 7 * 24 * 60 * 60 * 1000;
     return devices.filter((d) => {
       if (filter === "active" && d.status !== "active") return false;
       if (filter === "blocked" && d.status !== "blocked") return false;
+      if (filter === "expiring") {
+        if (!d.expires_at) return false;
+        const t = new Date(d.expires_at).getTime();
+        if (t < now || t > in7) return false;
+      }
       if (!q) return true;
       return (d.client_name ?? "").toLowerCase().includes(q);
     });
@@ -89,10 +96,10 @@ function DashboardPage() {
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Total de aparelhos" value={stats.total} tone="neutral" />
-        <StatCard label="Ativos" value={stats.active} tone="green" />
-        <StatCard label="Bloqueados" value={stats.blocked} tone="red" />
-        <StatCard label="Vencendo em 7 dias" value={stats.expiring} tone="orange" />
+        <StatCard label="Total de aparelhos" value={stats.total} tone="neutral" onClick={() => setFilter("all")} />
+        <StatCard label="Ativos" value={stats.active} tone="green" onClick={() => setFilter("active")} />
+        <StatCard label="Bloqueados" value={stats.blocked} tone="red" onClick={() => setFilter("blocked")} />
+        <StatCard label="Vencendo em 7 dias" value={stats.expiring} tone="orange" onClick={() => setFilter("expiring")} />
       </div>
 
       <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
@@ -104,7 +111,7 @@ function DashboardPage() {
           className="flex-1 h-11 rounded-xl border border-neutral-800 bg-neutral-900 px-4 text-sm text-white placeholder:text-neutral-500 outline-none focus:border-neutral-600"
         />
         <div className="flex gap-1 rounded-xl border border-neutral-800 bg-neutral-900 p-1">
-          {(["all", "active", "blocked"] as Filter[]).map((f) => (
+          {(["all", "active", "blocked", "expiring"] as Filter[]).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -114,7 +121,7 @@ function DashboardPage() {
                   : "text-neutral-400 hover:text-white"
               }`}
             >
-              {f === "all" ? "Todos" : f === "active" ? "Ativos" : "Bloqueados"}
+              {f === "all" ? "Todos" : f === "active" ? "Ativos" : f === "blocked" ? "Bloqueados" : "Vencendo"}
             </button>
           ))}
         </div>
@@ -181,10 +188,12 @@ function StatCard({
   label,
   value,
   tone,
+  onClick,
 }: {
   label: string;
   value: number;
   tone: "neutral" | "green" | "red" | "orange";
+  onClick?: () => void;
 }) {
   const toneClasses = {
     neutral: "border-neutral-800 bg-neutral-900/50",
@@ -199,12 +208,15 @@ function StatCard({
     orange: "text-orange-400",
   }[tone];
   return (
-    <div className={`rounded-2xl border p-5 ${toneClasses}`}>
+    <button
+      onClick={onClick}
+      className={`rounded-2xl border p-5 text-left transition-colors hover:brightness-110 ${toneClasses} ${onClick ? "cursor-pointer" : ""}`}
+    >
       <div className="text-xs font-medium uppercase tracking-wider text-neutral-400">
         {label}
       </div>
       <div className={`mt-2 text-4xl font-bold ${valueColor}`}>{value}</div>
-    </div>
+    </button>
   );
 }
 
