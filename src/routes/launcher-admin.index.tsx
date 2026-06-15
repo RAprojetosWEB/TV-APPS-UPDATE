@@ -195,12 +195,12 @@ function StatCard({
   return (
     <button
       onClick={onClick}
-      className={`rounded-2xl border p-4 text-left transition-colors hover:brightness-110 ${toneClasses} ${onClick ? "cursor-pointer" : ""}`}
+      className={`rounded-xl border py-2 px-3 text-left transition-colors hover:brightness-110 ${toneClasses} ${onClick ? "cursor-pointer" : ""}`}
     >
-      <div className="text-xs font-medium uppercase tracking-wider text-neutral-400">
+      <div className="text-[10px] font-medium uppercase tracking-wider text-neutral-400">
         {label}
       </div>
-      <div className={`mt-1 text-3xl font-bold ${valueColor}`}>{value}</div>
+      <div className={`text-xl font-bold ${valueColor}`}>{value}</div>
     </button>
   );
 }
