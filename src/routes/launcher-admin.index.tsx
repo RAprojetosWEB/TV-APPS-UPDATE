@@ -180,7 +180,15 @@ function DashboardPage() {
                       onChange={(e) => setEditName(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") commitEdit(d.id);
-                        if (e.key === "Escape") cancelEdit();
+                        if (e.key === "Escape") {
+                          if (editName.trim() !== originalName.trim()) {
+                            if (window.confirm("Descartar alterações no nome do dispositivo?")) {
+                              cancelEdit();
+                            }
+                          } else {
+                            cancelEdit();
+                          }
+                        }
                       }}
                       onBlur={() => commitEdit(d.id)}
                       className="w-full rounded-md border border-neutral-700 bg-neutral-800 px-2 py-1 text-sm text-white outline-none focus:border-neutral-500"
