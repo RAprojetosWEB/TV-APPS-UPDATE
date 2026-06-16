@@ -116,6 +116,7 @@ function DashboardPage() {
   function startEdit(d: Device) {
     setEditingId(d.id);
     setEditName(d.client_name ?? "");
+    setOriginalName(d.client_name ?? "");
   }
 
   function commitEdit(id: string) {
