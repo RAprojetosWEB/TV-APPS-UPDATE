@@ -27,6 +27,7 @@ function DashboardPage() {
   const [filter, setFilter] = useState<Filter>("all");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [originalName, setOriginalName] = useState("");
 
   async function load() {
     setLoading(true);
