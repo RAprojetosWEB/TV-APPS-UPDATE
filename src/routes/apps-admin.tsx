@@ -60,7 +60,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-export const Route = createFileRoute("/admin")({
+export const Route = createFileRoute("/apps-admin")({
   component: AdminPage,
   head: () => ({
     meta: [
