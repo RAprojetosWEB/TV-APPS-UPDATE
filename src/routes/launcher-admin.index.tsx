@@ -27,6 +27,7 @@ function DashboardPage() {
   const [filter, setFilter] = useState<Filter>("all");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [originalName, setOriginalName] = useState("");
 
   async function load() {
     setLoading(true);
@@ -115,6 +116,7 @@ function DashboardPage() {
   function startEdit(d: Device) {
     setEditingId(d.id);
     setEditName(d.client_name ?? "");
+    setOriginalName(d.client_name ?? "");
   }
 
   function commitEdit(id: string) {
@@ -178,7 +180,15 @@ function DashboardPage() {
                       onChange={(e) => setEditName(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") commitEdit(d.id);
-                        if (e.key === "Escape") cancelEdit();
+                        if (e.key === "Escape") {
+                          if (editName.trim() !== originalName.trim()) {
+                            if (window.confirm("Descartar alterações no nome do dispositivo?")) {
+                              cancelEdit();
+                            }
+                          } else {
+                            cancelEdit();
+                          }
+                        }
                       }}
                       onBlur={() => commitEdit(d.id)}
                       className="w-full rounded-md border border-neutral-700 bg-neutral-800 px-2 py-1 text-sm text-white outline-none focus:border-neutral-500"
