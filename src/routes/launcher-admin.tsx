@@ -73,38 +73,44 @@ function LauncherAdminLayout() {
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
       <header className="border-b border-neutral-800 bg-neutral-950/95 backdrop-blur sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
-          <div className="flex items-center gap-6">
-            <Link to="/launcher-admin" className="text-lg font-bold tracking-tight">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:h-16 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-6">
+          <div className="flex items-center justify-between gap-3 sm:gap-6">
+            <Link to="/launcher-admin" className="text-base sm:text-lg font-bold tracking-tight truncate">
               Painel de Aparelhos
             </Link>
-            <nav className="flex items-center gap-1">
-              <Link
-                to="/launcher-admin"
-                activeOptions={{ exact: true }}
-                className={linkIdle + " " + linkBase}
-                activeProps={{ className: `${linkBase} ${linkActive}` }}
-              >
-                Dashboard
-              </Link>
-              <Link
-                to="/launcher-admin/novo"
-                className={linkIdle + " " + linkBase}
-                activeProps={{ className: `${linkBase} ${linkActive}` }}
-              >
-                Cadastrar
-              </Link>
-              <Link
-                to="/launcher-admin/novos"
-                className={linkIdle + " " + linkBase}
-                activeProps={{ className: `${linkBase} ${linkActive}` }}
-              >
-                Novos Aparelhos
-              </Link>
-            </nav>
+            <button
+              onClick={handleLogout}
+              className="sm:hidden px-3 py-1.5 rounded-lg border border-neutral-700 text-neutral-300 text-sm shrink-0"
+            >
+              Sair
+            </button>
           </div>
-          <div className="flex items-center gap-3 text-sm">
-            <span className="text-neutral-500 hidden md:inline">{email}</span>
+          <nav className="flex items-center gap-1 overflow-x-auto -mx-1 px-1 sm:mx-0 sm:px-0">
+            <Link
+              to="/launcher-admin"
+              activeOptions={{ exact: true }}
+              className={linkIdle + " " + linkBase + " shrink-0"}
+              activeProps={{ className: `${linkBase} ${linkActive} shrink-0` }}
+            >
+              Dashboard
+            </Link>
+            <Link
+              to="/launcher-admin/novo"
+              className={linkIdle + " " + linkBase + " shrink-0"}
+              activeProps={{ className: `${linkBase} ${linkActive} shrink-0` }}
+            >
+              Cadastrar
+            </Link>
+            <Link
+              to="/launcher-admin/novos"
+              className={linkIdle + " " + linkBase + " shrink-0"}
+              activeProps={{ className: `${linkBase} ${linkActive} shrink-0` }}
+            >
+              Novos Aparelhos
+            </Link>
+          </nav>
+          <div className="hidden sm:flex items-center gap-3 text-sm">
+            <span className="text-neutral-500 hidden md:inline truncate max-w-[160px]">{email}</span>
             <button
               onClick={handleLogout}
               className="px-3 py-1.5 rounded-lg border border-neutral-700 text-neutral-300 hover:text-white hover:border-neutral-500"
@@ -114,7 +120,7 @@ function LauncherAdminLayout() {
           </div>
         </div>
       </header>
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <Outlet />
       </main>
     </div>

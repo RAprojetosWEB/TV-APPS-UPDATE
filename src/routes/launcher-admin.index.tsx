@@ -151,7 +151,7 @@ function DashboardPage() {
       </div>
 
       <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 overflow-hidden">
-        <div className="grid grid-cols-12 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-500 border-b border-neutral-800">
+        <div className="hidden sm:grid grid-cols-12 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-500 border-b border-neutral-800">
           <div className="col-span-5">Cliente</div>
           <div className="col-span-2">Status</div>
           <div className="col-span-3">Vencimento</div>
@@ -170,9 +170,9 @@ function DashboardPage() {
             return (
               <div
                 key={d.id}
-                className="grid grid-cols-12 items-center px-5 py-4 border-b border-neutral-800/60 last:border-b-0"
+                className="flex flex-col gap-3 sm:grid sm:grid-cols-12 sm:items-center sm:gap-0 px-4 sm:px-5 py-4 border-b border-neutral-800/60 last:border-b-0"
               >
-                <div className="col-span-5">
+                <div className="sm:col-span-5 min-w-0">
                   {editingId === d.id ? (
                     <input
                       autoFocus
@@ -211,16 +211,17 @@ function DashboardPage() {
                     {d.device_id ?? "Aguardando primeira conexão"}
                   </div>
                 </div>
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <StatusBadge status={d.status} />
                 </div>
-                <div className="col-span-3 text-sm text-neutral-300">
+                <div className="sm:col-span-3 text-sm text-neutral-300 flex sm:block items-center gap-2">
+                  <span className="sm:hidden text-xs uppercase tracking-wider text-neutral-500">Vence:</span>
                   {formatDate(d.expires_at)}
                 </div>
-                <div className="col-span-2 text-right">
+                <div className="sm:col-span-2 sm:text-right">
                   <button
                     onClick={() => toggleStatus(d)}
-                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                    className={`w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
                       isActive
                         ? "bg-red-500/10 text-red-400 hover:bg-red-500/20"
                         : "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
