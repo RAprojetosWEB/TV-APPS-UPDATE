@@ -11,7 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LauncherAdminRouteImport } from './routes/launcher-admin'
-import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AppsAdminRouteImport } from './routes/apps-admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LauncherAdminIndexRouteImport } from './routes/launcher-admin.index'
 import { Route as LauncherAdminResetarSenhaRouteImport } from './routes/launcher-admin.resetar-senha'
@@ -34,9 +34,9 @@ const LauncherAdminRoute = LauncherAdminRouteImport.update({
   path: '/launcher-admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const AppsAdminRoute = AppsAdminRouteImport.update({
+  id: '/apps-admin',
+  path: '/apps-admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -99,7 +99,7 @@ const ApiPublicBumpVersionRoute = ApiPublicBumpVersionRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/apps-admin': typeof AppsAdminRoute
   '/launcher-admin': typeof LauncherAdminRouteWithChildren
   '/login': typeof LoginRoute
   '/launcher-admin/login': typeof LauncherAdminLoginRoute
@@ -115,7 +115,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/apps-admin': typeof AppsAdminRoute
   '/login': typeof LoginRoute
   '/launcher-admin/login': typeof LauncherAdminLoginRoute
   '/launcher-admin/nova-senha': typeof LauncherAdminNovaSenhaRoute
@@ -131,7 +131,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/apps-admin': typeof AppsAdminRoute
   '/launcher-admin': typeof LauncherAdminRouteWithChildren
   '/login': typeof LoginRoute
   '/launcher-admin/login': typeof LauncherAdminLoginRoute
@@ -149,7 +149,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/admin'
+    | '/apps-admin'
     | '/launcher-admin'
     | '/login'
     | '/launcher-admin/login'
@@ -165,7 +165,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin'
+    | '/apps-admin'
     | '/login'
     | '/launcher-admin/login'
     | '/launcher-admin/nova-senha'
@@ -180,7 +180,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/admin'
+    | '/apps-admin'
     | '/launcher-admin'
     | '/login'
     | '/launcher-admin/login'
@@ -197,7 +197,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
+  AppsAdminRoute: typeof AppsAdminRoute
   LauncherAdminRoute: typeof LauncherAdminRouteWithChildren
   LoginRoute: typeof LoginRoute
   ApiPublicBumpVersionRoute: typeof ApiPublicBumpVersionRoute
@@ -221,11 +221,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LauncherAdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
+    '/apps-admin': {
+      id: '/apps-admin'
+      path: '/apps-admin'
+      fullPath: '/apps-admin'
+      preLoaderRoute: typeof AppsAdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -334,7 +334,7 @@ const LauncherAdminRouteWithChildren = LauncherAdminRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
+  AppsAdminRoute: AppsAdminRoute,
   LauncherAdminRoute: LauncherAdminRouteWithChildren,
   LoginRoute: LoginRoute,
   ApiPublicBumpVersionRoute: ApiPublicBumpVersionRoute,

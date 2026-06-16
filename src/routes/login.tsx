@@ -25,7 +25,7 @@ function LoginPage() {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/admin` },
+          options: { emailRedirectTo: `${window.location.origin}/apps-admin` },
         });
         if (error) {
           toast.error("Erro ao criar conta", { description: error.message });
@@ -42,7 +42,7 @@ function LoginPage() {
           toast.error("Login falhou", { description: error.message });
         } else {
           toast.success("Bem-vindo!");
-          navigate({ to: "/admin" });
+          navigate({ to: "/apps-admin" });
         }
       }
     } finally {
