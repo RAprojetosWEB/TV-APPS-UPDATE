@@ -81,9 +81,9 @@ function LauncherAdminLayout() {
             <div className="flex items-center gap-2">
               <Link
                 to="/apps-admin"
-                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-700 text-neutral-300 hover:text-white hover:border-neutral-500 text-sm"
+                className="px-3 py-1.5 rounded-lg border border-neutral-700 text-neutral-300 hover:text-white hover:border-neutral-500 text-sm"
               >
-                <span className="text-xs">Painel de Apps</span>
+                Painel de Apps
               </Link>
               <button
                 onClick={handleLogout}
