@@ -81,7 +81,7 @@ function LauncherAdminLayout() {
             <div className="flex items-center gap-2">
               <Link
                 to="/apps-admin"
-                className="px-3 py-1.5 rounded-lg border border-neutral-700 text-neutral-300 hover:text-white hover:border-neutral-500 text-sm"
+                className="px-3 py-1.5 rounded-lg bg-blue-600/15 border border-blue-500/40 text-blue-400 hover:bg-blue-600/25 hover:border-blue-500/60 hover:text-blue-300 text-sm"
               >
                 Painel de Apps
               </Link>
@@ -121,7 +121,7 @@ function LauncherAdminLayout() {
             <span className="text-neutral-500 hidden md:inline truncate max-w-[160px]">{email}</span>
             <Link
               to="/apps-admin"
-              className="px-3 py-1.5 rounded-lg border border-neutral-700 text-neutral-300 hover:text-white hover:border-neutral-500"
+              className="px-3 py-1.5 rounded-lg bg-blue-600/15 border border-blue-500/40 text-blue-400 hover:bg-blue-600/25 hover:border-blue-500/60 hover:text-blue-300"
             >
               Painel de Apps
             </Link>

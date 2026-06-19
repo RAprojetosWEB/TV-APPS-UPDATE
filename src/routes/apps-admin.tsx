@@ -474,7 +474,7 @@ function AdminShell({
           <div className="flex items-center gap-2">
             <Link
               to="/launcher-admin"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--admin-border)] text-[var(--admin-text-muted)] hover:text-[var(--admin-text)] hover:border-[var(--admin-border-hover)] text-sm transition-colors"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--neon)]/15 border border-[var(--neon)]/40 text-[var(--neon)] hover:bg-[var(--neon)]/25 hover:border-[var(--neon)]/60 text-sm transition-colors"
             >
               <span>Painel de Aparelhos</span>
             </Link>
