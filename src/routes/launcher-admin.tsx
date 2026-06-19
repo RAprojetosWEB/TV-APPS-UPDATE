@@ -78,12 +78,20 @@ function LauncherAdminLayout() {
             <Link to="/launcher-admin" className="text-base sm:text-lg font-bold tracking-tight truncate">
               Painel de Aparelhos
             </Link>
-            <button
-              onClick={handleLogout}
-              className="sm:hidden px-3 py-1.5 rounded-lg border border-neutral-700 text-neutral-300 text-sm shrink-0"
-            >
-              Sair
-            </button>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/apps-admin"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-700 text-neutral-300 hover:text-white hover:border-neutral-500 text-sm"
+              >
+                <span className="text-xs">Painel de Apps</span>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="sm:hidden px-3 py-1.5 rounded-lg border border-neutral-700 text-neutral-300 text-sm shrink-0"
+              >
+                Sair
+              </button>
+            </div>
           </div>
           <nav className="flex items-center gap-1 overflow-x-auto -mx-1 px-1 sm:mx-0 sm:px-0">
             <Link
