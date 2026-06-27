@@ -12,6 +12,7 @@ type Device = {
   expires_at: string | null;
   registered_at: string;
   notes: string | null;
+  setup_status: string;
 };
 
 type Filter = "all" | "active" | "blocked" | "expiring";
@@ -94,6 +95,24 @@ function DashboardPage() {
     toast.success(newStatus === "active" ? "Aparelho ativado" : "Aparelho bloqueado");
     setDevices((prev) =>
       prev.map((x) => (x.id === d.id ? { ...x, status: newStatus } : x)),
+    );
+  }
+
+  async function resetSetup(d: Device) {
+    if (!window.confirm("Tem certeza? Isso vai reativar a tela de configuração inicial nesse aparelho.")) {
+      return;
+    }
+    const { error } = await supabase
+      .from("devices")
+      .update({ setup_status: "pending" })
+      .eq("id", d.id);
+    if (error) {
+      toast.error("Não foi possível preparar", { description: error.message });
+      return;
+    }
+    toast.success("Aparelho pronto para novo cliente");
+    setDevices((prev) =>
+      prev.map((x) => (x.id === d.id ? { ...x, setup_status: "pending" } : x)),
     );
   }
 
@@ -212,23 +231,36 @@ function DashboardPage() {
                   </div>
                 </div>
                 <div className="sm:col-span-2">
-                  <StatusBadge status={d.status} />
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <StatusBadge status={d.status} />
+                    <SetupBadge status={d.setup_status} />
+                  </div>
                 </div>
                 <div className="sm:col-span-3 text-sm text-neutral-300 flex sm:block items-center gap-2">
                   <span className="sm:hidden text-xs uppercase tracking-wider text-neutral-500">Vence:</span>
                   {formatDate(d.expires_at)}
                 </div>
                 <div className="sm:col-span-2 sm:text-right">
-                  <button
-                    onClick={() => toggleStatus(d)}
-                    className={`w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                      isActive
-                        ? "bg-red-500/10 text-red-400 hover:bg-red-500/20"
-                        : "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
-                    }`}
-                  >
-                    {isActive ? "Bloquear" : "Ativar"}
-                  </button>
+                  <div className="flex flex-col sm:items-end gap-2">
+                    <button
+                      onClick={() => toggleStatus(d)}
+                      className={`w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                        isActive
+                          ? "bg-red-500/10 text-red-400 hover:bg-red-500/20"
+                          : "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                      }`}
+                    >
+                      {isActive ? "Bloquear" : "Ativar"}
+                    </button>
+                    <button
+                      onClick={() => resetSetup(d)}
+                      disabled={d.setup_status === "pending"}
+                      className="w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-semibold transition-colors bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Reativa a tela de configuração inicial nesse aparelho"
+                    >
+                      Preparar p/ novo cliente
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -286,6 +318,21 @@ function StatusBadge({ status }: { status: string }) {
   return (
     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
       <span className="w-1.5 h-1.5 rounded-full bg-red-400" /> Bloqueado
+    </span>
+  );
+}
+
+function SetupBadge({ status }: { status: string }) {
+  if (status === "pending") {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> Aguardando configuração
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Configurado
     </span>
   );
 }
