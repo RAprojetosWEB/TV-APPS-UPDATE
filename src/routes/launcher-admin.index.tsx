@@ -231,23 +231,36 @@ function DashboardPage() {
                   </div>
                 </div>
                 <div className="sm:col-span-2">
-                  <StatusBadge status={d.status} />
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <StatusBadge status={d.status} />
+                    <SetupBadge status={d.setup_status} />
+                  </div>
                 </div>
                 <div className="sm:col-span-3 text-sm text-neutral-300 flex sm:block items-center gap-2">
                   <span className="sm:hidden text-xs uppercase tracking-wider text-neutral-500">Vence:</span>
                   {formatDate(d.expires_at)}
                 </div>
                 <div className="sm:col-span-2 sm:text-right">
-                  <button
-                    onClick={() => toggleStatus(d)}
-                    className={`w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                      isActive
-                        ? "bg-red-500/10 text-red-400 hover:bg-red-500/20"
-                        : "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
-                    }`}
-                  >
-                    {isActive ? "Bloquear" : "Ativar"}
-                  </button>
+                  <div className="flex flex-col sm:items-end gap-2">
+                    <button
+                      onClick={() => toggleStatus(d)}
+                      className={`w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                        isActive
+                          ? "bg-red-500/10 text-red-400 hover:bg-red-500/20"
+                          : "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                      }`}
+                    >
+                      {isActive ? "Bloquear" : "Ativar"}
+                    </button>
+                    <button
+                      onClick={() => resetSetup(d)}
+                      disabled={d.setup_status === "pending"}
+                      className="w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-semibold transition-colors bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Reativa a tela de configuração inicial nesse aparelho"
+                    >
+                      Preparar p/ novo cliente
+                    </button>
+                  </div>
                 </div>
               </div>
             );
