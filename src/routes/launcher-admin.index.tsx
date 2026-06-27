@@ -12,6 +12,7 @@ type Device = {
   expires_at: string | null;
   registered_at: string;
   notes: string | null;
+  setup_status: string;
 };
 
 type Filter = "all" | "active" | "blocked" | "expiring";
@@ -94,6 +95,24 @@ function DashboardPage() {
     toast.success(newStatus === "active" ? "Aparelho ativado" : "Aparelho bloqueado");
     setDevices((prev) =>
       prev.map((x) => (x.id === d.id ? { ...x, status: newStatus } : x)),
+    );
+  }
+
+  async function resetSetup(d: Device) {
+    if (!window.confirm("Tem certeza? Isso vai reativar a tela de configuração inicial nesse aparelho.")) {
+      return;
+    }
+    const { error } = await supabase
+      .from("devices")
+      .update({ setup_status: "pending" })
+      .eq("id", d.id);
+    if (error) {
+      toast.error("Não foi possível preparar", { description: error.message });
+      return;
+    }
+    toast.success("Aparelho pronto para novo cliente");
+    setDevices((prev) =>
+      prev.map((x) => (x.id === d.id ? { ...x, setup_status: "pending" } : x)),
     );
   }
 
