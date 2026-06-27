@@ -322,6 +322,21 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+function SetupBadge({ status }: { status: string }) {
+  if (status === "pending") {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> Aguardando configuração
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Configurado
+    </span>
+  );
+}
+
 function formatDate(iso: string | null) {
   if (!iso) return <span className="text-neutral-600">—</span>;
   try {
