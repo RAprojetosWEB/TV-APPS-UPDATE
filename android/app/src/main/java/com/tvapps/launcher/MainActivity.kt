@@ -61,6 +61,8 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import org.json.JSONObject
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 
 private const val VERIFY_PASSWORD_ENDPOINT =
     "https://tv-apps-update.lovable.app/api/public/verify-launcher-password"
@@ -87,10 +89,7 @@ private fun verifyLauncherPasswordRemote(password: String): VerifyResult {
     lastVerifyError = null
     return try {
         val payload = JSONObject().put("password", password).toString()
-        val body = okhttp3.RequestBody.create(
-            "application/json; charset=utf-8".toMediaTypeOrNullCompat(),
-            payload.toByteArray(Charsets.UTF_8),
-        )
+        val body = payload.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
         val req = okhttp3.Request.Builder()
             .url(VERIFY_PASSWORD_ENDPOINT)
             .header("Accept", "application/json")
@@ -120,9 +119,6 @@ private fun verifyLauncherPasswordRemote(password: String): VerifyResult {
         VerifyResult.NETWORK_ERROR
     }
 }
-
-private fun String.toMediaTypeOrNullCompat(): okhttp3.MediaType? =
-    okhttp3.MediaType.parse(this)
 
 class MainActivity : Activity() {
 
