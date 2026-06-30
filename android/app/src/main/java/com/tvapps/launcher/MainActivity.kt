@@ -703,7 +703,11 @@ class MainActivity : Activity() {
                     } else {
                         val message = when (result) {
                             VerifyResult.WRONG -> "Senha incorreta"
-                            VerifyResult.NETWORK_ERROR -> "Erro de conexão com o servidor"
+                            VerifyResult.NETWORK_ERROR -> {
+                                val detail = lastVerifyError
+                                if (detail != null) "Erro de conexão ($detail)"
+                                else "Erro de conexão com o servidor"
+                            }
                             else -> "Erro desconhecido"
                         }
                         Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
