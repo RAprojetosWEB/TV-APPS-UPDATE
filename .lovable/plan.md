@@ -1,66 +1,29 @@
-## Diagnóstico
+## Diagnóstico do erro de conexão no APK
 
-O bug está em `android/app/src/main/java/com/tvapps/launcher/ApkDownloader.kt`. A barra não aparece (na verdade pula direto pra 100% ou fica em estado inválido) quando o APK é baixado de um storage que **não retorna o header `Content-Length`** — caso típico de:
+Checei o status do backend hospedado (Lovable Cloud) e ele está **respondendo normalmente** — não há instabilidade do nosso lado neste momento. Então o "erro de conexão com servidor" que aparece no APK ao colocar a senha tem outra causa.
 
-- Servidores que enviam a resposta com `Transfer-Encoding: chunked` (sem `Content-Length`).
-- Servidores que aplicam **gzip** na resposta (OkHttp por padrão manda `Accept-Encoding: gzip`; quando o servidor comprime, o `Content-Length` da resposta decodificada vira `-1`).
-- CDNs/redirects que removem o header.
+O APK chama o endpoint público `/api/public/verify-launcher-password` no domínio publicado. Possíveis culpados:
 
-No Lovable Cloud (Supabase Storage) o header sempre vem certinho, então funciona. Em outros hosts, não.
+1. URL antiga/errada compilada no APK.
+2. TV Box com Android antigo (≤ 7.1) que não confia no certificado TLS do `.lovable.app` (problema bem comum em TV Box genérica).
+3. Handler retornando erro intermitente.
 
-### Por que isso quebra a UI
+### Plano de execução
 
-No código atual:
+1. Testar o endpoint em produção via `invoke-server-function` para confirmar que responde 200.
+2. Olhar `MainActivity.kt` e ver:
+   - Qual URL está hardcoded.
+   - Como o erro é mostrado (mapear `IOException` / `SSLHandshakeException` para mensagens distintas em vez de "sem conexão").
+3. Se for problema de TLS em Android antigo: adicionar `network_security_config.xml` confiando em system + user CAs e atualizar OkHttp para usar `conscrypt-android` (ou cair pra HttpURLConnection com TLS 1.2 forçado).
+4. Recompilar APK.
 
-```kotlin
-val total = body.contentLength().coerceAtLeast(1L)
-...
-val percent = ((downloaded * 100) / total).toInt().coerceIn(0, 100)
-```
+Antes de mexer no Android, **preciso de uma confirmação rápida** que muda o tipo de correção:
 
-Quando `contentLength()` devolve `-1`, `coerceAtLeast(1L)` força `total = 1`. Resultado:
+### Pergunta
 
-- Já no primeiro chunk lido (64 KB), `percent = (65536 * 100) / 1 = enorme`, clampado para `100`.
-- A barra "salta" pra 100% instantaneamente e o usuário não vê progresso nenhum, embora o download continue acontecendo até o fim.
-- A velocidade até é calculada, mas a UI provavelmente já some / fica travada em 100% (dependendo da tela que escuta o `Flow`).
+Qual a versão do Android da TV Box onde dá o erro? (Configurações → Sobre → versão do Android: 7, 9, 11, etc.)
 
-## Correção proposta
+- Se for **7 ou menor** → é praticamente certo que é falha de certificado TLS (corrige no manifesto + network_security_config).
+- Se for **9 ou maior** → vou investigar a URL/handler/logs do servidor.
 
-Alterar **apenas** `ApkDownloader.kt` (sem mexer em UI, OTA modal, etc.) para:
-
-1. **Forçar resposta sem compressão**: adicionar `header("Accept-Encoding", "identity")` no `Request`, garantindo que o servidor não devolva gzip e que `Content-Length` venha cru sempre que o servidor sabe o tamanho.
-2. **Detectar tamanho desconhecido**: tratar `contentLength() <= 0` como *unknown* (não forçar para 1).
-3. **Emitir progresso "indeterminado" quando o tamanho for desconhecido**:
-   - Manter o cálculo de velocidade e bytes baixados (já funciona, não depende do total).
-   - Emitir `percent = -1` (sentinela) e `totalBytes = 0` para sinalizar "indeterminado".
-   - ETA continua `-1` (já é o comportamento atual quando não dá pra calcular).
-4. **Garantir emissão periódica**: hoje só emite quando `percent` muda ou a janela de 250 ms passa; manter essa lógica para o caso indeterminado também, para a UI animar.
-
-## Mudança na UI (mínima, no mesmo arquivo de modal já existente)
-
-O `OtaUpdateModal.tsx` é só pra OTA (vem do `update.json`, que aponta pro Supabase — sempre tem Content-Length, então não muda nada lá).
-
-O download dos APKs do catálogo é renderizado dentro do `MainActivity.kt` (Kotlin), que consome o `Flow<DownloadProgress>`. Precisa de um pequeno ajuste lá: quando `progress.percent < 0` ou `progress.totalBytes <= 0`, trocar a barra determinada (`ProgressBar` horizontal com `progress`) por **modo indeterminado** (`isIndeterminate = true`) e exibir apenas "Baixado: X MB · Y MB/s" sem o "%".
-
-## Arquivos a alterar
-
-1. `android/app/src/main/java/com/tvapps/launcher/ApkDownloader.kt`
-   - Adicionar `Accept-Encoding: identity` no `Request`.
-   - Trocar `body.contentLength().coerceAtLeast(1L)` por detecção real de "desconhecido".
-   - Emitir `percent = -1` e `totalBytes = 0` no caso indeterminado, mantendo velocidade e bytes baixados.
-
-2. `android/app/src/main/java/com/tvapps/launcher/MainActivity.kt` (só o trecho que consome o `DownloadProgress.Progress`)
-   - Se `totalBytes <= 0L`, colocar a `ProgressBar` em `isIndeterminate = true` e esconder o texto de "%".
-   - Caso contrário, comportamento atual (barra determinada com %).
-
-## Por que isso resolve
-
-- Quando o servidor envia `Content-Length` → continua tudo igual (caso Supabase).
-- Quando não envia (storages externos, gzip, chunked) → o usuário **vê** a barra animando (modo indeterminado) + velocidade real + bytes baixados, em vez de uma barra travada/invisível.
-- Forçar `identity` aumenta a chance de obter `Content-Length` correto em muitos servidores, então a maioria dos casos passa a ter barra determinada de verdade.
-
-## Fora do escopo
-
-- Não mexer no fluxo OTA (`OtaUpdateModal.tsx`, `useOtaUpdate.ts`, `update.json`) — não é o caso reportado.
-- Não tocar no admin web nem em rotas server.
-- Sem mudança de versionCode/versionName (ajuste puramente local, mas vai entrar no próximo bump automático do Gradle como qualquer outro build).
+Sem isso eu posso queimar várias iterações chutando.
