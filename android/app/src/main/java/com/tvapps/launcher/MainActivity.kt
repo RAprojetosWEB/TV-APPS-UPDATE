@@ -60,8 +60,6 @@ import android.view.SoundEffectConstants
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import java.net.HttpURLConnection
-import java.net.URL
 import org.json.JSONObject
 
 private const val VERIFY_PASSWORD_ENDPOINT =
@@ -72,32 +70,59 @@ private const val FALLBACK_LAUNCHER_PASSWORD = "1555"
 
 private enum class VerifyResult { OK, WRONG, NETWORK_ERROR }
 
+// Detalhe do erro de rede, exposto no Toast para diagnóstico em TV Box.
+private var lastVerifyError: String? = null
+
+// Cliente HTTP dedicado, com timeouts generosos para TV Box em rede lenta.
+private val verifyHttpClient: okhttp3.OkHttpClient by lazy {
+    okhttp3.OkHttpClient.Builder()
+        .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+        .readTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+        .writeTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+        .retryOnConnectionFailure(true)
+        .build()
+}
+
 private fun verifyLauncherPasswordRemote(password: String): VerifyResult {
+    lastVerifyError = null
     return try {
-        val conn = (URL(VERIFY_PASSWORD_ENDPOINT).openConnection() as HttpURLConnection).apply {
-            requestMethod = "POST"
-            connectTimeout = 5000
-            readTimeout = 5000
-            doOutput = true
-            setRequestProperty("Content-Type", "application/json")
-            setRequestProperty("Accept", "application/json")
-        }
         val payload = JSONObject().put("password", password).toString()
-        conn.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
-        val code = conn.responseCode
-        if (code !in 200..299) {
-            conn.disconnect()
-            return VerifyResult.NETWORK_ERROR
+        val body = okhttp3.RequestBody.create(
+            "application/json; charset=utf-8".toMediaTypeOrNullCompat(),
+            payload.toByteArray(Charsets.UTF_8),
+        )
+        val req = okhttp3.Request.Builder()
+            .url(VERIFY_PASSWORD_ENDPOINT)
+            .header("Accept", "application/json")
+            .header("User-Agent", "TVAppsLauncher-Android")
+            .post(body)
+            .build()
+        verifyHttpClient.newCall(req).execute().use { resp ->
+            if (!resp.isSuccessful) {
+                lastVerifyError = "HTTP ${resp.code}"
+                android.util.Log.e("MainActivity", "verify password http ${resp.code}")
+                return VerifyResult.NETWORK_ERROR
+            }
+            val text = resp.body?.string().orEmpty()
+            val ok = JSONObject(text).optBoolean("ok", false)
+            if (ok) VerifyResult.OK else VerifyResult.WRONG
         }
-        val body = conn.inputStream.bufferedReader().use { it.readText() }
-        conn.disconnect()
-        val ok = JSONObject(body).optBoolean("ok", false)
-        if (ok) VerifyResult.OK else VerifyResult.WRONG
     } catch (e: Exception) {
-        android.util.Log.e("MainActivity", "verifyLauncherPasswordRemote failed: ${e.message}", e)
+        val tag = when (e) {
+            is java.net.UnknownHostException -> "DNS"
+            is java.net.SocketTimeoutException -> "Timeout"
+            is javax.net.ssl.SSLException -> "SSL"
+            is java.net.ConnectException -> "Conexão recusada"
+            else -> e.javaClass.simpleName
+        }
+        lastVerifyError = tag
+        android.util.Log.e("MainActivity", "verifyLauncherPasswordRemote failed [$tag]: ${e.message}", e)
         VerifyResult.NETWORK_ERROR
     }
 }
+
+private fun String.toMediaTypeOrNullCompat(): okhttp3.MediaType? =
+    okhttp3.MediaType.parse(this)
 
 class MainActivity : Activity() {
 
