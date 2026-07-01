@@ -4,6 +4,10 @@
         <trust-anchors>
             <certificates src="system" />
             <certificates src="user" />
+            <certificates src="@raw/gts_root_r1" />
+            <certificates src="@raw/gts_root_r2" />
+            <certificates src="@raw/gts_root_r3" />
+            <certificates src="@raw/gts_root_r4" />
         </trust-anchors>
     </base-config>
 </network-security-config>
